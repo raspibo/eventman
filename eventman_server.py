@@ -11,11 +11,13 @@ import tornado.ioloop
 import tornado.options
 from tornado.options import define, options
 import tornado.web
+from tornado import gen
 
 
 class MainHandler(tornado.web.RequestHandler):
+    @gen.coroutine
     def get(self):
-        self.write("Hello, world")
+        self.redirect('/static/html/index.html')
 
 
 def main():
@@ -26,12 +28,11 @@ def main():
     tornado.options.parse_command_line()
 
     application = tornado.web.Application([
-            (r"/", MainHandler),
+            (r"/(?:index.html)?", MainHandler),
         ],
+        template_path=os.path.join(os.path.dirname(__file__), "templates"),
         static_path=os.path.join(os.path.dirname(__file__), "static"),
-        debug=options.debug
-    )
-
+        debug=options.debug)
     http_server = tornado.httpserver.HTTPServer(application)
     http_server.listen(options.port)
     tornado.ioloop.IOLoop.instance().start()
