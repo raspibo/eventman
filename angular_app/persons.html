@@ -1,0 +1,38 @@
+<!doctype html>
+<html ng-app="eventManApp">
+  <head>
+    <script src="/static/js/angular.min.js"></script>
+    <script src="/js/controllers.js"></script>
+    <title>Event Man(ager)</title>
+  </head>
+  <body ng-controller="PersonsListCtrl">
+
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-2">
+        <!--Sidebar content-->
+
+        Search: <input ng-model="query">
+        Sort by:
+        <select ng-model="orderProp">
+          <option value="name">Alphabetical</option>
+          <option value="id">ID</option>
+        </select>
+
+      </div>
+      <div class="col-md-10">
+        <!--Body content-->
+
+        <ul class="persons">
+          <li ng-repeat="person in persons | filter:query | orderBy:orderProp">
+            <span>{{person.name}}</span>&nbsp;<span>{{person.surname}}</span>
+            <p>{{person.snippet}}</p>
+          </li>
+        </ul>
+
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
