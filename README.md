@@ -3,6 +3,13 @@ Event Man(ager)
 
 Manage attendants at an event.
 
+Notice
+======
+
+No, this project is not ready, yet.
+
+I'll let you know when I'm finished experimenting with it and you can contribute.
+
 
 License and copyright
 =====================
