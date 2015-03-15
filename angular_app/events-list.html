@@ -1,0 +1,25 @@
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-2">
+
+        Search: <input ng-model="query2">
+        Sort by:
+        <select ng-model="orderProp">
+          <option value="title">Alphabetical</option>
+          <option value="begin-datetime">Date</option>
+        </select>
+
+      </div>
+      <div class="col-md-10">
+
+        <ul class="events">
+          <li ng-repeat="event in events | filter:query2 | orderBy:orderProp">
+            <span>{{event.title}}</span>
+            <p>{{event['begin-datetime']}}</p>
+          </li>
+        </ul>
+
+      </div>
+    </div>
+  </div>
+
