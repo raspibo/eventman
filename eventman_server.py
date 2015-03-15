@@ -11,12 +11,14 @@ import tornado.ioloop
 import tornado.options
 from tornado.options import define, options
 import tornado.web
-from tornado import gen
+from tornado import gen, escape
 
-class MainHandler(tornado.web.RequestHandler):
+class RootHandler(tornado.web.RequestHandler):
+    angular_app_path = os.path.join(os.path.dirname(__file__), "angular_app")
     @gen.coroutine
     def get(self):
-        self.redirect('/index.html')
+        with open(self.angular_app_path + "/index.html", 'r') as fd:
+            self.write(fd.read())
 
 MOCKUP_PERSONS = [
     {'name': 'Silvia', 'surname': 'Castellari',
@@ -29,11 +31,39 @@ MOCKUP_PERSONS = [
      'email': 'hackinbo.it@gmail.com',
      'id': 3}]
 
+import datetime
+MOCKUP_EVENTS = [
+    {'title': 'HackInBo 2015', 'begin-datetime': datetime.datetime(2015, 5, 23, 9, 0),
+        'end-datetime': datetime.datetime(2015, 5, 24, 17, 0),
+        'location': 'Bologna', 'id': 1},
+    {'title': 'La fiera del carciofo', 'begin-datetime': datetime.datetime(2015, 6, 23, 9, 0),
+        'end-datetime': datetime.datetime(2015, 6, 24, 17, 0),
+        'location': 'Gatteo a mare', 'id': 2},
+]
+
+import json
+
+class ImprovedEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, datetime.datetime):
+            return str(o)
+        return json.JSONEncoder.default(self, o)
+
+json._default_encoder = ImprovedEncoder()
+
 
 class PersonsHandler(tornado.web.RequestHandler):
     @gen.coroutine
     def get(self, id_=None):
         self.write({'persons': MOCKUP_PERSONS})
+
+
+class EventsHandler(tornado.web.RequestHandler):
+    @gen.coroutine
+    def get(self, id_=None):
+        self.write({'events': MOCKUP_EVENTS})
+
+
 
 def main():
     define("port", default=5242, help="run on the given port", type=int)
@@ -46,7 +76,8 @@ def main():
 
     application = tornado.web.Application([
             (r"/persons/?(?P<id_>\d+)?", PersonsHandler),
-            (r"/", MainHandler),
+            (r"/events/?(?P<id_>\d+)?", EventsHandler),
+            (r"/(?:index.html)?", RootHandler),
             (r'/(.*)', tornado.web.StaticFileHandler, {"path": "angular_app"})
         ],
         template_path=os.path.join(os.path.dirname(__file__), "templates"),
