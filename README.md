@@ -31,11 +31,18 @@ Install and run
 ===============
 
 wget https://bootstrap.pypa.io/get-pip.py
+
 sudo python get-pip.py
+
 sudo pip install tornado
+
 cd
+
 git clone https://github.com/raspibo/eventman
+
 cd eventman
+
 ./eventman_server.py
+
 
 Open browser and navigate to: http://localhost:5242/
