@@ -13,10 +13,12 @@ from tornado.options import define, options
 import tornado.web
 from tornado import gen
 
-class MainHandler(tornado.web.RequestHandler):
+class RootHandler(tornado.web.RequestHandler):
+    angular_app_path = os.path.join(os.path.dirname(__file__), "angular_app")
     @gen.coroutine
     def get(self):
-        self.redirect('/index.html')
+        with open(self.angular_app_path + "/index.html", 'r') as fd:
+            self.write(fd.read())
 
 MOCKUP_PERSONS = [
     {'name': 'Silvia', 'surname': 'Castellari',
@@ -46,7 +48,7 @@ def main():
 
     application = tornado.web.Application([
             (r"/persons/?(?P<id_>\d+)?", PersonsHandler),
-            (r"/", MainHandler),
+            (r"/(?:index.html)?", RootHandler),
             (r'/(.*)', tornado.web.StaticFileHandler, {"path": "angular_app"})
         ],
         template_path=os.path.join(os.path.dirname(__file__), "templates"),
