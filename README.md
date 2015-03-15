@@ -27,3 +27,22 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
+Install and run
+===============
+
+wget https://bootstrap.pypa.io/get-pip.py
+
+sudo python get-pip.py
+
+sudo pip install tornado
+
+cd
+
+git clone https://github.com/raspibo/eventman
+
+cd eventman
+
+./eventman_server.py
+
+
+Open browser and navigate to: http://localhost:5242/
