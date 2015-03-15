@@ -11,7 +11,7 @@ import tornado.ioloop
 import tornado.options
 from tornado.options import define, options
 import tornado.web
-from tornado import gen, escape
+from tornado import gen
 
 class RootHandler(tornado.web.RequestHandler):
     angular_app_path = os.path.join(os.path.dirname(__file__), "angular_app")
@@ -20,26 +20,27 @@ class RootHandler(tornado.web.RequestHandler):
         with open(self.angular_app_path + "/index.html", 'r') as fd:
             self.write(fd.read())
 
-MOCKUP_PERSONS = [
-    {'name': 'Silvia', 'surname': 'Castellari',
+MOCKUP_PERSONS = {
+    1: {'name': 'Silvia', 'surname': 'Castellari',
      'email': 'hackinbo.it@gmail.com',
      'id': 1},
-    {'name': 'Daniele', 'surname': 'Castellari',
+    2: {'name': 'Daniele', 'surname': 'Castellari',
      'email': 'hackinbo.it@gmail.com',
      'id': 2},
-    {'name': 'Mario', 'surname': 'Anglani',
+    3: {'name': 'Mario', 'surname': 'Anglani',
      'email': 'hackinbo.it@gmail.com',
-     'id': 3}]
+     'id': 3}
+}
 
 import datetime
-MOCKUP_EVENTS = [
-    {'title': 'HackInBo 2015', 'begin-datetime': datetime.datetime(2015, 5, 23, 9, 0),
+MOCKUP_EVENTS = {
+    1: {'title': 'HackInBo 2015', 'begin-datetime': datetime.datetime(2015, 5, 23, 9, 0),
         'end-datetime': datetime.datetime(2015, 5, 24, 17, 0),
         'location': 'Bologna', 'id': 1},
-    {'title': 'La fiera del carciofo', 'begin-datetime': datetime.datetime(2015, 6, 23, 9, 0),
+    2: {'title': 'La fiera del carciofo', 'begin-datetime': datetime.datetime(2015, 6, 23, 9, 0),
         'end-datetime': datetime.datetime(2015, 6, 24, 17, 0),
         'location': 'Gatteo a mare', 'id': 2},
-]
+}
 
 import json
 
@@ -55,13 +56,19 @@ json._default_encoder = ImprovedEncoder()
 class PersonsHandler(tornado.web.RequestHandler):
     @gen.coroutine
     def get(self, id_=None):
-        self.write({'persons': MOCKUP_PERSONS})
+        if id_ is not None:
+            self.write({'person': MOCKUP_PERSONS[int(id_)]})
+            return
+        self.write({'persons': MOCKUP_PERSONS.values()})
 
 
 class EventsHandler(tornado.web.RequestHandler):
     @gen.coroutine
     def get(self, id_=None):
-        self.write({'events': MOCKUP_EVENTS})
+        if id_ is not None:
+            self.write({'event': MOCKUP_EVENTS[int(id_)]})
+            return
+        self.write({'events': MOCKUP_EVENTS.values()})
 
 
 

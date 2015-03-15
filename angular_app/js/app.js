@@ -10,17 +10,17 @@ eventManApp.config(['$routeProvider',
         templateUrl: 'persons-list.html',
         controller: 'PersonsListCtrl'
       }).
-      when('/persons/:personId', {
+      when('/persons/:personID', {
         templateUrl: 'person-detail.html',
-        controller: 'PersonDetailCtrl'
+        controller: 'PersonDetailsCtrl'
       }).
       when('/events', {
         templateUrl: 'events-list.html',
         controller: 'EventsListCtrl'
       }).
-      when('/events/:eventId', {
+      when('/events/:eventID', {
         templateUrl: 'event-detail.html',
-        controller: 'EventDetailCtrl'
+        controller: 'EventDetailsCtrl'
       }).
       otherwise({
         redirectTo: '/events'
