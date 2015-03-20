@@ -13,7 +13,14 @@ from tornado.options import define, options
 import tornado.web
 from tornado import gen
 
-class RootHandler(tornado.web.RequestHandler):
+
+class BaseHandler(tornado.web.RequestHandler):
+    def initialize(self, **kwargs):
+        for key, value in kwargs.iteritems():
+            setattr(self, key, value)
+
+
+class RootHandler(BaseHandler):
     angular_app_path = os.path.join(os.path.dirname(__file__), "angular_app")
     @gen.coroutine
     def get(self):
@@ -53,7 +60,7 @@ class ImprovedEncoder(json.JSONEncoder):
 json._default_encoder = ImprovedEncoder()
 
 
-class PersonsHandler(tornado.web.RequestHandler):
+class PersonsHandler(BaseHandler):
     @gen.coroutine
     def get(self, id_=None):
         if id_ is not None:
@@ -62,7 +69,7 @@ class PersonsHandler(tornado.web.RequestHandler):
         self.write({'persons': MOCKUP_PERSONS.values()})
 
 
-class EventsHandler(tornado.web.RequestHandler):
+class EventsHandler(BaseHandler):
     @gen.coroutine
     def get(self, id_=None):
         if id_ is not None:
