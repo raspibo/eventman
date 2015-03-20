@@ -3,6 +3,14 @@
 /* Controllers */
 var eventManControllers = angular.module('eventManControllers', []);
 
+eventManControllers.controller('navigation', ['$location',
+    function ($location) {
+        this.go = function(url) {
+            $location.url(url);
+        };
+    }]
+);
+
 
 eventManControllers.controller('EventsListCtrl', ['$scope', '$http',
     function ($scope, $http) {

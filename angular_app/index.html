@@ -14,9 +14,9 @@
   </head>
 
   <body>
-    <div class="main-header">
-      <input type="button" id="events-button" class="btn btn-link" value="Events" />
-      <input type="button" id="persons-button" class="btn btn-link" value="Persons" />
+    <div class="main-header" ng-controller="navigation as n">
+      <input type="button" id="events-button" ng-click="n.go('/events')" class="btn btn-link" value="Events" />
+      <input type="button" id="persons-button" ng-click="n.go('/persons')" class="btn btn-link" value="Persons" />
     </div>
 
     <div ng-view></div>
@@ -25,17 +25,5 @@
     </div>
     <script src="/static/js/jquery-2.1.3.min.js"></script>
     <script src="/static/js/bootstrap.min.js"></script>
-    <script>
-
-$(document).ready(function() {
-    $('#events-button').on('click', function() {
-        window.location = '/#/events';
-    });
-    $('#persons-button').on('click', function() {
-        window.location = '/#/persons';
-    });
-});
-
-    </script>
   </body>
 </html>
