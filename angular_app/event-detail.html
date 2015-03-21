@@ -1,11 +1,16 @@
-  <div class="container-fluid">
-    <div class="row">
-      <div class="col-md-10">
-        <h1><span class="label label-primary">{{event.title}}</span></h1>
-
-        <p>Date: {{event['begin-datetime']}}</p>
-
-      </div>
-    </div>
+<div class="container-fluid">
+  <div class="input-group input-group-lg">
+    <span class="input-group-addon" id="basic-addon1">Title</span>
+    <input type="text" class="form-control" placeholder="Title" aria-describedby="basic-addon-2" value="{{event.title}}">
   </div>
 
+  <div class="input-group top5">
+    <span class="input-group-addon" id="basic-addon1">Begin time</span>
+    <input type="text" class="form-control" placeholder="Date and time" aria-describedby="basic-addon1" value="{{event['begin-datetime']}}">
+  </div>
+
+  <div class="input-group top5">
+    <span class="input-group-addon" id="basic-addon1">End time</span>
+    <input type="text" class="form-control" placeholder="Date and time" aria-describedby="basic-addon1" value="{{event['end-datetime']}}">
+  </div>
+</div>

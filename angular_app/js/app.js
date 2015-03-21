@@ -23,6 +23,14 @@ eventManApp.config(['$routeProvider',
         templateUrl: 'event-detail.html',
         controller: 'EventDetailsCtrl'
       }).
+      when('/new-event', {
+        templateUrl: 'event-detail.html',
+        controller: 'EventDetailsCtrl'
+      }).
+      when('/new-person', {
+        templateUrl: 'person-detail.html',
+        controller: 'PersonDetailsCtrl'
+      }).
       otherwise({
         redirectTo: '/events'
       });
