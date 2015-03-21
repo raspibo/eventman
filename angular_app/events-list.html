@@ -17,7 +17,7 @@
 
         <ul class="events">
           <li ng-repeat="event in events | filter:query | orderBy:orderProp">
-            <span><a href="/#/events/{{event.id}}">{{event.title}}</a></span>
+            <span><a href="/#/events/{{event._id}}">{{event.title}}</a></span>
             <p>{{event['begin-datetime']}}</p>
           </li>
         </ul>
