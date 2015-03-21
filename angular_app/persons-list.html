@@ -17,7 +17,7 @@
 
         <ul class="persons">
           <li ng-repeat="person in persons | filter:query | orderBy:orderProp">
-            <a href="/#/persons/{{person.id}}"><span>{{person.name}}</span>&nbsp;<span>{{person.surname}}</span></a>
+            <a href="/#/persons/{{person._id}}"><span>{{person.name}}</span>&nbsp;<span>{{person.surname}}</span></a>
             <p>{{person.email}}</p>
           </li>
         </ul>
