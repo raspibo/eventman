@@ -2,14 +2,15 @@ var eventManServices = angular.module('eventManServices', ['ngResource']);
 
 eventManServices.factory('Event', ['$resource',
   function($resource) {
-    return $resource('events/:eventID', {eventID: '@eventID'}, {
+    return $resource('events/:id', {id: '@id'}, {
       all: {
         method: 'GET',
-        isArray:true,
+        isArray: true,
         transformResponse: function(data, headers) {
           return angular.fromJson(data).events;
         }
-      }
+      },
+      update: {method: 'PUT'}
     });
   }]
 );
@@ -17,7 +18,7 @@ eventManServices.factory('Event', ['$resource',
 
 eventManServices.factory('Person', ['$resource',
   function($resource) {
-    return $resource('persons/:personID', {personID: '@personID'}, {
+    return $resource('persons/:id', {id: '@id'}, {
       all: {
         method: 'GET',
         isArray:true,

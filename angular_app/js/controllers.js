@@ -22,7 +22,16 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event',
 
 eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', '$routeParams',
     function ($scope, Event, $routeParams) {
-        $scope.event = Event.get($routeParams);
+        if ($routeParams.id) {
+            $scope.event = Event.get($routeParams);
+        }
+	$scope.save = function() {
+            if ($scope.event.id === undefined) {
+                Event.save($scope.event);
+            } else {
+                Event.update($scope.event);
+            }
+	};
     }]
 );
 

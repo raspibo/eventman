@@ -79,6 +79,16 @@ class EventsHandler(BaseHandler):
             return
         self.write({'events': MOCKUP_EVENTS.values()})
 
+    @gen.coroutine
+    def post(self, id_=None, **kwargs):
+        data = self.request.body
+        print 'aaaaaa', id_, data
+
+    @gen.coroutine
+    def put(self, id_=None, **kwargs):
+        data = self.request.body
+        print 'aaaaaaa put', id_, data
+
 
 def main():
     define("port", default=5242, help="run on the given port", type=int)
