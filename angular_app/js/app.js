@@ -1,8 +1,9 @@
 var eventManApp = angular.module('eventManApp', [
-  'ngRoute',
-  'eventManServices',
-  'eventManControllers'
+    'ngRoute',
+    'eventManServices',
+    'eventManControllers'
 ]);
+
 
 eventManApp.directive('ngEnter', function () {
     return function (scope, element, attrs) {
@@ -17,35 +18,36 @@ eventManApp.directive('ngEnter', function () {
     };
 });
 
+
 eventManApp.config(['$routeProvider',
-  function($routeProvider) {
-    $routeProvider.
-      when('/persons', {
-        templateUrl: 'persons-list.html',
-        controller: 'PersonsListCtrl'
-      }).
-      when('/persons/:id', {
-        templateUrl: 'person-detail.html',
-        controller: 'PersonDetailsCtrl'
-      }).
-      when('/events', {
-        templateUrl: 'events-list.html',
-        controller: 'EventsListCtrl'
-      }).
-      when('/events/:id', {
-        templateUrl: 'event-detail.html',
-        controller: 'EventDetailsCtrl'
-      }).
-      when('/new-event', {
-        templateUrl: 'event-detail.html',
-        controller: 'EventDetailsCtrl'
-      }).
-      when('/new-person', {
-        templateUrl: 'person-detail.html',
-        controller: 'PersonDetailsCtrl'
-      }).
-      otherwise({
-        redirectTo: '/events'
-      });
+    function($routeProvider) {
+        $routeProvider.
+            when('/persons', {
+                templateUrl: 'persons-list.html',
+                controller: 'PersonsListCtrl'
+            }).
+            when('/persons/:id', {
+                templateUrl: 'person-detail.html',
+                controller: 'PersonDetailsCtrl'
+            }).
+            when('/events', {
+                templateUrl: 'events-list.html',
+                controller: 'EventsListCtrl'
+            }).
+            when('/events/:id', {
+                templateUrl: 'event-detail.html',
+                controller: 'EventDetailsCtrl'
+            }).
+            when('/new-event', {
+                templateUrl: 'event-detail.html',
+                controller: 'EventDetailsCtrl'
+            }).
+            when('/new-person', {
+                templateUrl: 'person-detail.html',
+                controller: 'PersonDetailsCtrl'
+            }).
+            otherwise({
+                redirectTo: '/events'
+            });
 }]);
 

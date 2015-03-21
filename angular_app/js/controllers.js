@@ -25,13 +25,13 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', '$routePa
         if ($routeParams.id) {
             $scope.event = Event.get($routeParams);
         }
-	$scope.save = function() {
-            if ($scope.event.id === undefined) {
-                Event.save($scope.event);
-            } else {
-                Event.update($scope.event);
-            }
-	};
+        $scope.save = function() {
+                if ($scope.event.id === undefined) {
+                    Event.save($scope.event);
+                } else {
+                    Event.update($scope.event);
+                }
+        };
     }]
 );
 
