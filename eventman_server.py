@@ -11,7 +11,7 @@ import tornado.ioloop
 import tornado.options
 from tornado.options import define, options
 import tornado.web
-from tornado import gen
+from tornado import gen, escape
 
 import backend
 
@@ -63,12 +63,23 @@ json._default_encoder = ImprovedEncoder()
 
 
 class PersonsHandler(BaseHandler):
+    collection = 'persons'
+
     @gen.coroutine
     def get(self, id_=None):
         if id_ is not None:
-            self.write(MOCKUP_PERSONS[int(id_)])
-            return
-        self.write({'persons': MOCKUP_PERSONS.values()})
+            self.write(self.db.get(self.collection, int(id_)))
+        else:
+            self.write({'persons': self.db.query(self.collection)})
+
+    @gen.coroutine
+    def post(self, id_=None, **kwargs):
+        data = escape.json_decode(self.request.body or {})
+        if id_ is None:
+            newData = self.db.add(self.collection, data)
+        else:
+            newData = self.db.update(self.connection, data)
+        self.write(newData)
 
 
 class EventsHandler(BaseHandler):
@@ -81,7 +92,13 @@ class EventsHandler(BaseHandler):
 
     @gen.coroutine
     def post(self, id_=None, **kwargs):
-        data = self.request.body
+        event = self.request.body
+        if id_ is None:
+            newEvent = self.db.addEvent(event)
+            print newEvent
+        else:
+            dbEvent = self.db.findEvent({'id': event['id']})
+
         print 'aaaaaa', id_, data
 
     @gen.coroutine

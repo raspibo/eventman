@@ -50,10 +50,10 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', 'Person', '$route
             $scope.person = Person.get($routeParams);
         }
         $scope.save = function() {
-                if ($scope.event.id === undefined) {
-                    Event.save($scope.event);
+                if ($scope.person.id === undefined) {
+                    Person.save($scope.person);
                 } else {
-                    Event.update($scope.event);
+                    Person.update($scope.person);
                 }
         };
     }]
