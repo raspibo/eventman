@@ -46,7 +46,16 @@ eventManControllers.controller('PersonsListCtrl', ['$scope', 'Person',
 
 eventManControllers.controller('PersonDetailsCtrl', ['$scope', 'Person', '$routeParams',
     function ($scope, Person, $routeParams) {
-        $scope.person = Person.get($routeParams);
+        if ($routeParams.id) {
+            $scope.person = Person.get($routeParams);
+        }
+        $scope.save = function() {
+                if ($scope.event.id === undefined) {
+                    Event.save($scope.event);
+                } else {
+                    Event.update($scope.event);
+                }
+        };
     }]
 );
 

@@ -25,7 +25,8 @@ eventManServices.factory('Person', ['$resource',
                 transformResponse: function(data, headers) {
                     return angular.fromJson(data).persons;
                 }
-            }
+            },
+            update: {method: 'PUT'}
         });
     }]
 );
