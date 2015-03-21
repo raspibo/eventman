@@ -5,6 +5,8 @@ Your friendly manager of attendants at a conference.
 """
 
 import os
+import json
+import datetime
 
 import tornado.httpserver
 import tornado.ioloop
@@ -29,29 +31,6 @@ class RootHandler(BaseHandler):
         with open(self.angular_app_path + "/index.html", 'r') as fd:
             self.write(fd.read())
 
-MOCKUP_PERSONS = {
-    1: {'name': 'Silvia', 'surname': 'Castellari',
-     'email': 'hackinbo.it@gmail.com',
-     'id': 1},
-    2: {'name': 'Daniele', 'surname': 'Castellari',
-     'email': 'hackinbo.it@gmail.com',
-     'id': 2},
-    3: {'name': 'Mario', 'surname': 'Anglani',
-     'email': 'hackinbo.it@gmail.com',
-     'id': 3}
-}
-
-import datetime
-MOCKUP_EVENTS = {
-    1: {'title': 'HackInBo 2015', 'begin-datetime': datetime.datetime(2015, 5, 23, 9, 0),
-        'end-datetime': datetime.datetime(2015, 5, 24, 17, 0),
-        'location': 'Bologna', 'id': 1},
-    2: {'title': 'La fiera del carciofo', 'begin-datetime': datetime.datetime(2015, 6, 23, 9, 0),
-        'end-datetime': datetime.datetime(2015, 6, 24, 17, 0),
-        'location': 'Gatteo a mare', 'id': 2},
-}
-
-import json
 
 class ImprovedEncoder(json.JSONEncoder):
     def default(self, o):
@@ -62,15 +41,15 @@ class ImprovedEncoder(json.JSONEncoder):
 json._default_encoder = ImprovedEncoder()
 
 
-class PersonsHandler(BaseHandler):
-    collection = 'persons'
+class CollectionHandler(BaseHandler):
+    collection = None
 
     @gen.coroutine
     def get(self, id_=None):
         if id_ is not None:
-            self.write(self.db.get(self.collection, int(id_)))
+            self.write(self.db.get(self.collection, id_))
         else:
-            self.write({'persons': self.db.query(self.collection)})
+            self.write({self.collection: self.db.query(self.collection)})
 
     @gen.coroutine
     def post(self, id_=None, **kwargs):
@@ -78,52 +57,37 @@ class PersonsHandler(BaseHandler):
         if id_ is None:
             newData = self.db.add(self.collection, data)
         else:
-            newData = self.db.update(self.connection, data)
+            newData = self.db.update(self.collection, id_, data)
         self.write(newData)
 
+    put = post
 
-class EventsHandler(BaseHandler):
-    @gen.coroutine
-    def get(self, id_=None):
-        if id_ is not None:
-            self.write(MOCKUP_EVENTS[int(id_)])
-            return
-        self.write({'events': MOCKUP_EVENTS.values()})
+class PersonsHandler(CollectionHandler):
+    collection = 'persons'
 
-    @gen.coroutine
-    def post(self, id_=None, **kwargs):
-        event = self.request.body
-        if id_ is None:
-            newEvent = self.db.addEvent(event)
-            print newEvent
-        else:
-            dbEvent = self.db.findEvent({'id': event['id']})
-
-        print 'aaaaaa', id_, data
-
-    @gen.coroutine
-    def put(self, id_=None, **kwargs):
-        data = self.request.body
-        print 'aaaaaaa put', id_, data
+class EventsHandler(CollectionHandler):
+    collection = 'events'
 
 
 def main():
     define("port", default=5242, help="run on the given port", type=int)
     define("data", default=os.path.join(os.path.dirname(__file__), "data"),
             help="specify the directory used to store the data")
-    define("mongodb", default=None,
+    define("mongodbURL", default=None,
             help="URL to MongoDB server", type=str)
+    define("dbName", default='eventman',
+            help="Name of the MongoDB database to use", type=str)
     define("debug", default=False, help="run in debug mode")
     define("config", help="read configuration file",
             callback=lambda path: tornado.options.parse_config_file(path, final=False))
     tornado.options.parse_command_line()
 
-    db_connector = backend.EventManDB(url=options.mongodb)
+    db_connector = backend.EventManDB(url=options.mongodbURL, dbName=options.dbName)
     init_params = dict(db=db_connector)
 
     application = tornado.web.Application([
-            (r"/persons/?(?P<id_>\d+)?", PersonsHandler, init_params),
-            (r"/events/?(?P<id_>\d+)?", EventsHandler, init_params),
+            (r"/persons/?(?P<id_>\w+)?", PersonsHandler, init_params),
+            (r"/events/?(?P<id_>\w+)?", EventsHandler, init_params),
             (r"/(?:index.html)?", RootHandler, init_params),
             (r'/(.*)', tornado.web.StaticFileHandler, {"path": "angular_app"})
         ],
