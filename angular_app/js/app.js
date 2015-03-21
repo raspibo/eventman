@@ -1,5 +1,6 @@
 var eventManApp = angular.module('eventManApp', [
   'ngRoute',
+  'eventManServices',
   'eventManControllers'
 ]);
 

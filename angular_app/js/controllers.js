@@ -12,41 +12,32 @@ eventManControllers.controller('navigation', ['$location',
 );
 
 
-eventManControllers.controller('EventsListCtrl', ['$scope', '$http',
-    function ($scope, $http) {
-        $http.get('/events').success(function(data) {
-            $scope.events = data.events;
-        });
+eventManControllers.controller('EventsListCtrl', ['$scope', 'Event',
+    function ($scope, Event) {
+        $scope.events = Event.all();
         $scope.orderProp = 'begin-datetime';
     }]
 );
 
 
-eventManControllers.controller('EventDetailsCtrl', ['$scope', '$http', '$routeParams',
-    function ($scope, $http, $routeParams) {
-        $http.get("/events/" + $routeParams.eventID).success(function(data) {
-
-            $scope.event = data.event;
-        });
+eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', '$routeParams',
+    function ($scope, Event, $routeParams) {
+        $scope.event = Event.get($routeParams);
     }]
 );
 
 
-eventManControllers.controller('PersonsListCtrl', ['$scope', '$http',
-    function ($scope, $http) {
-        $http.get('/persons').success(function(data) {
-            $scope.persons = data.persons;
-        });
+eventManControllers.controller('PersonsListCtrl', ['$scope', 'Person',
+    function ($scope, Person) {
+        $scope.persons = Person.all();
         $scope.orderProp = 'name';
     }]
 );
 
 
-eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$http', '$routeParams',
-    function ($scope, $http, $routeParams) {
-        $http.get("/persons/" + $routeParams.personID).success(function(data) {
-            $scope.person = data.person;
-        });
+eventManControllers.controller('PersonDetailsCtrl', ['$scope', 'Person', '$routeParams',
+    function ($scope, Person, $routeParams) {
+        $scope.person = Person.get($routeParams);
     }]
 );
 

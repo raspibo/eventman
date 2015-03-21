@@ -66,7 +66,7 @@ class PersonsHandler(BaseHandler):
     @gen.coroutine
     def get(self, id_=None):
         if id_ is not None:
-            self.write({'person': MOCKUP_PERSONS[int(id_)]})
+            self.write(MOCKUP_PERSONS[int(id_)])
             return
         self.write({'persons': MOCKUP_PERSONS.values()})
 
@@ -75,11 +75,9 @@ class EventsHandler(BaseHandler):
     @gen.coroutine
     def get(self, id_=None):
         if id_ is not None:
-            self.write({'event': MOCKUP_EVENTS[int(id_)]})
+            self.write(MOCKUP_EVENTS[int(id_)])
             return
         self.write({'events': MOCKUP_EVENTS.values()})
-
-
 
 
 def main():
