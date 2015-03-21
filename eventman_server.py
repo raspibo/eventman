@@ -13,6 +13,8 @@ from tornado.options import define, options
 import tornado.web
 from tornado import gen
 
+import backend
+
 
 class BaseHandler(tornado.web.RequestHandler):
     def initialize(self, **kwargs):
@@ -79,19 +81,25 @@ class EventsHandler(BaseHandler):
 
 
 
+
 def main():
     define("port", default=5242, help="run on the given port", type=int)
     define("data", default=os.path.join(os.path.dirname(__file__), "data"),
             help="specify the directory used to store the data")
+    define("mongodb", default=None,
+            help="URL to MongoDB server", type=str)
     define("debug", default=False, help="run in debug mode")
     define("config", help="read configuration file",
             callback=lambda path: tornado.options.parse_config_file(path, final=False))
     tornado.options.parse_command_line()
 
+    db_connector = backend.EventManDB(url=options.mongodb)
+    init_params = dict(db=db_connector)
+
     application = tornado.web.Application([
-            (r"/persons/?(?P<id_>\d+)?", PersonsHandler),
-            (r"/events/?(?P<id_>\d+)?", EventsHandler),
-            (r"/(?:index.html)?", RootHandler),
+            (r"/persons/?(?P<id_>\d+)?", PersonsHandler, init_params),
+            (r"/events/?(?P<id_>\d+)?", EventsHandler, init_params),
+            (r"/(?:index.html)?", RootHandler, init_params),
             (r'/(.*)', tornado.web.StaticFileHandler, {"path": "angular_app"})
         ],
         template_path=os.path.join(os.path.dirname(__file__), "templates"),
