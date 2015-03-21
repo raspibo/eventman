@@ -4,6 +4,7 @@ Classes and functions used to manage events and attendants.
 """
 
 import pymongo
+from bson.objectid import ObjectId
 
 
 class EventManDB(object):
@@ -26,14 +27,18 @@ class EventManDB(object):
         self.db = self.connection[self._dbName]
         return self.db
 
-    def get(self, collection, id_):
-        results = self.query(collection, {'id': id_})
-        print results, id_, type(id_)
+    def get(self, collection, _id):
+        if not isinstance(_id, ObjectId):
+            _id = ObjectId(_id)
+        results = self.query(collection, {'_id': _id})
         return results and results[0] or {}
 
     def query(self, collection, query=None):
         db = self.connect()
-        results = list(db[collection].find(query or {}))
+        query = query or {}
+        if'_id' in query and not isinstance(query['_id'], ObjectId):
+            query['_id'] = ObjectId(query['_id'])
+        results = list(db[collection].find(query))
         for result in results:
             result['_id'] = str(result['_id'])
         return results
@@ -41,36 +46,13 @@ class EventManDB(object):
     def add(self, collection, data):
         db = self.connect()
         _id = db[collection].insert(data)
-        newData = db[collection].find_one({'_id': _id})
-        newData['_id'] = str(newData['_id'])
-        return newData
+        return self.get(collection, _id)
 
-    #def update(self, collection)
-
-    def addUser(self, user):
+    def update(self, collection, _id, data):
         db = self.connect()
-        db.users.insert(user)
-
-    def addEvent(self, event):
-        db = self.connect()
-        db.events.insert(event)
-
-    def getUser(self, query=None):
-        db = self.connect()
-        return db.users.find_one(query or {})
-
-    def getEvent(self, query):
-        db = self.connect()
-        return db.events.find_one(query or {})
-
-    def getUsers(self, eventID=None):
-        self.connect()
-        pass
-
-    def getEvents(self):
-        self.connect()
-        pass
-
-
-
+        data = data or {}
+        if '_id' in data:
+            del data['_id']
+        db[collection].update({'_id': ObjectId(_id)}, {'$set': data})
+        return self.get(collection, _id)
 
