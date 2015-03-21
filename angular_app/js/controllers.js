@@ -28,9 +28,9 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', '$routePa
         }
         $scope.save = function() {
                 if ($scope.event.id === undefined) {
-                    Event.save($scope.event);
+                    $scope.event = Event.save($scope.event);
                 } else {
-                    Event.update($scope.event);
+                    $scope.event = Event.update($scope.event);
                 }
         };
     }]
@@ -52,9 +52,9 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', 'Person', '$route
         }
         $scope.save = function() {
                 if ($scope.person.id === undefined) {
-                    Person.save($scope.person);
+                    $scope.person = Person.save($scope.person);
                 } else {
-                    Person.update($scope.person);
+                    $scope.person = Person.update($scope.person);
                 }
         };
     }]
