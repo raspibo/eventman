@@ -1,3 +1,5 @@
+'use strict';
+
 var eventManApp = angular.module('eventManApp', [
     'ngRoute',
     'eventManServices',

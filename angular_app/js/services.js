@@ -1,3 +1,5 @@
+'use strict';
+
 var eventManServices = angular.module('eventManServices', ['ngResource']);
 
 eventManServices.factory('Event', ['$resource',
