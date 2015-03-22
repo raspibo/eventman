@@ -1,9 +1,12 @@
 'use strict';
 
-/* Controllers */
+/* Controllers; their method are available where specified with the ng-controller
+ * directive or for a given route (see app.js).  They use some services to
+ * connect to the backend (see services.js). */
 var eventManControllers = angular.module('eventManControllers', []);
 
 
+/* A controller that can be used to navigate. */
 eventManControllers.controller('navigation', ['$location',
     function ($location) {
         this.go = function(url) {
@@ -26,11 +29,12 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', '$routePa
         if ($routeParams.id) {
             $scope.event = Event.get($routeParams);
         }
+        // store a new Event or update an existing one
         $scope.save = function() {
                 if ($scope.event.id === undefined) {
-                    Event.save($scope.event);
+                    $scope.event = Event.save($scope.event);
                 } else {
-                    Event.update($scope.event);
+                    $scope.event = Event.update($scope.event);
                 }
         };
     }]
@@ -50,11 +54,13 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', 'Person', '$route
         if ($routeParams.id) {
             $scope.person = Person.get($routeParams);
         }
+        // store a new Person or update an existing one
+        $scope.save = function() {
         $scope.save = function() {
                 if ($scope.person.id === undefined) {
-                    Person.save($scope.person);
+                    $scope.person = Person.save($scope.person);
                 } else {
-                    Person.update($scope.person);
+                    $scope.person = Person.update($scope.person);
                 }
         };
     }]

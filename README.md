@@ -1,7 +1,7 @@
 Event Man(ager)
 ===============
 
-Manage attendants at an event.
+Your friendly manager of attendees at an event.
 
 Notice
 ======
@@ -10,11 +10,50 @@ No, this project is not ready, yet.
 
 I'll let you know when I'm finished experimenting with it and you can contribute.
 
+See the DEVELOPMENT.md file for more information about how to contribute.
+
+
+Technological stack
+===================
+
+- [AngularJS](https://angularjs.org/) for the webApp
+- [Bootstrap](http://getbootstrap.com/) (plus [jQuery](https://jquery.com/)) for the eye-candy
+- [Tornado web](http://www.tornadoweb.org/) as web server
+- [MongoDB](https://www.mongodb.org/) to store the data
+
+The web part is incuded; you need to install Tornado, MongoDB and the pymongo module on your system (no configuration needed).
+
+
+Coding style and conventions
+============================
+
+It's enough to be consistent within the document you're editing.
+
+I suggest four spaces instead of tabs for all the code: Python (**mandatory**), JavaScript, HTML and CSS.
+
+Python code documented following the [Sphinx](http://sphinx-doc.org/) syntax.
+
+
+Install and run
+===============
+
+    wget https://bootstrap.pypa.io/get-pip.py
+    sudo python get-pip.py
+    sudo pip install tornado
+    sudo pip install pymongo
+    cd
+    git clone https://github.com/raspibo/eventman
+    cd eventman
+    ./eventman_server.py --debug
+
+
+Open browser and navigate to: http://localhost:5242/
+
 
 License and copyright
 =====================
 
-Copyright 2015 Davide Alberani <da@erlug.linux.it>
+Copyright 2015 Davide Alberani <da@erlug.linux.it>  
                RaspiBO <info@raspibo.org>
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,22 +66,3 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-Install and run
-===============
-
-wget https://bootstrap.pypa.io/get-pip.py
-
-sudo python get-pip.py
-
-sudo pip install tornado
-
-cd
-
-git clone https://github.com/raspibo/eventman
-
-cd eventman
-
-./eventman_server.py
-
-
-Open browser and navigate to: http://localhost:5242/

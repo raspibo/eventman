@@ -1,7 +1,20 @@
 #!/usr/bin/env python
 """Event Man(ager)
 
-Your friendly manager of attendants at a conference.
+Your friendly manager of attendees at an event.
+
+Copyright 2015 Davide Alberani <da@erlug.linux.it>
+               RaspiBO <info@raspibo.org>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 """
 
 import os
@@ -18,58 +31,84 @@ from tornado import gen, escape
 import backend
 
 
-class BaseHandler(tornado.web.RequestHandler):
-    def initialize(self, **kwargs):
-        for key, value in kwargs.iteritems():
-            setattr(self, key, value)
-
-
-class RootHandler(BaseHandler):
-    angular_app_path = os.path.join(os.path.dirname(__file__), "angular_app")
-    @gen.coroutine
-    def get(self):
-        with open(self.angular_app_path + "/index.html", 'r') as fd:
-            self.write(fd.read())
-
-
 class ImprovedEncoder(json.JSONEncoder):
+    """Enhance the default JSON encoder to serialize datetime objects."""
     def default(self, o):
-        if isinstance(o, datetime.datetime):
+        if isinstance(o, (datetime.datetime, datetime.date,
+                datetime.time, datetime.timedelta)):
             return str(o)
         return json.JSONEncoder.default(self, o)
 
 json._default_encoder = ImprovedEncoder()
 
 
+class BaseHandler(tornado.web.RequestHandler):
+    """Base class for request handlers."""
+    def initialize(self, **kwargs):
+        """Add every passed (key, value) as attributes of the instance."""
+        for key, value in kwargs.iteritems():
+            setattr(self, key, value)
+
+
+class RootHandler(BaseHandler):
+    """Handler for the / path."""
+    angular_app_path = os.path.join(os.path.dirname(__file__), "angular_app")
+
+    @gen.coroutine
+    def get(self):
+        # serve the ./angular_app/index.html file
+        with open(self.angular_app_path + "/index.html", 'r') as fd:
+            self.write(fd.read())
+
+
 class CollectionHandler(BaseHandler):
+    """Base class for handlers that need to interact with the database backend.
+    
+    Introduce basic CRUD operations."""
+    # set of documents we're managing (a collection in MongoDB or a table in a SQL database)
     collection = None
 
     @gen.coroutine
     def get(self, id_=None):
         if id_ is not None:
+            # read a single document
             self.write(self.db.get(self.collection, id_))
         else:
+            # return an object containing the list of all objects in the collection;
+            # e.g.: {'events': [{'_id': 'obj1-id, ...}, {'_id': 'obj2-id, ...}, ...]}
+            # Please, never return JSON lists that are not encapsulated in an object,
+            # to avoid XSS vulnerabilities.
             self.write({self.collection: self.db.query(self.collection)})
 
     @gen.coroutine
     def post(self, id_=None, **kwargs):
         data = escape.json_decode(self.request.body or {})
         if id_ is None:
+            # insert a new document
             newData = self.db.add(self.collection, data)
         else:
+            # update an existing document
             newData = self.db.update(self.collection, id_, data)
         self.write(newData)
 
+    # PUT is handled by the POST method
     put = post
 
+
 class PersonsHandler(CollectionHandler):
+    """Handle requests for Persons."""
     collection = 'persons'
 
+
 class EventsHandler(CollectionHandler):
+    """Handle requests for Events."""
     collection = 'events'
 
 
-def main():
+def run():
+    """Run the Tornado web application."""
+    # command line arguments; can also be written in a configuration file,
+    # specified with the --config argument.
     define("port", default=5242, help="run on the given port", type=int)
     define("data", default=os.path.join(os.path.dirname(__file__), "data"),
             help="specify the directory used to store the data")
@@ -82,6 +121,7 @@ def main():
             callback=lambda path: tornado.options.parse_config_file(path, final=False))
     tornado.options.parse_command_line()
 
+    # database backend connector
     db_connector = backend.EventManDB(url=options.mongodbURL, dbName=options.dbName)
     init_params = dict(db=db_connector)
 
@@ -100,5 +140,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    run()
 

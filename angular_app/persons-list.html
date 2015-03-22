@@ -1,28 +1,25 @@
-  <div class="container-fluid">
+<!-- show a list of Persons -->
+<div class="container-fluid">
     <div class="row">
-      <div class="col-md-10">
-
-        Search: <input ng-model="query">
-        Sort by:
-        <select ng-model="orderProp">
-          <option value="name">Alphabetical</option>
-          <option value="id">ID</option>
-        </select>
-
-      </div>
+        <div class="col-md-10">
+            Search: <input ng-model="query">
+            Sort by:
+            <select ng-model="orderProp">
+                <option value="name">Alphabetical</option>
+                <option value="id">ID</option>
+            </select>
+        </div>
     </div>
 
     <div class="row">
-      <div class="col-md-10">
-
-        <ul class="persons">
-          <li ng-repeat="person in persons | filter:query | orderBy:orderProp">
-            <a href="/#/persons/{{person._id}}"><span>{{person.name}}</span>&nbsp;<span>{{person.surname}}</span></a>
-            <p>{{person.email}}</p>
-          </li>
-        </ul>
-
-      </div>
+        <div class="col-md-10">
+            <ul class="persons">
+                <li ng-repeat="person in persons | filter:query | orderBy:orderProp">
+                    <a href="/#/persons/{{person._id}}"><span>{{person.name}}</span>&nbsp;<span>{{person.surname}}</span></a>
+                    <p>{{person.email}}</p>
+                </li>
+            </ul>
+        </div>
     </div>
-  </div>
+</div>
 

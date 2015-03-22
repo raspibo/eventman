@@ -1,28 +1,25 @@
-  <div class="container-fluid">
+<!-- show a list of Events -->
+<div class="container-fluid">
     <div class="row">
-      <div class="col-md-10">
-
-        Search: <input ng-model="query">
-        Sort by:
-        <select ng-model="orderProp">
-          <option value="title">Alphabetical</option>
-          <option value="begin-datetime">Date</option>
-        </select>
-
-      </div>
+        <div class="col-md-10">
+            Search: <input ng-model="query">
+            Sort by:
+            <select ng-model="orderProp">
+                <option value="title">Alphabetical</option>
+                <option value="begin-datetime">Date</option>
+            </select>
+        </div>
     </div>
 
     <div class="row">
-      <div class="col-md-10">
-
-        <ul class="events">
-          <li ng-repeat="event in events | filter:query | orderBy:orderProp">
-            <span><a href="/#/events/{{event._id}}">{{event.title}}</a></span>
-            <p>{{event['begin-datetime']}}</p>
-          </li>
-        </ul>
-
-      </div>
+        <div class="col-md-10">
+            <ul class="events">
+                <li ng-repeat="event in events | filter:query | orderBy:orderProp">
+                    <span><a href="/#/events/{{event._id}}">{{event.title}}</a></span>
+                    <p>{{event['begin-datetime']}}</p>
+                </li>
+            </ul>
+        </div>
     </div>
-  </div>
+</div>
 

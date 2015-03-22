@@ -1,3 +1,21 @@
+'use strict';
+/*
+    Copyright 2015 Davide Alberani <da@erlug.linux.it>
+                   RaspiBO <info@raspibo.org>
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+
+/* Register our fantastic app. */
 var eventManApp = angular.module('eventManApp', [
     'ngRoute',
     'eventManServices',
@@ -5,6 +23,7 @@ var eventManApp = angular.module('eventManApp', [
 ]);
 
 
+/* Directive that can be used to make an input field react to the press of Enter. */
 eventManApp.directive('ngEnter', function () {
     return function (scope, element, attrs) {
         element.bind("keydown keypress", function (event) {
@@ -19,6 +38,7 @@ eventManApp.directive('ngEnter', function () {
 });
 
 
+/* Configure the routes. */
 eventManApp.config(['$routeProvider',
     function($routeProvider) {
         $routeProvider.
@@ -49,5 +69,6 @@ eventManApp.config(['$routeProvider',
             otherwise({
                 redirectTo: '/events'
             });
-}]);
+    }
+]);
 
