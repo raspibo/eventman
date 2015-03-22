@@ -29,6 +29,8 @@ It's enough to be consistent within the document you're editing.
 
 I suggest four spaces instead of tabs for all the code: Python (**mandatory**), JavaScript, HTML and CSS.
 
+Python code documented following the [Sphinx](http://sphinx-doc.org/) syntax.
+
 
 Install and run
 ===============
