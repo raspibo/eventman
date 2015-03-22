@@ -1,7 +1,7 @@
 Event Man(ager)
 ===============
 
-Manage attendants at an event.
+Your friendly manager of attendees at a conference.
 
 Notice
 ======
@@ -9,6 +9,8 @@ Notice
 No, this project is not ready, yet.
 
 I'll let you know when I'm finished experimenting with it and you can contribute.
+
+See the DEVELOPMENT.md file for more information about how to contribute.
 
 
 Technological stack

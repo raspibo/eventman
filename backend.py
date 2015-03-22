@@ -1,6 +1,6 @@
 """Event Man(ager) database backend
 
-Classes and functions used to manage events and attendants database.
+Classes and functions used to manage events and attendees database.
 
 Copyright 2015 Davide Alberani <da@erlug.linux.it>
                RaspiBO <info@raspibo.org>
