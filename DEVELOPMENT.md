@@ -27,7 +27,8 @@ Next to be done
 - import persons from CSV
 - introduce the concept of registered persons and attendees in the GUI and in the database
 - add the minimum required fields to lists and detailed pages for persons and events
-
+- handle datetimes (on GUI with a calendar and on the backend deserializing ISO 8601 strings)
+- modal on event/person removal
 
 Nice to have
 ------------
@@ -35,5 +36,8 @@ Nice to have
 - a test suite
 - join the page used to add persons/events into the lists (shown when the filter field returns nothing and/or when a button is pressed)
 - notifications for form editing and other actions
+- authentication for administrators
+- i18n
+- logging and debugging code
 
 

@@ -76,7 +76,7 @@ class CollectionHandler(BaseHandler):
         else:
             # return an object containing the list of all objects in the collection;
             # e.g.: {'events': [{'_id': 'obj1-id, ...}, {'_id': 'obj2-id, ...}, ...]}
-            # Please, never return JSON lists that are not encapsulated in an object,
+            # Please, never return JSON lists that are not encapsulated into an object,
             # to avoid XSS vulnerabilities.
             self.write({self.collection: self.db.query(self.collection)})
 
@@ -91,8 +91,12 @@ class CollectionHandler(BaseHandler):
             newData = self.db.update(self.collection, id_, data)
         self.write(newData)
 
-    # PUT is handled by the POST method
+    # PUT (update an existing document) is handled by the POST (create a new document) method
     put = post
+
+    @gen.coroutine
+    def delete(self, id_=None, **kwargs):
+        self.db.delete(self.collection, id_)
 
 
 class PersonsHandler(CollectionHandler):

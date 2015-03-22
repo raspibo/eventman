@@ -20,6 +20,12 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event',
     function ($scope, Event) {
         $scope.events = Event.all();
         $scope.orderProp = 'begin-datetime';
+
+        $scope.remove = function(_id) {
+            Event.remove({'id': _id}, function() {
+                $scope.events = Event.all();
+            });
+        };
     }]
 );
 
@@ -45,6 +51,12 @@ eventManControllers.controller('PersonsListCtrl', ['$scope', 'Person',
     function ($scope, Person) {
         $scope.persons = Person.all();
         $scope.orderProp = 'name';
+
+        $scope.remove = function(_id) {
+            Person.remove({'id': _id}, function() {
+                $scope.persons = Person.all();
+            });
+        };
     }]
 );
 

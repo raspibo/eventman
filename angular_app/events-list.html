@@ -1,7 +1,7 @@
 <!-- show a list of Events -->
-<div class="container-fluid">
+<div class="container">
     <div class="row">
-        <div class="col-md-10">
+        <div class="col-lg-12">
             Search: <input ng-model="query">
             Sort by:
             <select ng-model="orderProp">
@@ -10,16 +10,28 @@
             </select>
         </div>
     </div>
+</div>
 
-    <div class="row">
-        <div class="col-md-10">
-            <ul class="events">
-                <li ng-repeat="event in events | filter:query | orderBy:orderProp">
-                    <span><a href="/#/events/{{event._id}}">{{event.title}}</a></span>
-                    <p>{{event['begin-datetime']}}</p>
-                </li>
-            </ul>
-        </div>
-    </div>
+<div class="container">
+    <table class="table">
+        <thead>
+            <tr>
+                <td><strong>Event</strong></td>
+                <td><strong>Actions</strong></td>
+            </tr>
+        </thead>
+        <tbody>
+        <tr ng-repeat="event in events | filter:query | orderBy:orderProp">
+            <td>
+                <span><strong><a href="/#/events/{{event._id}}">{{event.title}}</a></strong></span>
+                <p>Begins: {{event['begin-datetime']}}<br/>
+                Ends: {{event['end-datetime']}}</p>
+            </td>
+            <td>
+                <button ng-click="remove(event._id)" type="button" class="btn btn-link glyphicon glyphicon-trash" aria-hidden="true"></button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
 </div>
 
