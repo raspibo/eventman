@@ -38,5 +38,6 @@ Nice to have
 - notifications for form editing and other actions
 - authentication for administrators
 - i18n
+- logging and debugging code
 
 
