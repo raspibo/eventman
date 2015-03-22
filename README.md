@@ -1,7 +1,7 @@
 Event Man(ager)
 ===============
 
-Your friendly manager of attendees at a conference.
+Your friendly manager of attendees at an event.
 
 Notice
 ======

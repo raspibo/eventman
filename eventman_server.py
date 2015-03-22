@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Event Man(ager)
 
-Your friendly manager of attendees at a conference.
+Your friendly manager of attendees at an event.
 
 Copyright 2015 Davide Alberani <da@erlug.linux.it>
                RaspiBO <info@raspibo.org>
