@@ -1,5 +1,6 @@
 'use strict';
 
+/* Register our fantastic module. */
 var eventManApp = angular.module('eventManApp', [
     'ngRoute',
     'eventManServices',
@@ -7,6 +8,7 @@ var eventManApp = angular.module('eventManApp', [
 ]);
 
 
+/* Directive that can be used to make an input field react to the press of Enter. */
 eventManApp.directive('ngEnter', function () {
     return function (scope, element, attrs) {
         element.bind("keydown keypress", function (event) {
@@ -21,6 +23,7 @@ eventManApp.directive('ngEnter', function () {
 });
 
 
+/* Configure the routes. */
 eventManApp.config(['$routeProvider',
     function($routeProvider) {
         $routeProvider.
@@ -51,5 +54,6 @@ eventManApp.config(['$routeProvider',
             otherwise({
                 redirectTo: '/events'
             });
-}]);
+    }
+]);
 
