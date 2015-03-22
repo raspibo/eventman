@@ -1,6 +1,8 @@
 'use strict';
 
-/* Controllers */
+/* Controllers; their method are available where specified with the ng-controller
+ * directive or for a given route (see app.js).  They use some services to
+ * connect to the backend (see services.js). */
 var eventManControllers = angular.module('eventManControllers', []);
 
 

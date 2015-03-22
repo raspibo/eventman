@@ -1,6 +1,6 @@
 'use strict';
 
-/* Services. */
+/* Services that are used to interact with the backend. */
 var eventManServices = angular.module('eventManServices', ['ngResource']);
 
 
