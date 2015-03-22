@@ -56,7 +56,6 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', 'Person', '$route
         }
         // store a new Person or update an existing one
         $scope.save = function() {
-        $scope.save = function() {
                 if ($scope.person.id === undefined) {
                     $scope.person = Person.save($scope.person);
                 } else {
