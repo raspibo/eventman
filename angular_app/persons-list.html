@@ -2,12 +2,19 @@
 <div class="container">
     <div class="row">
         <div class="col-lg-12">
-            Search: <input ng-model="query">
-            Sort by:
-            <select ng-model="orderProp">
-                <option value="name">Alphabetical</option>
-                <option value="id">ID</option>
-            </select>
+            <form class="form-inline">
+                <div class="form-group">
+                    <label for="query-persons">Search:</label>
+                    <input type="text" id="query-persons" class="form-control" placeholder="Name or email" ng-model="query">
+                </div>
+                <div class="form-group">
+                    <label for="persons-order">Sort by:</label>
+                    <select id="persons-order" class="form-control" ng-model="orderProp">
+                        <option value="name">Alphabetical</option>
+                        <option value="_id">ID</option>
+                    </select>
+                </div>
+            </form>
         </div>
     </div>
 </div>

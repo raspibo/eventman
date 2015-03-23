@@ -14,6 +14,18 @@ eventManServices.factory('Event', ['$resource',
                     return angular.fromJson(data).events;
                 }
             },
+            get: {method: 'GET',
+                transformResponse: function(data, headers) {
+                    data = angular.fromJson(data);
+                    if (data && data['begin-datetime']) {
+                        data['begin-datetime'] = data['begin-datetime'].getTime();
+                    }
+                    if (data && data['end-datetime']) {
+                        data['end-datetime'] = data['end-datetime'].getTime();
+                    }
+                    return data;
+                }
+            },
             update: {method: 'PUT'}
         });
     }]
