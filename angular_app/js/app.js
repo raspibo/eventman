@@ -15,6 +15,12 @@
 */
 
 
+String.prototype.getTime = function() {
+    var ms = Date.parse(this);
+    return new Date(ms);
+};
+
+
 /* Register our fantastic app. */
 var eventManApp = angular.module('eventManApp', [
     'ngRoute',

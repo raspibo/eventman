@@ -2,18 +2,18 @@
 <div class="container">
     <form ng-model="persondetails" ng-submit="save()">
         <div class="input-group input-group-lg">
-            <span class="input-group-addon" id="basic-addon1">Name</span>
-            <input type="text" class="form-control" placeholder="Name" aria-describedby="basic-addon-2" value="{{person.name}}" ng-model="person.name" ng-required="1">
+            <span class="input-group-addon">Name</span>
+            <input type="text" class="form-control" placeholder="Name" value="{{person.name}}" ng-model="person.name" ng-required="1">
         </div>
 
         <div class="input-group input-group-lg top5">
-            <span class="input-group-addon" id="basic-addon1">Surname</span>
-            <input type="text" class="form-control" placeholder="Surname" aria-describedby="basic-addon1" value="{{person.surname}}" ng-model="person.surname">
+            <span class="input-group-addon">Surname</span>
+            <input type="text" class="form-control" placeholder="Surname" value="{{person.surname}}" ng-model="person.surname">
         </div>
 
         <div class="input-group top5">
-            <span class="input-group-addon" id="basic-addon1">Email</span>
-            <input type="text" class="form-control" placeholder="root@example.com" aria-describedby="basic-addon1" value="{{person.email}}" ng-model="person.email">
+            <span class="input-group-addon">Email</span>
+            <input type="email" class="form-control" placeholder="root@example.com" value="{{person.email}}" ng-model="person.email">
         </div>
 
         <input type="submit" style="position: absolute; left: -9999px; width: 1px; height: 1px;"/>
