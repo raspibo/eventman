@@ -25,8 +25,11 @@ String.prototype.getTime = function() {
 var eventManApp = angular.module('eventManApp', [
     'ngRoute',
     'eventManServices',
-    'eventManControllers'
+    'eventManControllers',
+    'ui.bootstrap'
 ]);
+
+//angular.module('eventManApp', ['ui.bootstrap']);
 
 
 /* Directive that can be used to make an input field react to the press of Enter. */
