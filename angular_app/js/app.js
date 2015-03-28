@@ -14,13 +14,6 @@
     limitations under the License.
 */
 
-
-String.prototype.getTime = function() {
-    var ms = Date.parse(this);
-    return new Date(ms);
-};
-
-
 /* Register our fantastic app. */
 var eventManApp = angular.module('eventManApp', [
     'ngRoute',
@@ -28,8 +21,6 @@ var eventManApp = angular.module('eventManApp', [
     'eventManControllers',
     'ui.bootstrap'
 ]);
-
-//angular.module('eventManApp', ['ui.bootstrap']);
 
 
 /* Directive that can be used to make an input field react to the press of Enter. */
