@@ -16,6 +16,18 @@ eventManControllers.controller('NavigationCtrl', ['$location',
 );
 
 
+/* Controller for a group of date and time pickers. */
+eventManControllers.controller('DatetimePickerCtrl', ['$scope',
+    function ($scope) {
+        $scope.open = function($event) {
+            $event.preventDefault();
+            $event.stopPropagation();
+            $scope.opened = true;
+          };
+    }]
+);
+
+
 eventManControllers.controller('EventsListCtrl', ['$scope', 'Event',
     function ($scope, Event) {
         $scope.events = Event.all();
@@ -42,6 +54,7 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', '$routePa
                 } else {
                     $scope.event = Event.update($scope.event);
                 }
+                $scope.eventForm.$dirty = false;
         };
     }]
 );
