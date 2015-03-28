@@ -8,29 +8,36 @@
             <input type="text" class="form-control" placeholder="Title" value="{{event.title}}" ng-model="event.title" ng-required="1">
         </div>
 
-        <div class="input-group top5">
-            <span class="input-group-addon">Short description</span>
-            <input type="text" class="form-control" placeholder="The event in one sentence" value="{{event['short-description']}}" ng-model="event['short-description']">
+        <div class="input-group top5 well form-horizontal" ng-controller="DatetimePickerCtrl">
+            <div class="form-group">
+                <label for="begin-date" class="col-sm-3 control-label">begin date:</label>
+                <div id="begin-date" class="input-group col-sm-9">
+                    <input type="text" class="form-control" datepicker-popup="dd-MMMM-yyyy" ng-model="event['begin-date']" is-open="opened" ng-required="true" />
+                    <span class="input-group-btn">
+                        <button type="button" class="btn btn-default" ng-click="open($event)"><i class="glyphicon glyphicon-calendar"></i></button>
+                    </span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="begin-time" class="col-sm-3 control-label">begin time:</label>
+                <timepicker id="begin-time" class="input-group" ng-model="event['begin-time']" show-meridian="false"></timepicker>
+            </div>
         </div>
 
-        <div class="input-group top5" ng-controller="DatetimePickerCtrl">
-            <div class="input-group">
-                <input type="text" class="form-control" datepicker-popup="dd-MMMM-yyyy" ng-model="event['begin-date']" is-open="opened" ng-required="true" />
-              <span class="input-group-btn">
-                <button type="button" class="btn btn-default" ng-click="open($event)"><i class="glyphicon glyphicon-calendar"></i></button>
-              </span>
+        <div class="input-group top5 well form-horizontal" ng-controller="DatetimePickerCtrl">
+            <div class="form-group">
+                <label for="end-date" class="col-sm-3 control-label">End date:</label>
+                <div id="end-date" class="input-group col-sm-9">
+                    <input type="text" class="form-control" datepicker-popup="dd-MMMM-yyyy" ng-model="event['end-date']" is-open="opened" ng-required="true" />
+                    <span class="input-group-btn">
+                        <button type="button" class="btn btn-default" ng-click="open($event)"><i class="glyphicon glyphicon-calendar"></i></button>
+                    </span>
+                </div>
             </div>
-            <timepicker ng-model="event['begin-time']" show-meridian="false"></timepicker>
-        </div>
-
-        <div class="input-group top5" ng-controller="DatetimePickerCtrl">
-            <div class="input-group">
-                <input type="text" class="form-control" datepicker-popup="dd-MMMM-yyyy" ng-model="event['end-date']" is-open="opened" ng-required="true" />
-              <span class="input-group-btn">
-                <button type="button" class="btn btn-default" ng-click="open($event)"><i class="glyphicon glyphicon-calendar"></i></button>
-              </span>
+            <div class="form-group">
+                <label for="end-time" class="col-sm-3 control-label">End time:</label>
+                <timepicker id="end-time" class="input-group" ng-model="event['end-time']" show-meridian="false"></timepicker>
             </div>
-            <timepicker ng-model="event['end-time']" show-meridian="false"></timepicker>
         </div>
 
         <input type="submit" style="position: absolute; left: -9999px; width: 1px; height: 1px;"/>

@@ -23,7 +23,7 @@ eventManControllers.controller('DatetimePickerCtrl', ['$scope',
             $event.preventDefault();
             $event.stopPropagation();
             $scope.opened = true;
-          };
+        };
     }]
 );
 
