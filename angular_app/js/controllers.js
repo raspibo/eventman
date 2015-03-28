@@ -7,7 +7,7 @@ var eventManControllers = angular.module('eventManControllers', []);
 
 
 /* A controller that can be used to navigate. */
-eventManControllers.controller('navigation', ['$location',
+eventManControllers.controller('NavigationCtrl', ['$location',
     function ($location) {
         this.go = function(url) {
             $location.url(url);
