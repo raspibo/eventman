@@ -19,7 +19,8 @@ var eventManApp = angular.module('eventManApp', [
     'ngRoute',
     'eventManServices',
     'eventManControllers',
-    'ui.bootstrap'
+    'ui.bootstrap',
+    'pascalprecht.translate'
 ]);
 
 
