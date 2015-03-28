@@ -90,3 +90,13 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', 'Person', '$route
     }]
 );
 
+
+eventManControllers.controller('ImportPersonsCtrl', ['$scope', '$log',
+    function ($scope, $log) {
+            $scope.ebCSVimport = function() {
+                $log.info("ImportPersonsCtrl");
+                $log.info($scope);
+        };
+    }]
+);
+

@@ -1,7 +1,10 @@
 <!-- show details of a single Event (editing also take place here) -->
 <div class="container">
     <form name="eventForm" ng-model="eventdetails" ng-submit="save()">
-        <alert><button type="button" class="btn btn-default" ng-click="save($event)" ng-disabled="!eventForm.$dirty">save</button></alert>
+        <alert class="clearfix">
+            <span>{{event.title}}</span>
+            <button type="button" class="btn btn-default pull-right" ng-click="save($event)" ng-disabled="!eventForm.$dirty">save</button>
+        </alert>
 
         <div class="input-group input-group-lg">
             <span class="input-group-addon">Title</span>

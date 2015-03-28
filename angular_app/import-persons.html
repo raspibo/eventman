@@ -1,0 +1,18 @@
+<div class="container">
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">{{'Import from eventbrite CSV'}}</h3>
+        </div>
+        <div class="panel-body">
+            <form name="ebCSVForm" ng-model="importpersons" class="well" ng-submit="ebCSVimport()">
+                <div class="form-group">
+                    <label for="eb-csv-import">{{'CSV file' | translate}}</label>
+                    <input name="csvFile" type="file" id="eb-csv-import" ng-model="ebCSVfile" ng-required="true">
+                    <p class="help-block">{{'CSV exported from eventbrite' | translate}}</p>
+                </div>
+
+                <input type="submit" value="{{'Import' | translate}}"/>
+            </form>
+        </div>
+    </div>
+</div>

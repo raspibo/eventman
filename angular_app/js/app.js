@@ -67,6 +67,10 @@ eventManApp.config(['$routeProvider',
                 templateUrl: 'person-detail.html',
                 controller: 'PersonDetailsCtrl'
             }).
+            when('/import-persons', {
+                templateUrl: 'import-persons.html',
+                controller: 'ImportPersonsCtrl'
+            }).
             otherwise({
                 redirectTo: '/events'
             });
