@@ -114,6 +114,7 @@ class EventsHandler(CollectionHandler):
 class ImportPersonsHandler(BaseHandler):
     pass
 
+
 def csvParse(csvStr, remap=None):
     fd = StringIO.StringIO(csvStr)
     reader = csv.reader(fd)
@@ -123,20 +124,24 @@ def csvParse(csvStr, remap=None):
     try:
         headers = reader.next()
         fields = len(headers)
-    except StopIteration:
+    except (StopIteration, csv.Error):
         return reply, {}
     if remap:
         for idx, header in enumerate(headers):
             if header in remap:
                 headers[idx] = remap[header]
     for row in reader:
-        reply['total'] += 1
-        if len(row) != fields:
+        try:
+            reply['total'] += 1
+            if len(row) != fields:
+                continue
+            results.append(dict(map(None, headers, row)))
+            reply['valid'] += 1
+        except csv.Error:
             continue
-        results.append(dict(map(None, headers, row)))
-        reply['valid'] += 1
     fd.close()
     return reply, results
+
 
 class EbCSVImportPersonsHandler(ImportPersonsHandler):
     csvRemap = {
@@ -156,9 +161,17 @@ class EbCSVImportPersonsHandler(ImportPersonsHandler):
     }
     @gen.coroutine
     def post(self, **kwargs):
+        print kwargs
+        targetEvent = None
+        try:
+            targetEvent = self.get_body_argument('targetEvent')
+        except:
+            pass
         reply = dict(total=0, valid=0, merged=0)
         for fieldname, contents in self.request.files.iteritems():
+            print fieldname
             for content in contents:
+                print content.keys()
                 filename = content['filename']
                 parseStats, result = csvParse(content['body'], remap=self.csvRemap)
                 reply['total'] += parseStats['total']

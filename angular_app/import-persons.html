@@ -10,10 +10,19 @@
                     <input name="file" ng-file-select ng-model="file" type="file" id="eb-csv-import" ng-required="true">
                     <p class="help-block">{{'CSV exported from eventbrite' | translate}}</p>
                 </div>
+                
+                <div class="form-group">
+                    <label for="forEvent">{{'Associate users to this event' | translate}}</label>
+                    <select class="form-control" id="forEvent" ng-model="targetEvent">
+                        <option ng-repeat="event in events" value="{{event._id}}">{{event.title}}</option>
+                    </select>
+                </div>
 
                 <input type="submit" value="{{'Import' | translate}}" ng-click="upload(file, '/ebcsvpersons')" />
 
-                Result: total: <span>{{reply.total}}</span> valid: <span>{{reply.valid}}</span>
+                <div class="form-group top5">
+                    Result: total: <span>{{reply.total}}</span> valid: <span>{{reply.valid}}</span>
+                </div>
             </form>
         </div>
     </div>

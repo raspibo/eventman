@@ -101,15 +101,17 @@ eventManControllers.controller('ImportPersonsCtrl', ['$scope', '$log',
 );
 
 
-eventManControllers.controller('FileUploadCtrl', ['$scope', '$log', '$upload',
-    function ($scope, $log, $upload) {
+eventManControllers.controller('FileUploadCtrl', ['$scope', '$log', '$upload', 'Event',
+    function ($scope, $log, $upload, Event) {
             $scope.file = null;
             $scope.reply = {};
+            $scope.events = Event.all();
             $scope.upload = function(file, url) {
                 $log.info("FileUploadCtrl.upload");
                 $upload.upload({
                     url: url,
-                    file: file
+                    file: file,
+                    fields: {targetEvent: $scope.targetEvent}
                 }).progress(function(evt) {
                     var progressPercentage = parseInt(100.0 * evt.loaded / evt.total);
                     $log.debug('progress: ' + progressPercentage + '%');
