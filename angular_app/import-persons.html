@@ -7,11 +7,13 @@
             <form name="ebCSVForm" class="well" ng-controller="FileUploadCtrl">
                 <div class="form-group">
                     <label for="eb-csv-import">{{'CSV file' | translate}}</label>
-                    <input name="file" ng-file-select ng-model="files" type="file" id="eb-csv-import" ng-required="true">
+                    <input name="file" ng-file-select ng-model="file" type="file" id="eb-csv-import" ng-required="true">
                     <p class="help-block">{{'CSV exported from eventbrite' | translate}}</p>
                 </div>
 
-                <input type="submit" value="{{'Import' | translate}}" ng-click="upload($file, '/ebcsvpersons')" />
+                <input type="submit" value="{{'Import' | translate}}" ng-click="upload(file, '/ebcsvpersons')" />
+
+                Result: total: <span>{{reply.total}}</span> valid: <span>{{reply.valid}}</span>
             </form>
         </div>
     </div>

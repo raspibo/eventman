@@ -18,7 +18,9 @@ limitations under the License.
 """
 
 import os
+import csv
 import json
+import StringIO
 import datetime
 
 import tornado.httpserver
@@ -109,6 +111,63 @@ class EventsHandler(CollectionHandler):
     collection = 'events'
 
 
+class ImportPersonsHandler(BaseHandler):
+    pass
+
+def csvParse(csvStr, remap=None):
+    fd = StringIO.StringIO(csvStr)
+    reader = csv.reader(fd)
+    fields = 0
+    reply = dict(total=0, valid=0)
+    results = []
+    try:
+        headers = reader.next()
+        fields = len(headers)
+    except StopIteration:
+        return reply, {}
+    if remap:
+        for idx, header in enumerate(headers):
+            if header in remap:
+                headers[idx] = remap[header]
+    for row in reader:
+        reply['total'] += 1
+        if len(row) != fields:
+            continue
+        results.append(dict(map(None, headers, row)))
+        reply['valid'] += 1
+    fd.close()
+    return reply, results
+
+class EbCSVImportPersonsHandler(ImportPersonsHandler):
+    csvRemap = {
+        'Nome evento': 'event_title',
+        'ID evento': 'event_id',
+        'N. codice a barre': 'ebqrcode',
+        'Cognome acquirente': 'surname',
+        'Nome acquirente': 'name',
+        'E-mail acquirente': 'email',
+        'Cognome': 'lowercase_surname',
+        'Nome': 'lowercase_name',
+        'E-mail': 'lowercase_email',
+        'Tipologia biglietto': 'ticket_kind',
+        'Data partecipazione': 'attending_datetime',
+        'Data check-in': 'checkin_datetime',
+        'Ordine n.': 'order_nr',
+    }
+    @gen.coroutine
+    def post(self, **kwargs):
+        reply = dict(total=0, valid=0, merged=0)
+        for fieldname, contents in self.request.files.iteritems():
+            for content in contents:
+                filename = content['filename']
+                parseStats, result = csvParse(content['body'], remap=self.csvRemap)
+                reply['total'] += parseStats['total']
+                reply['valid'] += parseStats['valid']
+                print filename
+        print reply
+        self.write(reply)
+
+
 def run():
     """Run the Tornado web application."""
     # command line arguments; can also be written in a configuration file,
@@ -133,6 +192,7 @@ def run():
             (r"/persons/?(?P<id_>\w+)?", PersonsHandler, init_params),
             (r"/events/?(?P<id_>\w+)?", EventsHandler, init_params),
             (r"/(?:index.html)?", RootHandler, init_params),
+            (r"/ebcsvpersons", EbCSVImportPersonsHandler, init_params),
             (r'/(.*)', tornado.web.StaticFileHandler, {"path": "angular_app"})
         ],
         template_path=os.path.join(os.path.dirname(__file__), "templates"),

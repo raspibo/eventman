@@ -103,11 +103,19 @@ eventManControllers.controller('ImportPersonsCtrl', ['$scope', '$log',
 
 eventManControllers.controller('FileUploadCtrl', ['$scope', '$log', '$upload',
     function ($scope, $log, $upload) {
+            $scope.file = null;
+            $scope.reply = {};
             $scope.upload = function(file, url) {
                 $log.info("FileUploadCtrl.upload");
                 $upload.upload({
                     url: url,
                     file: file
+                }).progress(function(evt) {
+                    var progressPercentage = parseInt(100.0 * evt.loaded / evt.total);
+                    $log.debug('progress: ' + progressPercentage + '%');
+                }).success(function(data, status, headers, config) {
+                    $scope.file = null;
+                    $scope.reply = angular.fromJson(data);
                 });
             };
     }]
