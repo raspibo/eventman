@@ -178,11 +178,13 @@ class EbCSVImportPersonsHandler(ImportPersonsHandler):
         for fieldname, contents in self.request.files.iteritems():
             for content in contents:
                 filename = content['filename']
-                parseStats, users = csvParse(content['body'], remap=self.csvRemap)
+                parseStats, persons = csvParse(content['body'], remap=self.csvRemap)
                 reply['total'] += parseStats['total']
                 reply['valid'] += parseStats['valid']
-                for user in users:
-                    print user
+                for person in persons:
+                    if self.db.merge('persons', person,
+                            searchBy=[('email',), ('name', 'surname')]):
+                        reply['merged'] += 1
         self.write(reply)
 
 
