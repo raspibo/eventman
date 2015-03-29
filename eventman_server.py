@@ -115,9 +115,11 @@ class ImportPersonsHandler(BaseHandler):
     pass
 
 
-def csvParse(csvStr, remap=None):
+def csvParse(csvStr, remap=None, merge=None):
     fd = StringIO.StringIO(csvStr)
     reader = csv.reader(fd)
+    remap = remap or {}
+    merge = merge or {}
     fields = 0
     reply = dict(total=0, valid=0)
     results = []
@@ -126,19 +128,25 @@ def csvParse(csvStr, remap=None):
         fields = len(headers)
     except (StopIteration, csv.Error):
         return reply, {}
-    if remap:
-        for idx, header in enumerate(headers):
-            if header in remap:
-                headers[idx] = remap[header]
-    for row in reader:
-        try:
-            reply['total'] += 1
-            if len(row) != fields:
+
+    for idx, header in enumerate(headers):
+        if header in remap:
+            headers[idx] = remap[header]
+    try:
+        for row in reader:
+            try:
+                reply['total'] += 1
+                if len(row) != fields:
+                    continue
+                row = [unicode(cell, 'utf-8', 'replace') for cell in row]
+                values = dict(map(None, headers, row))
+                values.update(merge)
+                results.append(values)
+                reply['valid'] += 1
+            except csv.Error:
                 continue
-            results.append(dict(map(None, headers, row)))
-            reply['valid'] += 1
-        except csv.Error:
-            continue
+    except csv.Error:
+        pass
     fd.close()
     return reply, results
 
@@ -151,9 +159,9 @@ class EbCSVImportPersonsHandler(ImportPersonsHandler):
         'Cognome acquirente': 'surname',
         'Nome acquirente': 'name',
         'E-mail acquirente': 'email',
-        'Cognome': 'lowercase_surname',
-        'Nome': 'lowercase_name',
-        'E-mail': 'lowercase_email',
+        'Cognome': 'original_surname',
+        'Nome': 'original_name',
+        'E-mail': 'original_email',
         'Tipologia biglietto': 'ticket_kind',
         'Data partecipazione': 'attending_datetime',
         'Data check-in': 'checkin_datetime',
@@ -161,7 +169,6 @@ class EbCSVImportPersonsHandler(ImportPersonsHandler):
     }
     @gen.coroutine
     def post(self, **kwargs):
-        print kwargs
         targetEvent = None
         try:
             targetEvent = self.get_body_argument('targetEvent')
@@ -169,15 +176,15 @@ class EbCSVImportPersonsHandler(ImportPersonsHandler):
             pass
         reply = dict(total=0, valid=0, merged=0)
         for fieldname, contents in self.request.files.iteritems():
-            print fieldname
             for content in contents:
-                print content.keys()
                 filename = content['filename']
-                parseStats, result = csvParse(content['body'], remap=self.csvRemap)
+                parseStats, persons = csvParse(content['body'], remap=self.csvRemap)
                 reply['total'] += parseStats['total']
                 reply['valid'] += parseStats['valid']
-                print filename
-        print reply
+                for person in persons:
+                    if self.db.merge('persons', person,
+                            searchBy=[('email',), ('name', 'surname')]):
+                        reply['merged'] += 1
         self.write(reply)
 
 

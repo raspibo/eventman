@@ -125,6 +125,19 @@ class EventManDB(object):
         db[collection].update({'_id': ObjectId(_id)}, {'$set': data})
         return self.get(collection, _id)
 
+    def merge(self, collection, data, searchBy):
+        db = self.connect()
+        _or = []
+        for searchPattern in searchBy:
+            try:
+                _or.append(dict([(k, data[k]) for k in searchPattern]))
+            except KeyError:
+                continue
+        if not _or:
+            return {}
+        r = db[collection].update({'$or': _or}, {'$set': data}, upsert=True)
+        return r['updatedExisting']
+
     def delete(self, collection, _id_or_query=None, force=False):
         """Remove one or more documents from a collection.
 
