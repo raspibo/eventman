@@ -1,25 +1,48 @@
 <!-- show details of a single Event (editing also take place here) -->
 <div class="container">
-    <form ng-model="eventdetails" ng-submit="save()">
+    <form name="eventForm" ng-model="eventdetails" ng-submit="save()">
+        <alert class="clearfix">
+            <span>{{event.title}}</span>
+            <button type="button" class="btn btn-default pull-right" ng-click="save($event)" ng-disabled="!eventForm.$dirty">save</button>
+        </alert>
+
         <div class="input-group input-group-lg">
             <span class="input-group-addon">Title</span>
             <input type="text" class="form-control" placeholder="Title" value="{{event.title}}" ng-model="event.title" ng-required="1">
         </div>
 
-        <div class="input-group top5">
-            <span class="input-group-addon">Short description</span>
-            <input type="text" class="form-control" placeholder="The event in one sentence" value="{{event['short-description']}}" ng-model="event['short-description']">
+        <div class="input-group top5 well form-horizontal" ng-controller="DatetimePickerCtrl">
+            <div class="form-group">
+                <label for="begin-date" class="col-sm-3 control-label">begin date:</label>
+                <div id="begin-date" class="input-group col-sm-9">
+                    <input type="text" class="form-control" datepicker-popup="dd-MMMM-yyyy" ng-model="event['begin-date']" is-open="opened" ng-required="true" />
+                    <span class="input-group-btn">
+                        <button type="button" class="btn btn-default" ng-click="open($event)"><i class="glyphicon glyphicon-calendar"></i></button>
+                    </span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="begin-time" class="col-sm-3 control-label">begin time:</label>
+                <timepicker id="begin-time" class="input-group" ng-model="event['begin-time']" show-meridian="false"></timepicker>
+            </div>
         </div>
 
-        <div class="input-group top5">
-            <span class="input-group-addon">Begin time</span>
-            <input type="datetime-local" class="form-control" placeholder="Date and time" value="{{event['begin-datetime']}}" ng-model="event['begin-datetime']">
+        <div class="input-group top5 well form-horizontal" ng-controller="DatetimePickerCtrl">
+            <div class="form-group">
+                <label for="end-date" class="col-sm-3 control-label">End date:</label>
+                <div id="end-date" class="input-group col-sm-9">
+                    <input type="text" class="form-control" datepicker-popup="dd-MMMM-yyyy" ng-model="event['end-date']" is-open="opened" ng-required="true" />
+                    <span class="input-group-btn">
+                        <button type="button" class="btn btn-default" ng-click="open($event)"><i class="glyphicon glyphicon-calendar"></i></button>
+                    </span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="end-time" class="col-sm-3 control-label">End time:</label>
+                <timepicker id="end-time" class="input-group" ng-model="event['end-time']" show-meridian="false"></timepicker>
+            </div>
         </div>
 
-        <div class="input-group top5">
-            <span class="input-group-addon">End time</span>
-            <input type="datetime-local" class="form-control" placeholder="Date and time" value="{{event['end-datetime']}}" ng-model="event['end-datetime']">
-        </div>
         <input type="submit" style="position: absolute; left: -9999px; width: 1px; height: 1px;"/>
     </form>
 </div>

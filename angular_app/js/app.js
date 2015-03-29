@@ -14,22 +14,15 @@
     limitations under the License.
 */
 
-
-String.prototype.getTime = function() {
-    var ms = Date.parse(this);
-    return new Date(ms);
-};
-
-
 /* Register our fantastic app. */
 var eventManApp = angular.module('eventManApp', [
     'ngRoute',
     'eventManServices',
     'eventManControllers',
-    'ui.bootstrap'
+    'ui.bootstrap',
+    'pascalprecht.translate',
+    'angularFileUpload'
 ]);
-
-//angular.module('eventManApp', ['ui.bootstrap']);
 
 
 /* Directive that can be used to make an input field react to the press of Enter. */
@@ -74,6 +67,10 @@ eventManApp.config(['$routeProvider',
             when('/new-person', {
                 templateUrl: 'person-detail.html',
                 controller: 'PersonDetailsCtrl'
+            }).
+            when('/import-persons', {
+                templateUrl: 'import-persons.html',
+                controller: 'ImportPersonsCtrl'
             }).
             otherwise({
                 redirectTo: '/events'

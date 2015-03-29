@@ -23,7 +23,6 @@ TODO
 Next to be done
 ---------------
 
-- ability to delete a person or event
 - import persons from CSV
 - introduce the concept of registered persons and attendees in the GUI and in the database
 - add the minimum required fields to lists and detailed pages for persons and events

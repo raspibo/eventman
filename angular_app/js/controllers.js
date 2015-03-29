@@ -7,10 +7,22 @@ var eventManControllers = angular.module('eventManControllers', []);
 
 
 /* A controller that can be used to navigate. */
-eventManControllers.controller('navigation', ['$location',
+eventManControllers.controller('NavigationCtrl', ['$location',
     function ($location) {
         this.go = function(url) {
             $location.url(url);
+        };
+    }]
+);
+
+
+/* Controller for a group of date and time pickers. */
+eventManControllers.controller('DatetimePickerCtrl', ['$scope',
+    function ($scope) {
+        $scope.open = function($event) {
+            $event.preventDefault();
+            $event.stopPropagation();
+            $scope.opened = true;
         };
     }]
 );
@@ -42,6 +54,7 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', '$routePa
                 } else {
                     $scope.event = Event.update($scope.event);
                 }
+                $scope.eventForm.$dirty = false;
         };
     }]
 );
@@ -74,6 +87,39 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', 'Person', '$route
                     $scope.person = Person.update($scope.person);
                 }
         };
+    }]
+);
+
+
+eventManControllers.controller('ImportPersonsCtrl', ['$scope', '$log',
+    function ($scope, $log) {
+            $scope.ebCSVimport = function() {
+                $log.info("ImportPersonsCtrl");
+                $log.info($scope);
+        };
+    }]
+);
+
+
+eventManControllers.controller('FileUploadCtrl', ['$scope', '$log', '$upload', 'Event',
+    function ($scope, $log, $upload, Event) {
+            $scope.file = null;
+            $scope.reply = {};
+            $scope.events = Event.all();
+            $scope.upload = function(file, url) {
+                $log.info("FileUploadCtrl.upload");
+                $upload.upload({
+                    url: url,
+                    file: file,
+                    fields: {targetEvent: $scope.targetEvent}
+                }).progress(function(evt) {
+                    var progressPercentage = parseInt(100.0 * evt.loaded / evt.total);
+                    $log.debug('progress: ' + progressPercentage + '%');
+                }).success(function(data, status, headers, config) {
+                    $scope.file = null;
+                    $scope.reply = angular.fromJson(data);
+                });
+            };
     }]
 );
 
