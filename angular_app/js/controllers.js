@@ -100,3 +100,16 @@ eventManControllers.controller('ImportPersonsCtrl', ['$scope', '$log',
     }]
 );
 
+
+eventManControllers.controller('FileUploadCtrl', ['$scope', '$log', '$upload',
+    function ($scope, $log, $upload) {
+            $scope.upload = function(file, url) {
+                $log.info("FileUploadCtrl.upload");
+                $upload.upload({
+                    url: url,
+                    file: file
+                });
+            };
+    }]
+);
+

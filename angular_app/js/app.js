@@ -20,7 +20,8 @@ var eventManApp = angular.module('eventManApp', [
     'eventManServices',
     'eventManControllers',
     'ui.bootstrap',
-    'pascalprecht.translate'
+    'pascalprecht.translate',
+    'angularFileUpload'
 ]);
 
 
