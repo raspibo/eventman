@@ -18,10 +18,6 @@ limitations under the License.
 """
 
 import os
-import csv
-import json
-import StringIO
-import datetime
 
 import tornado.httpserver
 import tornado.ioloop
@@ -30,18 +26,8 @@ from tornado.options import define, options
 import tornado.web
 from tornado import gen, escape
 
+import utils
 import backend
-
-
-class ImprovedEncoder(json.JSONEncoder):
-    """Enhance the default JSON encoder to serialize datetime objects."""
-    def default(self, o):
-        if isinstance(o, (datetime.datetime, datetime.date,
-                datetime.time, datetime.timedelta)):
-            return str(o)
-        return json.JSONEncoder.default(self, o)
-
-json._default_encoder = ImprovedEncoder()
 
 
 class BaseHandler(tornado.web.RequestHandler):
@@ -111,47 +97,8 @@ class EventsHandler(CollectionHandler):
     collection = 'events'
 
 
-class ImportPersonsHandler(BaseHandler):
-    pass
-
-
-def csvParse(csvStr, remap=None, merge=None):
-    fd = StringIO.StringIO(csvStr)
-    reader = csv.reader(fd)
-    remap = remap or {}
-    merge = merge or {}
-    fields = 0
-    reply = dict(total=0, valid=0)
-    results = []
-    try:
-        headers = reader.next()
-        fields = len(headers)
-    except (StopIteration, csv.Error):
-        return reply, {}
-
-    for idx, header in enumerate(headers):
-        if header in remap:
-            headers[idx] = remap[header]
-    try:
-        for row in reader:
-            try:
-                reply['total'] += 1
-                if len(row) != fields:
-                    continue
-                row = [unicode(cell, 'utf-8', 'replace') for cell in row]
-                values = dict(map(None, headers, row))
-                values.update(merge)
-                results.append(values)
-                reply['valid'] += 1
-            except csv.Error:
-                continue
-    except csv.Error:
-        pass
-    fd.close()
-    return reply, results
-
-
-class EbCSVImportPersonsHandler(ImportPersonsHandler):
+class EbCSVImportPersonsHandler(BaseHandler):
+    """Importer for CSV files exported from eventbrite."""
     csvRemap = {
         'Nome evento': 'event_title',
         'ID evento': 'event_id',
@@ -178,13 +125,20 @@ class EbCSVImportPersonsHandler(ImportPersonsHandler):
         for fieldname, contents in self.request.files.iteritems():
             for content in contents:
                 filename = content['filename']
-                parseStats, persons = csvParse(content['body'], remap=self.csvRemap)
+                parseStats, persons = utils.csvParse(content['body'], remap=self.csvRemap)
                 reply['total'] += parseStats['total']
                 reply['valid'] += parseStats['valid']
                 for person in persons:
-                    if self.db.merge('persons', person,
-                            searchBy=[('email',), ('name', 'surname')]):
+                    merged, _id = self.db.merge('persons', person,
+                            searchBy=[('email',), ('name', 'surname')])
+                    if merged:
                         reply['merged'] += 1
+                    if targetEvent and _id:
+                        registered_data = {
+                                'event_id': self.db.toID(targetEvent),
+                                'person_id': self.db.toID(_id),
+                                'from_file': filename}
+                        self.db.insertOne('registered', registered_data)
         self.write(reply)
 
 

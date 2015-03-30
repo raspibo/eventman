@@ -54,6 +54,19 @@ class EventManDB(object):
         self.db = self.connection[self._dbName]
         return self.db
 
+    def toID(self, _id):
+        """Convert a string to a MongoDB ID.
+
+        :param _id: string to convert to :class:`~bson.objectid.ObjectId`
+        :type _id: str
+
+        :return: MongoDB ID
+        :rtype: :class:`~bson.objectid.ObjectId`
+        """
+        if not isinstance(_id, ObjectId):
+            _id = ObjectId(_id)
+        return _id
+
     def get(self, collection, _id):
         """Get a single document with the specified `_id`.
 
@@ -65,8 +78,7 @@ class EventManDB(object):
         :return: the document with the given `_id`
         :rtype: dict
         """
-        if not isinstance(_id, ObjectId):
-            _id = ObjectId(_id)
+        _id = self.toID(_id)
         results = self.query(collection, {'_id': _id})
         return results and results[0] or {}
 
@@ -83,8 +95,8 @@ class EventManDB(object):
         """
         db = self.connect()
         query = query or {}
-        if'_id' in query and not isinstance(query['_id'], ObjectId):
-            query['_id'] = ObjectId(query['_id'])
+        if'_id' in query:
+            query['_id'] = self.toID(query['_id'])
         results = list(db[collection].find(query))
         for result in results:
             result['_id'] = str(result['_id'])
@@ -105,6 +117,21 @@ class EventManDB(object):
         _id = db[collection].insert(data)
         return self.get(collection, _id)
 
+    def insertOne(self, collection, data):
+        """Insert a document, avoiding duplicates.
+
+        :param collection: update a document in this collection
+        :type collection: str
+        :param data: the document information to store
+        :type data: dict
+
+        :return: True if the document was already present
+        :rtype: bool
+        """
+        db = self.connect()
+        ret = db[collection].update(data, {'$set': data}, upsert=True)
+        return ret['updatedExisting']
+
     def update(self, collection, _id, data):
         """Update an existing document.
 
@@ -122,10 +149,20 @@ class EventManDB(object):
         data = data or {}
         if '_id' in data:
             del data['_id']
-        db[collection].update({'_id': ObjectId(_id)}, {'$set': data})
+        db[collection].update({'_id': self.toID(_id)}, {'$set': data})
         return self.get(collection, _id)
 
     def merge(self, collection, data, searchBy):
+        """Update an existing document.
+
+        :param collection: update a document in this collection
+        :type collection: str
+        :param data: the document to store or merge with an existing one
+        :type data: dict
+
+        :return: a tuple with a boolean (True if an existing document was updated, and the _id of the document)
+        :rtype: tuple
+        """
         db = self.connect()
         _or = []
         for searchPattern in searchBy:
@@ -134,9 +171,14 @@ class EventManDB(object):
             except KeyError:
                 continue
         if not _or:
-            return {}
-        r = db[collection].update({'$or': _or}, {'$set': data}, upsert=True)
-        return r['updatedExisting']
+            return False, None
+        ret = db[collection].update({'$or': _or}, {'$set': data}, upsert=True)
+        _id = ret.get('upserted')
+        if _id is None:
+            newDoc = db[collection].find_one(data)
+            if newDoc:
+                _id = newDoc['_id']
+        return ret['updatedExisting'], _id
 
     def delete(self, collection, _id_or_query=None, force=False):
         """Remove one or more documents from a collection.
@@ -151,7 +193,7 @@ class EventManDB(object):
         if not _id_or_query and not force:
             return
         db = self.connect()
-        if not isinstance(_id_or_query, (ObjectId, dict)):
-            _id_or_query = ObjectId(_id_or_query)
+        if not isinstance(_id_or_query, dict):
+            _id_or_query = self.toID(_id_or_query)
         db[collection].remove(_id_or_query)
 
