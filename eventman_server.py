@@ -18,9 +18,6 @@ limitations under the License.
 """
 
 import os
-import json
-import utils
-import datetime
 
 import tornado.httpserver
 import tornado.ioloop
@@ -29,18 +26,8 @@ from tornado.options import define, options
 import tornado.web
 from tornado import gen, escape
 
+import utils
 import backend
-
-
-class ImprovedEncoder(json.JSONEncoder):
-    """Enhance the default JSON encoder to serialize datetime objects."""
-    def default(self, o):
-        if isinstance(o, (datetime.datetime, datetime.date,
-                datetime.time, datetime.timedelta)):
-            return str(o)
-        return json.JSONEncoder.default(self, o)
-
-json._default_encoder = ImprovedEncoder()
 
 
 class BaseHandler(tornado.web.RequestHandler):
@@ -110,11 +97,8 @@ class EventsHandler(CollectionHandler):
     collection = 'events'
 
 
-class ImportPersonsHandler(BaseHandler):
-    pass
-
-
-class EbCSVImportPersonsHandler(ImportPersonsHandler):
+class EbCSVImportPersonsHandler(BaseHandler):
+    """Importer for CSV files exported from eventbrite."""
     csvRemap = {
         'Nome evento': 'event_title',
         'ID evento': 'event_id',

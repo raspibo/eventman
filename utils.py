@@ -17,7 +17,10 @@ limitations under the License.
 """
 
 import csv
+import json
+import datetime
 import StringIO
+
 
 def csvParse(csvStr, remap=None, merge=None):
     """Parse a CSV file, optionally renaming the columns and merging other information.
@@ -65,4 +68,16 @@ def csvParse(csvStr, remap=None, merge=None):
         pass
     fd.close()
     return reply, results
+
+
+class ImprovedEncoder(json.JSONEncoder):
+    """Enhance the default JSON encoder to serialize datetime objects."""
+    def default(self, o):
+        if isinstance(o, (datetime.datetime, datetime.date,
+                datetime.time, datetime.timedelta)):
+            return str(o)
+        return json.JSONEncoder.default(self, o)
+
+# Inject our class as the default encoder.
+json._default_encoder = ImprovedEncoder()
 
