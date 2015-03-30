@@ -129,9 +129,16 @@ class EbCSVImportPersonsHandler(BaseHandler):
                 reply['total'] += parseStats['total']
                 reply['valid'] += parseStats['valid']
                 for person in persons:
-                    if self.db.merge('persons', person,
-                            searchBy=[('email',), ('name', 'surname')]):
+                    merged, _id = self.db.merge('persons', person,
+                            searchBy=[('email',), ('name', 'surname')])
+                    if merged:
                         reply['merged'] += 1
+                    if targetEvent and _id:
+                        registered_data = {
+                                'event_id': self.db.toID(targetEvent),
+                                'person_id': self.db.toID(_id),
+                                'from_file': filename}
+                        self.db.insertOne('registered', registered_data)
         self.write(reply)
 
 
