@@ -126,6 +126,16 @@ class EventManDB(object):
         return self.get(collection, _id)
 
     def merge(self, collection, data, searchBy):
+        """Update an existing document.
+
+        :param collection: update a document in this collection
+        :type collection: str
+        :param data: the document to store or merge with an existing one
+        :type data: dict
+
+        :return: a tuple with a boolean (True if an existing document was updated, and the _id of the document)
+        :rtype: tuple
+        """
         db = self.connect()
         _or = []
         for searchPattern in searchBy:
@@ -134,9 +144,14 @@ class EventManDB(object):
             except KeyError:
                 continue
         if not _or:
-            return {}
-        r = db[collection].update({'$or': _or}, {'$set': data}, upsert=True)
-        return r['updatedExisting']
+            return False, None
+        ret = db[collection].update({'$or': _or}, {'$set': data}, upsert=True)
+        _id = ret.get('upserted')
+        if _id is None:
+            newDoc = db[collection].find_one(data)
+            if newDoc:
+                _id = newDoc['_id']
+        return ret['updatedExisting'], _id
 
     def delete(self, collection, _id_or_query=None, force=False):
         """Remove one or more documents from a collection.

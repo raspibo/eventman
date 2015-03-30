@@ -18,9 +18,8 @@ limitations under the License.
 """
 
 import os
-import csv
 import json
-import StringIO
+import utils
 import datetime
 
 import tornado.httpserver
@@ -115,42 +114,6 @@ class ImportPersonsHandler(BaseHandler):
     pass
 
 
-def csvParse(csvStr, remap=None, merge=None):
-    fd = StringIO.StringIO(csvStr)
-    reader = csv.reader(fd)
-    remap = remap or {}
-    merge = merge or {}
-    fields = 0
-    reply = dict(total=0, valid=0)
-    results = []
-    try:
-        headers = reader.next()
-        fields = len(headers)
-    except (StopIteration, csv.Error):
-        return reply, {}
-
-    for idx, header in enumerate(headers):
-        if header in remap:
-            headers[idx] = remap[header]
-    try:
-        for row in reader:
-            try:
-                reply['total'] += 1
-                if len(row) != fields:
-                    continue
-                row = [unicode(cell, 'utf-8', 'replace') for cell in row]
-                values = dict(map(None, headers, row))
-                values.update(merge)
-                results.append(values)
-                reply['valid'] += 1
-            except csv.Error:
-                continue
-    except csv.Error:
-        pass
-    fd.close()
-    return reply, results
-
-
 class EbCSVImportPersonsHandler(ImportPersonsHandler):
     csvRemap = {
         'Nome evento': 'event_title',
@@ -178,7 +141,7 @@ class EbCSVImportPersonsHandler(ImportPersonsHandler):
         for fieldname, contents in self.request.files.iteritems():
             for content in contents:
                 filename = content['filename']
-                parseStats, persons = csvParse(content['body'], remap=self.csvRemap)
+                parseStats, persons = utils.csvParse(content['body'], remap=self.csvRemap)
                 reply['total'] += parseStats['total']
                 reply['valid'] += parseStats['valid']
                 for person in persons:
