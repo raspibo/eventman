@@ -20,6 +20,7 @@ import csv
 import json
 import datetime
 import StringIO
+from bson.objectid import ObjectId
 
 
 def csvParse(csvStr, remap=None, merge=None):
@@ -74,7 +75,7 @@ class ImprovedEncoder(json.JSONEncoder):
     """Enhance the default JSON encoder to serialize datetime objects."""
     def default(self, o):
         if isinstance(o, (datetime.datetime, datetime.date,
-                datetime.time, datetime.timedelta)):
+                datetime.time, datetime.timedelta, ObjectId)):
             return str(o)
         return json.JSONEncoder.default(self, o)
 
