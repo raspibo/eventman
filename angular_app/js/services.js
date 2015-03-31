@@ -3,6 +3,11 @@
 /* Services that are used to interact with the backend. */
 var eventManServices = angular.module('eventManServices', ['ngResource']);
 
+eventManServices.factory('Action', ['$resource',
+    function($resource) {
+        return $resource('actions');
+    }]
+);
 
 eventManServices.factory('Event', ['$resource',
     function($resource) {

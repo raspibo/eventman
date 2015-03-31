@@ -18,4 +18,23 @@
 
         <input type="submit" style="position: absolute; left: -9999px; width: 1px; height: 1px;"/>
     </form>
+
+    <div class="panel panel-primary table-striped top5">
+        <div class="panel-heading">Actions</div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Action</th>
+                    <th>Event ID</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="action in actions">
+                    <td>{{action.action}}</td>
+                    <td>{{action.event_id}}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </div>
+

@@ -43,7 +43,7 @@ class RootHandler(BaseHandler):
     angular_app_path = os.path.join(os.path.dirname(__file__), "angular_app")
 
     @gen.coroutine
-    def get(self):
+    def get(self, *args, **kwargs):
         # serve the ./angular_app/index.html file
         with open(self.angular_app_path + "/index.html", 'r') as fd:
             self.write(fd.read())
@@ -57,7 +57,15 @@ class CollectionHandler(BaseHandler):
     collection = None
 
     @gen.coroutine
-    def get(self, id_=None):
+    def get(self, id_=None, resource=None, **kwargs):
+        if resource:
+            method = getattr(self, 'handle_%s' % resource, None)
+            if method and callable(method):
+                try:
+                    self.write(method(id_, **kwargs))
+                    return
+                except:
+                    pass
         if id_ is not None:
             # read a single document
             self.write(self.db.get(self.collection, id_))
@@ -91,10 +99,27 @@ class PersonsHandler(CollectionHandler):
     """Handle requests for Persons."""
     collection = 'persons'
 
+    def handle_events(self, _id, **kwds):
+        return {'events': []}
+
 
 class EventsHandler(CollectionHandler):
     """Handle requests for Events."""
     collection = 'events'
+
+
+class ActionsHandler(CollectionHandler):
+    """Handle requests for Actions."""
+    collection = 'actions'
+
+    def get(self, *args, **kwargs):
+        params = self.request.arguments or {}
+        if 'event_id' in params:
+            params['event_id'] = self.db.toID(params['event_id'][0])
+        if 'person_id' in params:
+            params['person_id'] = self.db.toID(params['person_id'][0])
+        data = self.db.query(self.collection, params)
+        self.write({'actions': data})
 
 
 class EbCSVImportPersonsHandler(BaseHandler):
@@ -137,8 +162,9 @@ class EbCSVImportPersonsHandler(BaseHandler):
                         registered_data = {
                                 'event_id': self.db.toID(targetEvent),
                                 'person_id': self.db.toID(_id),
+                                'action': 'registered',
                                 'from_file': filename}
-                        self.db.insertOne('registered', registered_data)
+                        self.db.insertOne('actions', registered_data)
         self.write(reply)
 
 
@@ -163,8 +189,9 @@ def run():
     init_params = dict(db=db_connector)
 
     application = tornado.web.Application([
-            (r"/persons/?(?P<id_>\w+)?", PersonsHandler, init_params),
+            (r"/persons/?(?P<id_>\w+)?/?(?P<resource>\w+)?", PersonsHandler, init_params),
             (r"/events/?(?P<id_>\w+)?", EventsHandler, init_params),
+            (r"/actions/?.*", ActionsHandler, init_params),
             (r"/(?:index.html)?", RootHandler, init_params),
             (r"/ebcsvpersons", EbCSVImportPersonsHandler, init_params),
             (r'/(.*)', tornado.web.StaticFileHandler, {"path": "angular_app"})
