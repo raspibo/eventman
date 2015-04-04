@@ -45,4 +45,22 @@
 
         <input type="submit" style="position: absolute; left: -9999px; width: 1px; height: 1px;"/>
     </form>
+
+    <div class="panel panel-primary table-striped top5">
+        <div class="panel-heading">Events</div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Person</th>
+                    <th>Attended</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="person in event.registered | orderBy:'surname'">
+                    <td><a href="/#/persons/{{person.person_id}}">{{person.name}} {{person.surname}}</a></td>
+                    <td><span class="glyphicon {{(event.person_data && event.person_data.attended) && 'glyphicon-ok-sign' || 'glyphicon-remove-sign'}}"></span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </div>
