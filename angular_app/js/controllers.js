@@ -42,19 +42,31 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event',
 );
 
 
-eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', '$routeParams',
-    function ($scope, Event, $routeParams) {
+eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', '$routeParams', '$log',
+    function ($scope, Event, $routeParams, $log) {
         if ($routeParams.id) {
             $scope.event = Event.get($routeParams);
         }
         // store a new Event or update an existing one
         $scope.save = function() {
-                if ($scope.event.id === undefined) {
-                    $scope.event = Event.save($scope.event);
+                var this_event = angular.copy($scope.event);
+                if (this_event.persons) {
+                    delete this_event.persons;
+                }
+                if (this_event.id === undefined) {
+                    $scope.event = Event.save(this_event);
                 } else {
-                    $scope.event = Event.update($scope.event);
+                    $scope.event = Event.update(this_event);
                 }
                 $scope.eventForm.$dirty = false;
+        };
+
+        $scope.updateAttendee = function(person, data) {
+            $log.info('EventDetailsCtrl');
+            $log.info('event_id: ' + $routeParams.id);
+            $log.info('person_id: ' + person.person_id);
+            $log.info('data:');
+            $log.info(data);
         };
     }]
 );

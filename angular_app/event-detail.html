@@ -72,7 +72,9 @@
                 <tbody>
                     <tr ng-repeat="person in event.persons | filter:query | orderBy:orderProp">
                         <td><a href="/#/persons/{{person.person_id}}">{{person.name}} {{person.surname}}</a></td>
-                        <td><span class="glyphicon {{(event.person_data && event.person_data.attended) && 'glyphicon-ok-sign' || 'glyphicon-remove-sign'}}"></span></td>
+                        <td>
+                                <button name="switch-attended" ng-click="updateAttendee(person, {attended: !person.attended})" class="btn btn-link glyphicon {{(person.attended) && 'glyphicon-ok-sign' || 'glyphicon-remove-sign'}}"></button>
+                        </td>
                     </tr>
                 </tbody>
             </table>

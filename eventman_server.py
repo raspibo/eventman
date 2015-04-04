@@ -99,7 +99,7 @@ class PersonsHandler(CollectionHandler):
     object_id = 'person_id'
 
     def handle_get_events(self, id_, **kwargs):
-        events = self.db.query('events', {'persons.person_id': self.db.toID(id_)})
+        events = self.db.query('events', {'persons.person_id': id_})
         for event in events:
             person_data = {}
             for persons in event.get('persons') or []:
@@ -161,8 +161,8 @@ class EbCSVImportPersonsHandler(BaseHandler):
                     if merged:
                         reply['merged'] += 1
                     if targetEvent and person:
-                        event_id = self.db.toID(targetEvent)
-                        person_id = self.db.toID(person['_id'])
+                        event_id = targetEvent
+                        person_id = person['_id']
                         registered_data = {
                                 'person_id': person_id,
                                 'attended': False,
