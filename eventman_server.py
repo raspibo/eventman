@@ -98,6 +98,17 @@ class PersonsHandler(CollectionHandler):
     collection = 'persons'
     object_id = 'person_id'
 
+    def handle_events(self, id_, **kwargs):
+        events = self.db.query('events', {'registered.person_id': self.db.toID(id_)})
+        for event in events:
+            person_data = {}
+            for registered in event.get('registered') or []:
+                if str(registered.get('person_id')) == id_:
+                    person_data = registered
+                    break
+            event['person_data'] = person_data
+        return {'events': events}
+
 
 class EventsHandler(CollectionHandler):
     """Handle requests for Events."""

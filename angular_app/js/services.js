@@ -42,7 +42,15 @@ eventManServices.factory('Person', ['$resource',
                     return angular.fromJson(data).persons;
                 }
             },
-            update: {method: 'PUT'}
+            update: {method: 'PUT'},
+            getEvents: {
+                method: 'GET',
+                url: 'persons/:id/events',
+                isArray: true,
+                transformResponse: function(data, headers) {
+                    return angular.fromJson(data).events;
+                }
+            }
         });
     }]
 );
