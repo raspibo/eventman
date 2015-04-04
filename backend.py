@@ -132,7 +132,7 @@ class EventManDB(object):
         ret = db[collection].update(data, {'$set': data}, upsert=True)
         return ret['updatedExisting']
 
-    def update(self, collection, _id_or_query, data, operator='$set'):
+    def update(self, collection, _id_or_query, data, operator='$set', create=True):
         """Update an existing document.
 
         :param collection: update a document in this collection
@@ -156,7 +156,7 @@ class EventManDB(object):
         if '_id' in data:
             del data['_id']
         res = db[collection].find_and_modify(query=_id_or_query,
-                update={operator: data}, full_response=True, new=True,upsert=True)
+                update={operator: data}, full_response=True, new=True, upsert=create)
         lastErrorObject = res.get('lastErrorObject') or {}
         return lastErrorObject.get('updatedExisting', False), res.get('value') or {}
 

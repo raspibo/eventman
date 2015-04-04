@@ -97,44 +97,12 @@ class PersonsHandler(CollectionHandler):
     """Handle requests for Persons."""
     collection = 'persons'
     object_id = 'person_id'
-    connect_to = 'events'
-    connect_id = 'event_id'
-
-    def _handle_actions(self, id_, action=None, **kwds):
-        print id_, kwds
-        self.request.arguments
-        query = {self.object_id: self.db.toID(id_)}
-        if action:
-            query['action'] = action
-        actions = self.db.query('actions', query)
-        
-        return {self.connect_to: results}
-
-    def handle_registered(self, id_, **kwds):
-        return self._handle_actions(id_, 'registered', **kwds)
 
 
 class EventsHandler(CollectionHandler):
     """Handle requests for Events."""
     collection = 'events'
     object_id = 'event_id'
-    connect_to = 'persons'
-    connect_id = 'person_id'
-
-
-class ActionsHandler(CollectionHandler):
-    """Handle requests for Actions."""
-    collection = 'actions'
-    object_id = 'action_id'
-
-    def get(self, *args, **kwargs):
-        params = self.request.arguments or {}
-        if 'event_id' in params:
-            params['event_id'] = self.db.toID(params['event_id'][0])
-        if 'person_id' in params:
-            params['person_id'] = self.db.toID(params['person_id'][0])
-        data = self.db.query(self.collection, params)
-        self.write({'actions': data})
 
 
 class EbCSVImportPersonsHandler(BaseHandler):
@@ -220,7 +188,6 @@ def run():
     application = tornado.web.Application([
             (r"/persons/?(?P<id_>\w+)?/?(?P<resource>\w+)?", PersonsHandler, init_params),
             (r"/events/?(?P<id_>\w+)?", EventsHandler, init_params),
-            (r"/actions/?.*", ActionsHandler, init_params),
             (r"/(?:index.html)?", RootHandler, init_params),
             (r"/ebcsvpersons", EbCSVImportPersonsHandler, init_params),
             (r'/(.*)', tornado.web.StaticFileHandler, {"path": "angular_app"})

@@ -78,9 +78,6 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$routeParams', '
     function ($scope, $routeParams, Person) {
         if ($routeParams.id) {
             $scope.person = Person.get($routeParams);
-            /* Action.get({person_id: $routeParams.id}, function(data) {
-                $scope.actions = angular.fromJson(data).actions;
-            }); */
         }
         // store a new Person or update an existing one
         $scope.save = function() {
