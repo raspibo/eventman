@@ -16,6 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import re
 import csv
 import json
 import datetime
@@ -72,12 +73,16 @@ def csvParse(csvStr, remap=None, merge=None):
 
 
 class ImprovedEncoder(json.JSONEncoder):
-    """Enhance the default JSON encoder to serialize datetime objects."""
+    """Enhance the default JSON encoder to serialize datetime and ObjectId instances."""
     def default(self, o):
         if isinstance(o, (datetime.datetime, datetime.date,
                 datetime.time, datetime.timedelta, ObjectId)):
-            return str(o)
+            try:
+                return str(o)
+            except Exception, e:
+                pass
         return json.JSONEncoder.default(self, o)
+
 
 # Inject our class as the default encoder.
 json._default_encoder = ImprovedEncoder()

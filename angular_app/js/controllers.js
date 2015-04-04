@@ -42,19 +42,40 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event',
 );
 
 
-eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', '$routeParams',
-    function ($scope, Event, $routeParams) {
+eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', '$routeParams', '$log',
+    function ($scope, Event, $routeParams, $log) {
         if ($routeParams.id) {
             $scope.event = Event.get($routeParams);
         }
         // store a new Event or update an existing one
         $scope.save = function() {
-                if ($scope.event.id === undefined) {
-                    $scope.event = Event.save($scope.event);
+                // avoid override of event.persons list.
+                var this_event = angular.copy($scope.event);
+                if (this_event.persons) {
+                    delete this_event.persons;
+                }
+                if (this_event.id === undefined) {
+                    $scope.event = Event.save(this_event);
                 } else {
-                    $scope.event = Event.update($scope.event);
+                    $scope.event = Event.update(this_event);
                 }
                 $scope.eventForm.$dirty = false;
+        };
+
+        $scope.updateAttendee = function(person, attended) {
+            $log.debug('EventDetailsCtrl.event_id: ' + $routeParams.id);
+            $log.debug('EventDetailsCtrl.person_id: ' + person.person_id);
+            $log.debug('EventDetailsCtrl.attended: ' + attended);
+            Event.personAttended({
+                    _id: $routeParams.id,
+                    person_id: person.person_id,
+                    'persons.$.attended': attended
+                },
+                function(data) {
+                    $log.debug('EventDetailsCtrl.personAttended.data');
+                    $log.debug(data);
+                    $scope.event.persons = data;
+            });
         };
     }]
 );
@@ -74,22 +95,40 @@ eventManControllers.controller('PersonsListCtrl', ['$scope', 'Person',
 );
 
 
-eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$routeParams', 'Person', 'Action',
-    function ($scope, $routeParams, Person, Action) {
+eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$routeParams', 'Person', 'Event', '$log',
+    function ($scope, $routeParams, Person, Event, $log) {
         if ($routeParams.id) {
             $scope.person = Person.get($routeParams);
-            Action.get({person_id: $routeParams.id}, function(data) {
-                $scope.actions = angular.fromJson(data).actions;
+            Person.getEvents($routeParams, function(data) {
+                $scope.events = data;
             });
         }
         // store a new Person or update an existing one
         $scope.save = function() {
-                if ($scope.person.id === undefined) {
-                    $scope.person = Person.save($scope.person);
-                } else {
-                    $scope.person = Person.update($scope.person);
-                }
+            if ($scope.person.id === undefined) {
+                $scope.person = Person.save($scope.person);
+            } else {
+                $scope.person = Person.update($scope.person);
+            }
         };
+        $scope.updateAttendee = function(event, attended) {
+            $log.debug('PersonDetailsCtrl.event_id: ' + $routeParams.id);
+            $log.debug('PersonDetailsCtrl.event_id: ' + event.event_id);
+            $log.debug('PersonDetailsCtrl.attended: ' + attended);
+            Event.personAttended({
+                    _id: event._id,
+                    person_id: $routeParams.id,
+                    'persons.$.attended': attended
+                },
+                function(data) {
+                    Person.getEvents($routeParams, function(data) {
+                        $log.debug('PersonDetailsCtrl.personAttended.data');
+                        $log.debug(data);
+                        $scope.events = data;
+                    });
+                }
+            );
+        }
     }]
 );
 
@@ -97,8 +136,8 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$routeParams', '
 eventManControllers.controller('ImportPersonsCtrl', ['$scope', '$log',
     function ($scope, $log) {
             $scope.ebCSVimport = function() {
-                $log.info("ImportPersonsCtrl");
-                $log.info($scope);
+                $log.debug("ImportPersonsCtrl");
+                $log.debug($scope);
         };
     }]
 );
@@ -110,7 +149,7 @@ eventManControllers.controller('FileUploadCtrl', ['$scope', '$log', '$upload', '
             $scope.reply = {};
             $scope.events = Event.all();
             $scope.upload = function(file, url) {
-                $log.info("FileUploadCtrl.upload");
+                $log.debug("FileUploadCtrl.upload");
                 $upload.upload({
                     url: url,
                     file: file,

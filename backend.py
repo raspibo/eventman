@@ -16,9 +16,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import re
 import pymongo
 from bson.objectid import ObjectId
 
+re_objectid = re.compile(r'[0-9a-f]{24}')
 
 class EventManDB(object):
     """MongoDB connector."""
@@ -54,18 +56,30 @@ class EventManDB(object):
         self.db = self.connection[self._dbName]
         return self.db
 
-    def toID(self, _id):
-        """Convert a string to a MongoDB ID.
+    def convert_obj(self, obj):
+        """Convert a string to an object for MongoDB.
 
-        :param _id: string to convert to :class:`~bson.objectid.ObjectId`
-        :type _id: str
-
-        :return: MongoDB ID
-        :rtype: :class:`~bson.objectid.ObjectId`
+        :param obj: object to convert
         """
-        if not isinstance(_id, ObjectId):
-            _id = ObjectId(_id)
-        return _id
+        try:
+            return ObjectId(obj)
+        except:
+            pass
+        try:
+            return int(obj)
+        except:
+            pass
+        return obj
+
+    def convert(self, seq):
+        if isinstance(seq, dict):
+            d = {}
+            for key, item in seq.iteritems():
+                d[key] = self.convert_obj(item)
+            return d
+        if isinstance(seq, (list, tuple)):
+            return [self.convert_obj(x) for x in seq]
+        return self.convert_obj(seq)
 
     def get(self, collection, _id):
         """Get a single document with the specified `_id`.
@@ -78,8 +92,7 @@ class EventManDB(object):
         :return: the document with the given `_id`
         :rtype: dict
         """
-        _id = self.toID(_id)
-        results = self.query(collection, {'_id': _id})
+        results = self.query(collection, self.convert({'_id': _id}))
         return results and results[0] or {}
 
     def query(self, collection, query=None):
@@ -94,13 +107,8 @@ class EventManDB(object):
         :rtype: list
         """
         db = self.connect()
-        query = query or {}
-        if'_id' in query:
-            query['_id'] = self.toID(query['_id'])
-        results = list(db[collection].find(query))
-        for result in results:
-            result['_id'] = str(result['_id'])
-        return results
+        query = self.convert(query or {})
+        return list(db[collection].find(query))
 
     def add(self, collection, data):
         """Insert a new document.
@@ -132,12 +140,12 @@ class EventManDB(object):
         ret = db[collection].update(data, {'$set': data}, upsert=True)
         return ret['updatedExisting']
 
-    def update(self, collection, _id, data):
+    def update(self, collection, _id_or_query, data, operator='$set', create=True):
         """Update an existing document.
 
         :param collection: update a document in this collection
         :type collection: str
-        :param _id: unique ID of the document to be updatd
+        :param _id: unique ID of the document to be updated
         :type _id: str or :class:`~bson.objectid.ObjectId`
         :param data: the updated information to store
         :type data: dict
@@ -147,12 +155,30 @@ class EventManDB(object):
         """
         db = self.connect()
         data = data or {}
+        if _id_or_query is None:
+            _id_or_query = {'_id': None}
+        elif isinstance(_id_or_query, (list, tuple)):
+            _id_or_query = {'$or': self.buildSearchPattern(data, _id_or_query)}
+        elif not isinstance(_id_or_query, dict):
+            _id_or_query = {'_id': _id_or_query}
+        _id_or_query = self.convert(_id_or_query)
         if '_id' in data:
             del data['_id']
-        db[collection].update({'_id': self.toID(_id)}, {'$set': data})
-        return self.get(collection, _id)
+        res = db[collection].find_and_modify(query=_id_or_query,
+                update={operator: data}, full_response=True, new=True, upsert=create)
+        lastErrorObject = res.get('lastErrorObject') or {}
+        return lastErrorObject.get('updatedExisting', False), res.get('value') or {}
 
-    def merge(self, collection, data, searchBy):
+    def buildSearchPattern(self, data, searchBy):
+        _or = []
+        for searchPattern in searchBy:
+            try:
+                _or.append(dict([(k, data[k]) for k in searchPattern]))
+            except KeyError:
+                continue
+        return _or
+
+    def merge(self, collection, data, searchBy, operator='$set'):
         """Update an existing document.
 
         :param collection: update a document in this collection
@@ -172,7 +198,8 @@ class EventManDB(object):
                 continue
         if not _or:
             return False, None
-        ret = db[collection].update({'$or': _or}, {'$set': data}, upsert=True)
+        # Two-steps merge/find to count the number of merged documents
+        ret = db[collection].update({'$or': _or}, {operator: data}, upsert=True)
         _id = ret.get('upserted')
         if _id is None:
             newDoc = db[collection].find_one(data)
@@ -194,6 +221,6 @@ class EventManDB(object):
             return
         db = self.connect()
         if not isinstance(_id_or_query, dict):
-            _id_or_query = self.toID(_id_or_query)
+            _id_or_query = {'_id': _id_or_query}
         db[collection].remove(_id_or_query)
 

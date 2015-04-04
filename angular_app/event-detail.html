@@ -45,4 +45,39 @@
 
         <input type="submit" style="position: absolute; left: -9999px; width: 1px; height: 1px;"/>
     </form>
+
+    <div class="panel panel-primary table-striped top5">
+        <div class="panel-heading">Events</div>
+        <div class="panel-body">
+            <form class="form-inline">
+                <div class="form-group">
+                    <label for="query-persons">Search:</label>
+                    <input type="text" id="query-persons" class="form-control" placeholder="Name or email" ng-model="query">
+                </div>
+                <div class="form-group">
+                    <label for="persons-order">Sort by:</label>
+                    <select id="persons-order" class="form-control" ng-model="orderProp">
+                        <option value="name" ng-selected="selected">Alphabetical</option>
+                        <option value="_id">ID</option>
+                    </select>
+                </div>
+            </form>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Person</th>
+                        <th>Attended</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="person in event.persons | filter:query | orderBy:orderProp">
+                        <td><a href="/#/persons/{{person.person_id}}">{{person.name}} {{person.surname}}</a></td>
+                        <td>
+                            <button class="btn btn-link" name="switch-attended" ng-click="updateAttendee(person, !person.attended)"><span class="glyphicon {{(person.attended) && 'glyphicon-ok-sign text-success' || 'glyphicon-remove-sign text-danger'}}"></span></button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
