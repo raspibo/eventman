@@ -57,12 +57,12 @@ class CollectionHandler(BaseHandler):
     collection = None
 
     @gen.coroutine
-    def get(self, id_=None, resource=None, **kwargs):
+    def get(self, id_=None, resource=None, resource_id=None, **kwargs):
         if resource:
             method = getattr(self, 'handle_get_%s' % resource, None)
             if method and callable(method):
                 try:
-                    self.write(method(id_, **kwargs))
+                    self.write(method(id_, resource_id, **kwargs))
                     return
                 except:
                     pass
@@ -77,8 +77,16 @@ class CollectionHandler(BaseHandler):
             self.write({self.collection: self.db.query(self.collection)})
 
     @gen.coroutine
-    def post(self, id_=None, **kwargs):
+    def post(self, id_=None, resource=None, resource_id=None, **kwargs):
         data = escape.json_decode(self.request.body or {})
+        if resource:
+            method = getattr(self, 'handle_%s_%s' % (self.request.method.lower(), resource), None)
+            if method and callable(method):
+                try:
+                    self.write(method(id_, resource_id, data, **kwargs))
+                    return
+                except:
+                    pass
         if id_ is None:
             newData = self.db.add(self.collection, data)
         else:
@@ -98,8 +106,12 @@ class PersonsHandler(CollectionHandler):
     collection = 'persons'
     object_id = 'person_id'
 
-    def handle_get_events(self, id_, **kwargs):
-        events = self.db.query('events', {'persons.person_id': id_})
+    def handle_get_events(self, id_, resource_id=None, **kwargs):
+        query = {'persons.person_id': id_}
+        if resource_id:
+            query['_id'] = resource_id
+
+        events = self.db.query('events', query)
         for event in events:
             person_data = {}
             for persons in event.get('persons') or []:
@@ -114,6 +126,21 @@ class EventsHandler(CollectionHandler):
     """Handle requests for Events."""
     collection = 'events'
     object_id = 'event_id'
+
+    def handle_get_persons(self, id_, resource_id=None):
+        query = {'_id': id_}
+        event = self.db.query('events', query)[0]
+        if resource_id:
+            for person in event.get('persons', []):
+                if str(person.get('person_id')) == resource_id:
+                    return {'person': person}
+        return {'persons': event.get('persons') or {}}
+
+    def handle_put_persons(self, id_, person_id, data):
+        merged, doc = self.db.update('events',
+                {'_id': id_, 'persons.person_id': person_id},
+                data, create=False)
+        return {'event': doc}
 
 
 class EbCSVImportPersonsHandler(BaseHandler):
@@ -198,8 +225,8 @@ def run():
     init_params = dict(db=db_connector)
 
     application = tornado.web.Application([
-            (r"/persons/?(?P<id_>\w+)?/?(?P<resource>\w+)?", PersonsHandler, init_params),
-            (r"/events/?(?P<id_>\w+)?", EventsHandler, init_params),
+            (r"/persons/?(?P<id_>\w+)?/?(?P<resource>\w+)?/?(?P<resource_id>\w+)?", PersonsHandler, init_params),
+            (r"/events/?(?P<id_>\w+)?/?(?P<resource>\w+)?/?(?P<resource_id>\w+)?", EventsHandler, init_params),
             (r"/(?:index.html)?", RootHandler, init_params),
             (r"/ebcsvpersons", EbCSVImportPersonsHandler, init_params),
             (r'/(.*)', tornado.web.StaticFileHandler, {"path": "angular_app"})
