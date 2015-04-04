@@ -20,18 +20,18 @@
     </form>
 
     <div class="panel panel-primary table-striped top5">
-        <div class="panel-heading">Actions</div>
+        <div class="panel-heading">Events</div>
         <table class="table">
             <thead>
                 <tr>
-                    <th>Action</th>
-                    <th>Event ID</th>
+                    <th>Event</th>
+                    <th>Attended</th>
                 </tr>
             </thead>
             <tbody>
-                <tr ng-repeat="action in actions">
-                    <td>{{action.action}}</td>
-                    <td>{{action.event_id}}</td>
+                <tr ng-repeat="event in events">
+                    <td>{{event.title}}</td>
+                    <td>action.event_id</td>
                 </tr>
             </tbody>
         </table>

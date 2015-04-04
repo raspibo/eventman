@@ -80,11 +80,9 @@ class CollectionHandler(BaseHandler):
     def post(self, id_=None, **kwargs):
         data = escape.json_decode(self.request.body or {})
         if id_ is None:
-            # insert a new document
             newData = self.db.add(self.collection, data)
         else:
-            # update an existing document
-            newData = self.db.update(self.collection, id_, data)
+            merged, newData = self.db.update(self.collection, id_, data)
         self.write(newData)
 
     # PUT (update an existing document) is handled by the POST (create a new document) method
@@ -98,19 +96,36 @@ class CollectionHandler(BaseHandler):
 class PersonsHandler(CollectionHandler):
     """Handle requests for Persons."""
     collection = 'persons'
+    object_id = 'person_id'
+    connect_to = 'events'
+    connect_id = 'event_id'
 
-    def handle_events(self, _id, **kwds):
-        return {'events': []}
+    def _handle_actions(self, id_, action=None, **kwds):
+        print id_, kwds
+        self.request.arguments
+        query = {self.object_id: self.db.toID(id_)}
+        if action:
+            query['action'] = action
+        actions = self.db.query('actions', query)
+        
+        return {self.connect_to: results}
+
+    def handle_registered(self, id_, **kwds):
+        return self._handle_actions(id_, 'registered', **kwds)
 
 
 class EventsHandler(CollectionHandler):
     """Handle requests for Events."""
     collection = 'events'
+    object_id = 'event_id'
+    connect_to = 'persons'
+    connect_id = 'person_id'
 
 
 class ActionsHandler(CollectionHandler):
     """Handle requests for Actions."""
     collection = 'actions'
+    object_id = 'action_id'
 
     def get(self, *args, **kwargs):
         params = self.request.arguments or {}
@@ -131,14 +146,18 @@ class EbCSVImportPersonsHandler(BaseHandler):
         'Cognome acquirente': 'surname',
         'Nome acquirente': 'name',
         'E-mail acquirente': 'email',
-        'Cognome': 'original_surname',
-        'Nome': 'original_name',
-        'E-mail': 'original_email',
+        'Cognome': 'surname',
+        'Nome': 'name',
+        'E-mail': 'email',
         'Tipologia biglietto': 'ticket_kind',
         'Data partecipazione': 'attending_datetime',
         'Data check-in': 'checkin_datetime',
         'Ordine n.': 'order_nr',
+        'ID ordine': 'order_nr',
+        'Prefisso (Sig., Sig.ra, ecc.)': 'name_title',
     }
+    keepPersonData = ('name', 'surname', 'email')
+
     @gen.coroutine
     def post(self, **kwargs):
         targetEvent = None
@@ -146,7 +165,7 @@ class EbCSVImportPersonsHandler(BaseHandler):
             targetEvent = self.get_body_argument('targetEvent')
         except:
             pass
-        reply = dict(total=0, valid=0, merged=0)
+        reply = dict(total=0, valid=0, merged=0, new_in_event=0)
         for fieldname, contents in self.request.files.iteritems():
             for content in contents:
                 filename = content['filename']
@@ -154,17 +173,27 @@ class EbCSVImportPersonsHandler(BaseHandler):
                 reply['total'] += parseStats['total']
                 reply['valid'] += parseStats['valid']
                 for person in persons:
-                    merged, _id = self.db.merge('persons', person,
-                            searchBy=[('email',), ('name', 'surname')])
+                    person_data = dict([(k, person[k]) for k in self.keepPersonData
+                        if k in person])
+                    merged, person = self.db.update('persons',
+                            [('email',), ('name', 'surname')],
+                            person_data)
                     if merged:
                         reply['merged'] += 1
-                    if targetEvent and _id:
+                    if targetEvent and person:
+                        event_id = self.db.toID(targetEvent)
+                        person_id = self.db.toID(person['_id'])
                         registered_data = {
-                                'event_id': self.db.toID(targetEvent),
-                                'person_id': self.db.toID(_id),
-                                'action': 'registered',
+                                'person_id': person_id,
+                                'attended': False,
                                 'from_file': filename}
-                        self.db.insertOne('actions', registered_data)
+                        person.update(registered_data)
+                        if not self.db.query('events',
+                                {'_id': event_id, 'registered.person_id': person_id}):
+                            self.db.update('events', {'_id': event_id},
+                                    {'registered': person},
+                                    operator='$addToSet')
+                            reply['new_in_event'] += 1
         self.write(reply)
 
 

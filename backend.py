@@ -132,12 +132,12 @@ class EventManDB(object):
         ret = db[collection].update(data, {'$set': data}, upsert=True)
         return ret['updatedExisting']
 
-    def update(self, collection, _id, data):
+    def update(self, collection, _id_or_query, data, operator='$set'):
         """Update an existing document.
 
         :param collection: update a document in this collection
         :type collection: str
-        :param _id: unique ID of the document to be updatd
+        :param _id: unique ID of the document to be updated
         :type _id: str or :class:`~bson.objectid.ObjectId`
         :param data: the updated information to store
         :type data: dict
@@ -147,12 +147,29 @@ class EventManDB(object):
         """
         db = self.connect()
         data = data or {}
+        if _id_or_query is None:
+            _id_or_query = {'_id': None}
+        elif isinstance(_id_or_query, (list, tuple)):
+            _id_or_query = {'$or': self.buildSearchPattern(data, _id_or_query)}
+        elif not isinstance(_id_or_query, dict):
+            _id_or_query = {'_id': self.toID(_id_or_query)}
         if '_id' in data:
             del data['_id']
-        db[collection].update({'_id': self.toID(_id)}, {'$set': data})
-        return self.get(collection, _id)
+        res = db[collection].find_and_modify(query=_id_or_query,
+                update={operator: data}, full_response=True, new=True,upsert=True)
+        lastErrorObject = res.get('lastErrorObject') or {}
+        return lastErrorObject.get('updatedExisting', False), res.get('value') or {}
 
-    def merge(self, collection, data, searchBy):
+    def buildSearchPattern(self, data, searchBy):
+        _or = []
+        for searchPattern in searchBy:
+            try:
+                _or.append(dict([(k, data[k]) for k in searchPattern]))
+            except KeyError:
+                continue
+        return _or
+
+    def merge(self, collection, data, searchBy, operator='$set'):
         """Update an existing document.
 
         :param collection: update a document in this collection
@@ -172,7 +189,8 @@ class EventManDB(object):
                 continue
         if not _or:
             return False, None
-        ret = db[collection].update({'$or': _or}, {'$set': data}, upsert=True)
+        # Two-steps merge/find to count the number of merged documents
+        ret = db[collection].update({'$or': _or}, {operator: data}, upsert=True)
         _id = ret.get('upserted')
         if _id is None:
             newDoc = db[collection].find_one(data)
