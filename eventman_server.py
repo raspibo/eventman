@@ -59,7 +59,7 @@ class CollectionHandler(BaseHandler):
     @gen.coroutine
     def get(self, id_=None, resource=None, **kwargs):
         if resource:
-            method = getattr(self, 'handle_%s' % resource, None)
+            method = getattr(self, 'handle_get_%s' % resource, None)
             if method and callable(method):
                 try:
                     self.write(method(id_, **kwargs))
@@ -98,13 +98,13 @@ class PersonsHandler(CollectionHandler):
     collection = 'persons'
     object_id = 'person_id'
 
-    def handle_events(self, id_, **kwargs):
-        events = self.db.query('events', {'registered.person_id': self.db.toID(id_)})
+    def handle_get_events(self, id_, **kwargs):
+        events = self.db.query('events', {'persons.person_id': self.db.toID(id_)})
         for event in events:
             person_data = {}
-            for registered in event.get('registered') or []:
-                if str(registered.get('person_id')) == id_:
-                    person_data = registered
+            for persons in event.get('persons') or []:
+                if str(persons.get('person_id')) == id_:
+                    person_data = persons
                     break
             event['person_data'] = person_data
         return {'events': events}
@@ -128,6 +128,7 @@ class EbCSVImportPersonsHandler(BaseHandler):
         'Cognome': 'surname',
         'Nome': 'name',
         'E-mail': 'email',
+        'Indirizzo e-mail': 'email',
         'Tipologia biglietto': 'ticket_kind',
         'Data partecipazione': 'attending_datetime',
         'Data check-in': 'checkin_datetime',
@@ -168,9 +169,9 @@ class EbCSVImportPersonsHandler(BaseHandler):
                                 'from_file': filename}
                         person.update(registered_data)
                         if not self.db.query('events',
-                                {'_id': event_id, 'registered.person_id': person_id}):
+                                {'_id': event_id, 'persons.person_id': person_id}):
                             self.db.update('events', {'_id': event_id},
-                                    {'registered': person},
+                                    {'persons': person},
                                     operator='$addToSet')
                             reply['new_in_event'] += 1
         self.write(reply)
