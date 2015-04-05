@@ -1,0 +1,47 @@
+<!-- show details of an Event -->
+<div class="container">
+    <h1>{{event.title}}
+        <button ng-if="event._id" ng-click="$state.go('event.edit', {id: event._id})" class="btn btn-success">
+            <span class="glyphicon glyphicon-plus-sign"></span>
+            {{'Edit' | translate}}
+        </button>
+    </h1>
+    <div class="panel panel-primary table-striped top5">
+        <div class="panel-heading">{{'Persons' | translate}}</div>
+        <div class="panel-body">
+            <form class="form-inline">
+                <div class="form-group">
+                    <label for="query-persons">{{'Search:' | translate}}</label>
+                    <input type="text" id="query-persons" class="form-control" placeholder="{{'Name or email' | translate}}" ng-model="query">
+                </div>
+                <div class="form-group">
+                    <label for="persons-order">{{'Sort by:' | translate}}</label>
+                    <select id="persons-order" class="form-control" ng-model="orderProp">
+                        <option value="name" ng-selected="selected">{{'Alphabetical' | translate}}</option>
+                        <option value="_id">{{'ID' | translate}}</option>
+                    </select>
+                </div>
+            </form>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>{{'Person' | translate}}</th>
+                        <th>{{'Attended' | translate}}</th>
+                        <th>{{'Actions' | translate}}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="person in event.persons | filter:query | orderBy:orderProp">
+                        <td><strong><a ui-sref="person.info({id: person.person_id})">{{person.name}} {{person.surname}}</a></strong></td>
+                        <td>
+                            <button class="btn btn-link" name="switch-attended" ng-click="updateAttendee(person, !person.attended)"><span class="glyphicon {{(person.attended) && 'glyphicon-ok-sign text-success' || 'glyphicon-remove-sign text-danger'}}"></span></button>
+                        </td>
+                        <td>
+                            <button ng-click="removeAttendee(person)" type="button" class="btn btn-link glyphicon glyphicon-trash"></button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

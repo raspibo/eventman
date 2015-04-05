@@ -57,10 +57,14 @@ class EventManDB(object):
         return self.db
 
     def convert_obj(self, obj):
-        """Convert a string to an object for MongoDB.
+        """Convert an object in a format suitable to be stored in MongoDB.
 
         :param obj: object to convert
+
+        :return: object that can be stored in MongoDB.
         """
+        if obj is None:
+            return None
         try:
             return ObjectId(obj)
         except:
@@ -72,6 +76,13 @@ class EventManDB(object):
         return obj
 
     def convert(self, seq):
+        """Convert an object in a format suitable to be stored in MongoDB,
+        descending lists, tuples and dictionaries (a copy is returned).
+
+        :param seq: sequence or object to convert
+
+        :return: object that can be stored in MongoDB.
+        """
         if isinstance(seq, dict):
             d = {}
             for key, item in seq.iteritems():
@@ -122,6 +133,7 @@ class EventManDB(object):
         :rtype: dict
         """
         db = self.connect()
+        data = self.convert(data)
         _id = db[collection].insert(data)
         return self.get(collection, _id)
 
@@ -137,76 +149,53 @@ class EventManDB(object):
         :rtype: bool
         """
         db = self.connect()
+        data = self.convert(data)
         ret = db[collection].update(data, {'$set': data}, upsert=True)
         return ret['updatedExisting']
 
-    def update(self, collection, _id_or_query, data, operator='$set', create=True):
-        """Update an existing document.
-
-        :param collection: update a document in this collection
-        :type collection: str
-        :param _id: unique ID of the document to be updated
-        :type _id: str or :class:`~bson.objectid.ObjectId`
-        :param data: the updated information to store
-        :type data: dict
-
-        :return: the document, after the update
-        :rtype: dict
-        """
-        db = self.connect()
-        data = data or {}
-        if _id_or_query is None:
-            _id_or_query = {'_id': None}
-        elif isinstance(_id_or_query, (list, tuple)):
-            _id_or_query = {'$or': self.buildSearchPattern(data, _id_or_query)}
-        elif not isinstance(_id_or_query, dict):
-            _id_or_query = {'_id': _id_or_query}
-        _id_or_query = self.convert(_id_or_query)
-        if '_id' in data:
-            del data['_id']
-        data = self.convert(data)
-        res = db[collection].find_and_modify(query=_id_or_query,
-                update={operator: data}, full_response=True, new=True, upsert=create)
-        lastErrorObject = res.get('lastErrorObject') or {}
-        return lastErrorObject.get('updatedExisting', False), res.get('value') or {}
-
-    def buildSearchPattern(self, data, searchBy):
+    def _buildSearchPattern(self, data, searchBy):
+        """Return an OR condition."""
         _or = []
         for searchPattern in searchBy:
             try:
-                _or.append(dict([(k, data[k]) for k in searchPattern]))
+                _or.append(dict([(k, data[k]) for k in searchPattern if k in data]))
             except KeyError:
                 continue
         return _or
 
-    def merge(self, collection, data, searchBy, operator='$set'):
-        """Update an existing document.
+    def update(self, collection, _id_or_query, data, operator='$set', create=True):
+        """Update an existing document or create it, if requested.
+        _id_or_query can be an ID, a dict representing a query or a list of tuples.
+        In the latter case, the tuples are put in OR; a tuple match if all of its
+        items from 'data' are contained in the document.
 
         :param collection: update a document in this collection
         :type collection: str
-        :param data: the document to store or merge with an existing one
+        :param _id_or_query: ID of the document to be updated, or a query or a list of attributes in the data that must match
+        :type _id_or_query: str or :class:`~bson.objectid.ObjectId` or iterable
+        :param data: the updated information to store
         :type data: dict
+        :param operator: operator used to update the document
+        :type operator: str
+        :param create: if True, the document is created if no document matches
+        :type create: bool
 
-        :return: a tuple with a boolean (True if an existing document was updated, and the _id of the document)
-        :rtype: tuple
+        :return: a boolean (True if an existing document was updated) and the document after the update
+        :rtype: tuple of (bool, dict)
         """
         db = self.connect()
-        _or = []
-        for searchPattern in searchBy:
-            try:
-                _or.append(dict([(k, data[k]) for k in searchPattern]))
-            except KeyError:
-                continue
-        if not _or:
-            return False, None
-        # Two-steps merge/find to count the number of merged documents
-        ret = db[collection].update({'$or': _or}, {operator: data}, upsert=True)
-        _id = ret.get('upserted')
-        if _id is None:
-            newDoc = db[collection].find_one(data)
-            if newDoc:
-                _id = newDoc['_id']
-        return ret['updatedExisting'], _id
+        data = self.convert(data or {})
+        _id_or_query = self.convert(_id_or_query)
+        if isinstance(_id_or_query, (list, tuple)):
+            _id_or_query = {'$or': self._buildSearchPattern(data, _id_or_query)}
+        elif not isinstance(_id_or_query, dict):
+            _id_or_query = {'_id': _id_or_query}
+        if '_id' in data:
+            del data['_id']
+        res = db[collection].find_and_modify(query=_id_or_query,
+                update={operator: data}, full_response=True, new=True, upsert=create)
+        lastErrorObject = res.get('lastErrorObject') or {}
+        return lastErrorObject.get('updatedExisting', False), res.get('value') or {}
 
     def delete(self, collection, _id_or_query=None, force=False):
         """Remove one or more documents from a collection.
@@ -223,5 +212,6 @@ class EventManDB(object):
         db = self.connect()
         if not isinstance(_id_or_query, dict):
             _id_or_query = {'_id': _id_or_query}
+        _id_or_query = self.convert(_id_or_query)
         db[collection].remove(_id_or_query)
 

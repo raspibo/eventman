@@ -61,11 +61,8 @@ class CollectionHandler(BaseHandler):
         if resource:
             method = getattr(self, 'handle_get_%s' % resource, None)
             if method and callable(method):
-                try:
-                    self.write(method(id_, resource_id, **kwargs))
-                    return
-                except:
-                    pass
+                self.write(method(id_, resource_id, **kwargs))
+                return
         if id_ is not None:
             # read a single document
             self.write(self.db.get(self.collection, id_))
@@ -82,11 +79,8 @@ class CollectionHandler(BaseHandler):
         if resource:
             method = getattr(self, 'handle_%s_%s' % (self.request.method.lower(), resource), None)
             if method and callable(method):
-                try:
-                    self.write(method(id_, resource_id, data, **kwargs))
-                    return
-                except:
-                    pass
+                self.write(method(id_, resource_id, data, **kwargs))
+                return
         if id_ is None:
             newData = self.db.add(self.collection, data)
         else:
@@ -101,11 +95,8 @@ class CollectionHandler(BaseHandler):
         if resource:
             method = getattr(self, 'handle_delete_%s' % resource, None)
             if method and callable(method):
-                try:
-                    self.write(method(id_, resource_id, **kwargs))
-                    return
-                except:
-                    raise
+                self.write(method(id_, resource_id, **kwargs))
+                return
         self.db.delete(self.collection, id_)
 
 

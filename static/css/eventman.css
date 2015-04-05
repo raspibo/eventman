@@ -1,6 +1,6 @@
 
 /* nav-bar padding */
-body { padding-top: 65px; }
+body { padding-top: 70px; }
 
 /* fix styling for empty href */
 .nav, .pagination, .carousel, .panel-title a { cursor: pointer; }
@@ -10,5 +10,9 @@ body { padding-top: 65px; }
 .top10 { margin-top: 10px; }
 .top15 { margin-top: 15px; }
 .top20 { margin-top: 20px; }
-.top30 { margin-top:30px; }
+.top30 { margin-top: 30px; }
+
+.vcenter {
+    vertical-align: middle;
+}
 

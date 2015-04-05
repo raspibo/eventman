@@ -1,0 +1,33 @@
+<!-- show details of a Person -->
+<div class="container">
+    <h1><span ng-if="!(person.name || person.surname)">{{'New person' | translate}}</span>{{person.name}} {{person.surname}}&nbsp;
+        <button ng-if="person._id" ng-click="$state.go('person.info', {id: person._id})" class="btn btn-success">
+            <span class="glyphicon glyphicon-plus-sign"></span>
+            {{'Info' | translate}}
+        </button>
+    </h1>
+
+    <form name="personForm" ng-model="persondetails" ng-submit="save()">
+        <div ng-class="{clearfix: true, alert: true, 'alert-success': !personForm.$dirty, 'alert-danger': personForm.$dirty}">
+            <button type="button" class="btn btn-default pull-right" ng-click="save($event)" ng-disabled="!personForm.$dirty">{{'save' | translate}}</button>
+        </div>
+
+        <div class="input-group input-group-lg">
+            <span class="input-group-addon">{{'Name' | translate}}</span>
+            <input type="text" class="form-control" placeholder="{{'Name' | translate}}" ng-model="person.name" ng-required="1">
+        </div>
+
+        <div class="input-group input-group-lg top5">
+            <span class="input-group-addon">{{'Surname' | translate}}</span>
+            <input type="text" class="form-control" placeholder="{{'Surname' | translate}}" ng-model="person.surname">
+        </div>
+
+        <div class="input-group top5">
+            <span class="input-group-addon">{{'Email' | translate}}</span>
+            <input type="email" name="email" class="form-control" placeholder="{{'name.surname@example.com' | translate}}"  ng-model="person.email">
+        </div>
+
+        <input type="submit" style="position: absolute; left: -9999px; width: 1px; height: 1px;"/>
+    </form>
+</div>
+

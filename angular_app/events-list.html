@@ -1,11 +1,18 @@
-<!-- show a list of Events -->
+<!-- show the list of Events -->
 <div class="container">
-    <div class="row">
-        <div class="col-lg-12">
+    <h1>{{'Events' | translate}}
+        <button ng-click="$state.go('event.new')" class="btn btn-success">
+            <span class="glyphicon glyphicon-plus-sign"></span>
+            {{'Add event' | translate}}
+        </button>
+    </h1>
+    <div class="panel panel-primary table-striped top5">
+        <div class="panel-heading">{{'Events' | translate}}</div>
+        <div class="panel-body">
             <form class="form-inline">
                 <div class="form-group">
                     <label for="query-events">Search:</label>
-                    <input type="text" id="query-events" class="form-control" placeholder="Event title" ng-model="query">
+                    <input type="text" id="query-events" class="form-control" placeholder="{{'Event title' | translate}}" ng-model="query">
                 </div>
                 <div class="form-group">
                     <label for="events-order">Sort by:</label>
@@ -15,30 +22,27 @@
                     </select>
                 </div>
             </form>
+
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <td><strong>{{'Event' | translate}}</strong></td>
+                        <td><strong>{{'Actions' | translate}}</strong></td>
+                    </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="event in events | filter:query | orderBy:orderProp">
+                    <td>
+                        <span><strong><a ui-sref="event.info({id: event._id})">{{event.title}}</a></strong></span>
+                        <p>{{'Begins:' | translate}} {{event['begin-date']}}<br/>
+                        {{'Ends:' | translate}} {{event['end-date']}}</p>
+                    </td>
+                    <td>
+                        <button ng-click="remove(event._id)" type="button" class="btn btn-link glyphicon glyphicon-trash"></button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
-
-<div class="container">
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <td><strong>Event</strong></td>
-                <td><strong>Actions</strong></td>
-            </tr>
-        </thead>
-        <tbody>
-        <tr ng-repeat="event in events | filter:query | orderBy:orderProp">
-            <td>
-                <span><strong><a href="/#/events/{{event._id}}">{{event.title}}</a></strong></span>
-                <p>Begins: {{event['begin-datetime']}}<br/>
-                Ends: {{event['end-datetime']}}</p>
-            </td>
-            <td>
-                <button ng-click="remove(event._id)" type="button" class="btn btn-link glyphicon glyphicon-trash"></button>
-            </td>
-        </tr>
-        </tbody>
-    </table>
-</div>
-

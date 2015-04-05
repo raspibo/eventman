@@ -52,10 +52,10 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event',
 );
 
 
-eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', '$routeParams', '$log',
-    function ($scope, Event, $routeParams, $log) {
-        if ($routeParams.id) {
-            $scope.event = Event.get($routeParams);
+eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', '$stateParams', '$log',
+    function ($scope, Event, $stateParams, $log) {
+        if ($stateParams.id) {
+            $scope.event = Event.get($stateParams);
         }
         // store a new Event or update an existing one
         $scope.save = function() {
@@ -73,11 +73,11 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', '$routePa
         };
 
         $scope.updateAttendee = function(person, attended) {
-            $log.debug('EventDetailsCtrl.event_id: ' + $routeParams.id);
+            $log.debug('EventDetailsCtrl.event_id: ' + $stateParams.id);
             $log.debug('EventDetailsCtrl.person_id: ' + person.person_id);
             $log.debug('EventDetailsCtrl.attended: ' + attended);
             Event.personAttended({
-                    _id: $routeParams.id,
+                    _id: $stateParams.id,
                     person_id: person.person_id,
                     'persons.$.attended': attended
                 },
@@ -90,7 +90,7 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', '$routePa
 
         $scope.removeAttendee = function(person) {
             Event.deleteAttendee({
-                    _id: $routeParams.id,
+                    _id: $stateParams.id,
                     person_id: person.person_id
                 },
                 function(data) {
@@ -115,11 +115,11 @@ eventManControllers.controller('PersonsListCtrl', ['$scope', 'Person',
 );
 
 
-eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$routeParams', 'Person', 'Event', '$log',
-    function ($scope, $routeParams, Person, Event, $log) {
-        if ($routeParams.id) {
-            $scope.person = Person.get($routeParams);
-            Person.getEvents($routeParams, function(data) {
+eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$stateParams', 'Person', 'Event', '$log',
+    function ($scope, $stateParams, Person, Event, $log) {
+        if ($stateParams.id) {
+            $scope.person = Person.get($stateParams);
+            Person.getEvents($stateParams, function(data) {
                 $scope.events = data;
             });
         }
@@ -130,18 +130,19 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$routeParams', '
             } else {
                 $scope.person = Person.update($scope.person);
             }
+            $scope.personForm.$dirty = false;
         };
         $scope.updateAttendee = function(event, attended) {
-            $log.debug('PersonDetailsCtrl.event_id: ' + $routeParams.id);
+            $log.debug('PersonDetailsCtrl.event_id: ' + $stateParams.id);
             $log.debug('PersonDetailsCtrl.event_id: ' + event.event_id);
             $log.debug('PersonDetailsCtrl.attended: ' + attended);
             Event.personAttended({
                     _id: event._id,
-                    person_id: $routeParams.id,
+                    person_id: $stateParams.id,
                     'persons.$.attended': attended
                 },
                 function(data) {
-                    Person.getEvents($routeParams, function(data) {
+                    Person.getEvents($stateParams, function(data) {
                         $log.debug('PersonDetailsCtrl.personAttended.data');
                         $log.debug(data);
                         $scope.events = data;

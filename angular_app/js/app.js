@@ -20,9 +20,17 @@ var eventManApp = angular.module('eventManApp', [
     'eventManServices',
     'eventManControllers',
     'ui.bootstrap',
+    'ui.router',
     'pascalprecht.translate',
     'angularFileUpload'
 ]);
+
+
+/* Add some utilities to the global scope. */
+eventManApp.run(function($rootScope, $state, $stateParams) {
+    $rootScope.$state = $state;
+    $rootScope.$stateParams = $stateParams;
+});
 
 
 /* Directive that can be used to make an input field react to the press of Enter. */
@@ -40,40 +48,67 @@ eventManApp.directive('ngEnter', function () {
 });
 
 
-/* Configure the routes. */
-eventManApp.config(['$routeProvider',
-    function($routeProvider) {
-        $routeProvider.
-            when('/persons', {
-                templateUrl: 'persons-list.html',
-                controller: 'PersonsListCtrl'
-            }).
-            when('/persons/:id', {
-                templateUrl: 'person-detail.html',
-                controller: 'PersonDetailsCtrl'
-            }).
-            when('/events', {
+/* Configure the states. */
+eventManApp.config(['$stateProvider', '$urlRouterProvider',
+    function($stateProvider, $urlRouterProvider) {
+        $urlRouterProvider.otherwise("/events");
+        $stateProvider
+            .state('events', {
+                url: '/events',
                 templateUrl: 'events-list.html',
                 controller: 'EventsListCtrl'
-            }).
-            when('/events/:id', {
-                templateUrl: 'event-detail.html',
+            })
+            .state('event', {
+                url: '/event',
+                templateUrl: 'event-main.html',
+            })
+            .state('event.new', {
+                url: '/new',
+                templateUrl: 'event-edit.html',
                 controller: 'EventDetailsCtrl'
-            }).
-            when('/new-event', {
-                templateUrl: 'event-detail.html',
+            })
+            .state('event.edit', {
+                url: '/:id/edit',
+                templateUrl: 'event-edit.html',
                 controller: 'EventDetailsCtrl'
-            }).
-            when('/new-person', {
-                templateUrl: 'person-detail.html',
+            })
+            .state('event.info', {
+                url: '/:id',
+                templateUrl: 'event-info.html',
+                controller: 'EventDetailsCtrl'
+            })
+            .state('persons', {
+                url: '/persons',
+                templateUrl: 'persons-list.html',
+                controller: 'PersonsListCtrl'
+            })
+            .state('person', {
+                url: '/person',
+                templateUrl: 'person-main.html',
+            })
+            .state('person.new', {
+                url: '/new',
+                templateUrl: 'person-edit.html',
                 controller: 'PersonDetailsCtrl'
-            }).
-            when('/import-persons', {
+            })
+            .state('person.edit', {
+                url: '/:id/edit',
+                templateUrl: 'person-edit.html',
+                controller: 'PersonDetailsCtrl'
+            })
+            .state('person.info', {
+                url: '/:id',
+                templateUrl: 'person-info.html',
+                controller: 'PersonDetailsCtrl'
+            })
+            .state('import', {
+                url: '/import',
+                templateUrl: 'import-main.html',
+            })
+            .state('import.persons', {
+                url: '/persons',
                 templateUrl: 'import-persons.html',
                 controller: 'ImportPersonsCtrl'
-            }).
-            otherwise({
-                redirectTo: '/events'
             });
     }
 ]);

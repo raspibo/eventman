@@ -10,6 +10,7 @@
         <script src="/static/js/angular-resource.js"></script>
         <script src="/static/js/angular-file-upload.min.js"></script> 
         <script src="/static/js/ui-bootstrap-tpls-0.12.1.js"></script>
+        <script src="/static/js/angular-ui-router.min.js"></script>
         <script src="/static/js/angular-translate.js"></script>
         <script src="/static/js/eventman.js"></script>
         <script src="/js/app.js"></script>
@@ -42,11 +43,8 @@
             <div class="container">
                 <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                     <ul class="nav navbar-nav">
-                        <li ng-class="{active: n.isActive('/events')}"><a ng-href="#/events">{{'Events' | translate}}</a></li>
-                        <li ng-class="{active: n.isActive('/new-event')}"><a ng-href="#/new-event">{{'Add event' | translate}}</a></li>
-                        <li ng-class="{active: n.isActive('/persons')}"><a ng-href="#/persons">{{'Persons' | translate}}</a></li>
-                        <li ng-class="{active: n.isActive('/new-person')}"><a ng-href="#/new-person">{{'Add person' | translate}}</a></li>
-                        <li ng-class="{active: n.isActive('/import-persons')}"><a ng-href="#/import-persons">{{'Import persons' | translate}}</a></li>
+                        <li ng-class="{active: n.isActive('/events') || n.isActive('/event')}"><a ui-sref="events">{{'Events' | translate}}</a></li>
+                        <li ng-class="{active: n.isActive('/persons') ||  n.isActive('/person') || n.isActive('/import/persons')}"><a ui-sref="persons">{{'Persons' | translate}}</a></li>
                     </ul>
                 </div>
             </div>
@@ -57,7 +55,7 @@
 
         <!-- all the magic takes place here: the content inside the next div
              changes accordingly to the location you're visiting -->
-        <div ng-view></div>
+        <div ui-view></div>
 
         <div class="main-footer">
         </div>
