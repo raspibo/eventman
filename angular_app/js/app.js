@@ -101,12 +101,15 @@ eventManApp.config(['$stateProvider', '$urlRouterProvider',
                 templateUrl: 'person-info.html',
                 controller: 'PersonDetailsCtrl'
             })
-            .state('persons.import', {
+            .state('import', {
                 url: '/import',
+                templateUrl: 'import-main.html',
+            })
+            .state('import.persons', {
+                url: '/persons',
                 templateUrl: 'import-persons.html',
                 controller: 'ImportPersonsCtrl'
-            }
-        );
+            });
     }
 ]);
 
