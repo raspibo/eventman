@@ -6,6 +6,7 @@
             {{'Info' | translate}}
         </button>
     </h1>
+
     <form name="eventForm" ng-model="eventdetails" ng-submit="save()">
         <alert class="clearfix">
             <button type="button" class="btn btn-default pull-right" ng-click="save($event)" ng-disabled="!eventForm.$dirty">{{'save' | translate}}</button>

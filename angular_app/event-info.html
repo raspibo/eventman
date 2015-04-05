@@ -31,7 +31,7 @@
                 </thead>
                 <tbody>
                     <tr ng-repeat="person in event.persons | filter:query | orderBy:orderProp">
-                        <td><a href="/#/persons/{{person.person_id}}">{{person.name}} {{person.surname}}</a></td>
+                        <td><a ui-sref="person.info({id: person.person_id})">{{person.name}} {{person.surname}}</a></td>
                         <td>
                             <button class="btn btn-link" name="switch-attended" ng-click="updateAttendee(person, !person.attended)"><span class="glyphicon {{(person.attended) && 'glyphicon-ok-sign text-success' || 'glyphicon-remove-sign text-danger'}}"></span></button>
                         </td>

@@ -1,57 +1,33 @@
 <!-- show details of a single Person (editing also take place here) -->
 <div class="container">
-    <form ng-model="persondetails" ng-submit="save()">
+    <h1>{{person.name}} {{person.surname}}&nbsp;
+        <button ng-if="person._id" ng-click="$state.go('person.info', {id: person._id})" class="btn btn-success">
+            <span class="glyphicon glyphicon-plus-sign"></span>
+            {{'Info' | translate}}
+        </button>
+    </h1>
+
+    <form name="personForm" ng-model="persondetails" ng-submit="save()">
+        <alert class="clearfix">
+            <button type="button" class="btn btn-default pull-right" ng-click="save($event)" ng-disabled="!personForm.$dirty">{{'save' | translate}}</button>
+        </alert>
+
         <div class="input-group input-group-lg">
-            <span class="input-group-addon">Name</span>
+            <span class="input-group-addon">{{'Name' | translate}}</span>
             <input type="text" class="form-control" placeholder="Name" ng-model="person.name" ng-required="1">
         </div>
 
         <div class="input-group input-group-lg top5">
-            <span class="input-group-addon">Surname</span>
+            <span class="input-group-addon">{{'Surname' | translate}}</span>
             <input type="text" class="form-control" placeholder="Surname" ng-model="person.surname">
         </div>
 
         <div class="input-group top5">
-            <span class="input-group-addon">Email</span>
+            <span class="input-group-addon">{{'Email' | translate}}</span>
             <input type="email" name="email" class="form-control" placeholder="root@example.com"  ng-model="person.email">
         </div>
 
         <input type="submit" style="position: absolute; left: -9999px; width: 1px; height: 1px;"/>
     </form>
-
-    <div class="panel panel-primary table-striped top5">
-        <div class="panel-heading">Events</div>
-        <div class="panel-body">
-            <form class="form-inline">
-                <div class="form-group">
-                    <label for="query-persons">Search:</label>
-                    <input type="text" id="query-persons" class="form-control" placeholder="Name or email" ng-model="query">
-                </div>
-                <div class="form-group">
-                    <label for="events-order">Sort by:</label>
-                    <select id="events-order" class="form-control" ng-model="orderProp">
-                        <option value="name" ng-selected="selected">Alphabetical</option>
-                        <option value="date">Date</option>
-                    </select>
-                </div>
-            </form>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Event</th>
-                        <th>Attended</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr ng-repeat="event in events">
-                        <td><a href="/#/events/{{event._id}}">{{event.title}}</a></td>
-                        <td>
-                            <button class="btn btn-link" name="switch-attended" ng-click="updateAttendee(event, !event.person_data.attended)"><span class="glyphicon {{(event.person_data.attended) && 'glyphicon-ok-sign text-success' || 'glyphicon-remove-sign text-danger'}}"></span></button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
 </div>
 

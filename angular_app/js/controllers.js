@@ -130,6 +130,7 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$stateParams', '
             } else {
                 $scope.person = Person.update($scope.person);
             }
+            $scope.personForm.$dirty = false;
         };
         $scope.updateAttendee = function(event, attended) {
             $log.debug('PersonDetailsCtrl.event_id: ' + $stateParams.id);

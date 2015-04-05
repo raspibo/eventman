@@ -1,24 +1,11 @@
 <!-- show details of a single Person (editing also take place here) -->
 <div class="container">
-    <form ng-model="persondetails" ng-submit="save()">
-        <div class="input-group input-group-lg">
-            <span class="input-group-addon">Name</span>
-            <input type="text" class="form-control" placeholder="Name" ng-model="person.name" ng-required="1">
-        </div>
-
-        <div class="input-group input-group-lg top5">
-            <span class="input-group-addon">Surname</span>
-            <input type="text" class="form-control" placeholder="Surname" ng-model="person.surname">
-        </div>
-
-        <div class="input-group top5">
-            <span class="input-group-addon">Email</span>
-            <input type="email" name="email" class="form-control" placeholder="root@example.com"  ng-model="person.email">
-        </div>
-
-        <input type="submit" style="position: absolute; left: -9999px; width: 1px; height: 1px;"/>
-    </form>
-
+    <h1>{{person.name}} {{person.surname}}
+        <button ng-if="person._id" ng-click="$state.go('person.edit', {id: person._id})" class="btn btn-success">
+            <span class="glyphicon glyphicon-plus-sign"></span>
+            {{'Edit' | translate}}
+        </button>
+    </h1>
     <div class="panel panel-primary table-striped top5">
         <div class="panel-heading">Events</div>
         <div class="panel-body">
@@ -44,7 +31,7 @@
                 </thead>
                 <tbody>
                     <tr ng-repeat="event in events">
-                        <td><a href="/#/events/{{event._id}}">{{event.title}}</a></td>
+                        <td><strong><a ui-sref="event.info({id: event._id})">{{event.title}}</a></strong></td>
                         <td>
                             <button class="btn btn-link" name="switch-attended" ng-click="updateAttendee(event, !event.person_data.attended)"><span class="glyphicon {{(event.person_data.attended) && 'glyphicon-ok-sign text-success' || 'glyphicon-remove-sign text-danger'}}"></span></button>
                         </td>
