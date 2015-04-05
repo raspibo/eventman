@@ -1,6 +1,6 @@
 <!-- show details of a single Person (editing also take place here) -->
 <div class="container">
-    <h1>{{person.name}} {{person.surname}}&nbsp;
+    <h1><span ng-if="!(person.name || person.surname)">{{'New person' | translate}}</span>{{person.name}} {{person.surname}}&nbsp;
         <button ng-if="person._id" ng-click="$state.go('person.info', {id: person._id})" class="btn btn-success">
             <span class="glyphicon glyphicon-plus-sign"></span>
             {{'Info' | translate}}

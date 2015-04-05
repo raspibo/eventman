@@ -1,6 +1,6 @@
 <!-- show details of a single Event (editing also take place here) -->
 <div class="container">
-    <h1>{{event.title}}&nbsp;
+    <h1><span ng-if="!event.title">{{'New event' | translate}}</span>{{event.title}}&nbsp;
         <button ng-if="event._id" ng-click="$state.go('event.info', {id: event._id})" class="btn btn-success">
             <span class="glyphicon glyphicon-plus-sign"></span>
             {{'Info' | translate}}
