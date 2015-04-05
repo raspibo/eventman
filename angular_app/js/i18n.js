@@ -1,3 +1,5 @@
+/* i18n for Event(man) */
+
 eventManApp.config(['$translateProvider', function ($translateProvider) {
     $translateProvider.translations('it_IT', {
         'Events': 'Eventi',

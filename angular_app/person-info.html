@@ -1,4 +1,4 @@
-<!-- show details of a single Person (editing also take place here) -->
+<!-- show details of a Person -->
 <div class="container">
     <h1>{{person.name}} {{person.surname}}
         <button ng-if="person._id" ng-click="$state.go('person.edit', {id: person._id})" class="btn btn-success">
