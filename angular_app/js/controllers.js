@@ -14,7 +14,13 @@ eventManControllers.controller('NavigationCtrl', ['$location',
         };
 
         this.isActive = function (view) { 
-            return view === $location.path();
+            if (view === $location.path()) {
+                return true;
+            }
+            if (view[view.length-1] !== '/') {
+                view = view + '/';
+            }
+            return $location.path().indexOf(view) == 0;
         };
     }]
 );
