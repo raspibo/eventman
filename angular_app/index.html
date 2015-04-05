@@ -38,15 +38,15 @@
     -->
 
     <body>
-        <nav class="navbar navbar-default navbar-fixed-top">
-            <div class="container" ng-controller="NavigationCtrl as n">
+        <nav class="navbar navbar-default navbar-fixed-top" ng-controller="NavigationCtrl as n">
+            <div class="container">
                 <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                     <ul class="nav navbar-nav">
-                        <li><a ng-click="n.go('/events')">{{'Events' | translate}}</a></li>
-                        <li><a ng-click="n.go('/new-event')">{{'Add event' | translate}}</a></li>
-                        <li><a ng-click="n.go('/persons')">{{'Persons' | translate}}</a></li>
-                        <li><a ng-click="n.go('/new-person')">{{'Add person' | translate}}</a></li>
-                        <li><a ng-click="n.go('/import-persons')">{{'Import persons' | translate}}</a></li>
+                        <li ng-class="{active: n.isActive('/events')}"><a ng-href="#/events">{{'Events' | translate}}</a></li>
+                        <li ng-class="{active: n.isActive('/new-event')}"><a ng-href="#/new-event">{{'Add event' | translate}}</a></li>
+                        <li ng-class="{active: n.isActive('/persons')}"><a ng-href="#/persons">{{'Persons' | translate}}</a></li>
+                        <li ng-class="{active: n.isActive('/new-person')}"><a ng-href="#/new-person">{{'Add person' | translate}}</a></li>
+                        <li ng-class="{active: n.isActive('/import-persons')}"><a ng-href="#/import-persons">{{'Import persons' | translate}}</a></li>
                     </ul>
                 </div>
             </div>

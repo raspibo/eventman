@@ -12,6 +12,10 @@ eventManControllers.controller('NavigationCtrl', ['$location',
         this.go = function(url) {
             $location.url(url);
         };
+
+        this.isActive = function (view) { 
+            return view === $location.path();
+        };
     }]
 );
 
