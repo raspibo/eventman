@@ -3,22 +3,6 @@
 /* Services that are used to interact with the backend. */
 var eventManServices = angular.module('eventManServices', ['ngResource']);
 
-eventManServices.factory('Attendee', ['$resource', 'Event',
-    function($resource, Event) {
-        return $resource('events/:id/persons/:person_id', {id: '@_id', person_id: '@person_id'}, {
-            personAttended: {
-                method: 'PUT',
-                params: {'persons.$.attended': true},
-                transformResponse: function(data, headers) {
-                    console.log('reply');
-                    console.log(angular.fromJson(data));
-                    return angular.fromJson(data).event;
-                }
-            }
-        });
-    }]
-);
-
 
 eventManServices.factory('Event', ['$resource',
     function($resource) {
@@ -47,6 +31,14 @@ eventManServices.factory('Event', ['$resource',
                 method: 'PUT',
                 isArray: true,
                 url: 'events/:id/persons/:person_id',
+                transformResponse: function(data, headers) {
+                    return angular.fromJson(data).event.persons;
+                }
+            },
+            deleteAttendee: {
+                method: 'DELETE',
+                isArray: true,
+                url: 'events/:_id/persons/:person_id',
                 transformResponse: function(data, headers) {
                     return angular.fromJson(data).event.persons;
                 }

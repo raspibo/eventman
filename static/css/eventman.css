@@ -1,4 +1,7 @@
 
+/* nav-bar padding */
+body { padding-top: 65px; }
+
 /* fix styling for empty href */
 .nav, .pagination, .carousel, .panel-title a { cursor: pointer; }
 

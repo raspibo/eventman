@@ -12,6 +12,16 @@ eventManControllers.controller('NavigationCtrl', ['$location',
         this.go = function(url) {
             $location.url(url);
         };
+
+        this.isActive = function (view) { 
+            if (view === $location.path()) {
+                return true;
+            }
+            if (view[view.length-1] !== '/') {
+                view = view + '/';
+            }
+            return $location.path().indexOf(view) == 0;
+        };
     }]
 );
 
@@ -74,6 +84,16 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', '$routePa
                 function(data) {
                     $log.debug('EventDetailsCtrl.personAttended.data');
                     $log.debug(data);
+                    $scope.event.persons = data;
+            });
+        };
+
+        $scope.removeAttendee = function(person) {
+            Event.deleteAttendee({
+                    _id: $routeParams.id,
+                    person_id: person.person_id
+                },
+                function(data) {
                     $scope.event.persons = data;
             });
         };
