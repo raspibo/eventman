@@ -3,6 +3,7 @@ Event Man(ager)
 
 Your friendly manager of attendees at an event.
 
+
 Notice
 ======
 
@@ -16,8 +17,8 @@ See the DEVELOPMENT.md file for more information about how to contribute.
 Technological stack
 ===================
 
-- [AngularJS](https://angularjs.org/) for the webApp
-- [Bootstrap](http://getbootstrap.com/) (plus [jQuery](https://jquery.com/)) for the eye-candy
+- [AngularJS](https://angularjs.org/) (plus some third-party modules) for the webApp
+- [Bootstrap](http://getbootstrap.com/) (plus [Angular UI](https://angular-ui.github.io/bootstrap/)) for the eye-candy
 - [Tornado web](http://www.tornadoweb.org/) as web server
 - [MongoDB](https://www.mongodb.org/) to store the data
 
