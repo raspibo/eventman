@@ -47,7 +47,7 @@
     </form>
 
     <div class="panel panel-primary table-striped top5">
-        <div class="panel-heading">Events</div>
+        <div class="panel-heading">Persons</div>
         <div class="panel-body">
             <form class="form-inline">
                 <div class="form-group">
@@ -65,8 +65,9 @@
             <table class="table table-striped">
                 <thead>
                     <tr>
-                        <th>Person</th>
-                        <th>Attended</th>
+                        <th>{{'Person' | translate}}</th>
+                        <th>{{'Attended' | translate}}</th>
+                        <th>{{'Actions' | translate}}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -74,6 +75,9 @@
                         <td><a href="/#/persons/{{person.person_id}}">{{person.name}} {{person.surname}}</a></td>
                         <td>
                             <button class="btn btn-link" name="switch-attended" ng-click="updateAttendee(person, !person.attended)"><span class="glyphicon {{(person.attended) && 'glyphicon-ok-sign text-success' || 'glyphicon-remove-sign text-danger'}}"></span></button>
+                        </td>
+                        <td>
+                            <button ng-click="removeAttendee(person)" type="button" class="btn btn-link glyphicon glyphicon-trash"></button>
                         </td>
                     </tr>
                 </tbody>

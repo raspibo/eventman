@@ -75,10 +75,10 @@ class EventManDB(object):
         if isinstance(seq, dict):
             d = {}
             for key, item in seq.iteritems():
-                d[key] = self.convert_obj(item)
+                d[key] = self.convert(item)
             return d
         if isinstance(seq, (list, tuple)):
-            return [self.convert_obj(x) for x in seq]
+            return [self.convert(x) for x in seq]
         return self.convert_obj(seq)
 
     def get(self, collection, _id):
@@ -164,6 +164,7 @@ class EventManDB(object):
         _id_or_query = self.convert(_id_or_query)
         if '_id' in data:
             del data['_id']
+        data = self.convert(data)
         res = db[collection].find_and_modify(query=_id_or_query,
                 update={operator: data}, full_response=True, new=True, upsert=create)
         lastErrorObject = res.get('lastErrorObject') or {}

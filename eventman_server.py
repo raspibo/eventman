@@ -97,7 +97,15 @@ class CollectionHandler(BaseHandler):
     put = post
 
     @gen.coroutine
-    def delete(self, id_=None, **kwargs):
+    def delete(self, id_=None, resource=None, resource_id=None, **kwargs):
+        if resource:
+            method = getattr(self, 'handle_delete_%s' % resource, None)
+            if method and callable(method):
+                try:
+                    self.write(method(id_, resource_id, **kwargs))
+                    return
+                except:
+                    raise
         self.db.delete(self.collection, id_)
 
 
@@ -140,6 +148,14 @@ class EventsHandler(CollectionHandler):
         merged, doc = self.db.update('events',
                 {'_id': id_, 'persons.person_id': person_id},
                 data, create=False)
+        return {'event': doc}
+
+    def handle_delete_persons(self, id_, person_id):
+        merged, doc = self.db.update('events',
+                {'_id': id_},
+                {'persons': {'person_id': person_id}},
+                operator='$pull',
+                create=False)
         return {'event': doc}
 
 

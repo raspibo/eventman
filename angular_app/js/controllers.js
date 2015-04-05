@@ -87,6 +87,16 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', '$routePa
                     $scope.event.persons = data;
             });
         };
+
+        $scope.removeAttendee = function(person) {
+            Event.deleteAttendee({
+                    _id: $routeParams.id,
+                    person_id: person.person_id
+                },
+                function(data) {
+                    $scope.event.persons = data;
+            });
+        };
     }]
 );
 
