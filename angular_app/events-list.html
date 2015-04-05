@@ -3,7 +3,7 @@
     <form class="form-inline">
         <div class="form-group">
             <label for="query-events">Search:</label>
-            <input type="text" id="query-events" class="form-control" placeholder="Event title" ng-model="query">
+            <input type="text" id="query-events" class="form-control" placeholder="{{'Event title' | translate}}" ng-model="query">
         </div>
         <div class="form-group">
             <label for="events-order">Sort by:</label>
@@ -23,16 +23,16 @@
     <table class="table table-striped">
         <thead>
             <tr>
-                <td><strong>Event</strong></td>
-                <td><strong>Actions</strong></td>
+                <td><strong>{{'Event' | translate}}</strong></td>
+                <td><strong>{{'Actions' | translate}}</strong></td>
             </tr>
         </thead>
         <tbody>
         <tr ng-repeat="event in events | filter:query | orderBy:orderProp">
             <td>
                 <span><strong><a ui-sref="event.info({id: event._id})">{{event.title}}</a></strong></span>
-                <p>Begins: {{event['begin-datetime']}}<br/>
-                Ends: {{event['end-datetime']}}</p>
+                <p>{{'Begins:' | translate}} {{event['begin-date']}}<br/>
+                {{'Ends:' | translate}} {{event['end-date']}}</p>
             </td>
             <td>
                 <button ng-click="remove(event._id)" type="button" class="btn btn-link glyphicon glyphicon-trash"></button>
@@ -41,4 +41,3 @@
         </tbody>
     </table>
 </div>
-

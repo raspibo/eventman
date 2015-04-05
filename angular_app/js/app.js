@@ -87,22 +87,22 @@ eventManApp.config(['$stateProvider', '$urlRouterProvider',
                 templateUrl: 'person-main.html',
             })
             .state('person.new', {
-                url: '/person/new',
+                url: '/new',
                 templateUrl: 'person-edit.html',
                 controller: 'PersonDetailsCtrl'
             })
             .state('person.edit', {
-                url: '/person/:id/edit',
+                url: '/:id/edit',
                 templateUrl: 'person-edit.html',
                 controller: 'PersonDetailsCtrl'
             })
             .state('person.info', {
-                url: '/person/:id',
+                url: '/:id',
                 templateUrl: 'person-info.html',
                 controller: 'PersonDetailsCtrl'
             })
             .state('persons.import', {
-                url: '/persons/import',
+                url: '/import',
                 templateUrl: 'import-persons.html',
                 controller: 'ImportPersonsCtrl'
             }
