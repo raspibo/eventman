@@ -223,5 +223,6 @@ class EventManDB(object):
         db = self.connect()
         if not isinstance(_id_or_query, dict):
             _id_or_query = {'_id': _id_or_query}
+        _id_or_query = self.convert(_id_or_query)
         db[collection].remove(_id_or_query)
 
