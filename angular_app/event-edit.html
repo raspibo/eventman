@@ -8,9 +8,9 @@
     </h1>
 
     <form name="eventForm" ng-model="eventdetails" ng-submit="save()">
-        <alert class="clearfix">
+        <div ng-class="{clearfix: true, alert: true, 'alert-success': !eventForm.$dirty, 'alert-danger': eventForm.$dirty}">
             <button type="button" class="btn btn-default pull-right" ng-click="save($event)" ng-disabled="!eventForm.$dirty">{{'save' | translate}}</button>
-        </alert>
+        </div>
 
         <div class="input-group input-group-lg">
             <span class="input-group-addon">{{'Title' | translate}}</span>

@@ -5,6 +5,10 @@
             <span class="glyphicon glyphicon-plus-sign"></span>
             {{'Add person' | translate}}
         </button>
+        <button ng-click="$state.go('import.persons')" class="btn btn-success">
+            <span class="glyphicon glyphicon-plus-sign"></span>
+            {{'Import persons' | translate}}
+        </button>
     </h1>
     <div class="panel panel-primary table-striped top5">
         <div class="panel-heading">{{'Persons' | translate}}</div>
