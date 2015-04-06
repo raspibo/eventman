@@ -11,14 +11,16 @@
         <div class="panel-body">
             <form class="form-inline">
                 <div class="form-group">
-                    <label for="query-events">Search:</label>
+                    <label for="query-events">{{'Search:' | translate}}</label>
                     <input type="text" id="query-events" class="form-control" placeholder="{{'Event title' | translate}}" ng-model="query">
                 </div>
                 <div class="form-group">
                     <label for="events-order">Sort by:</label>
-                    <select id="events-order" class="form-control" ng-model="orderProp">
-                        <option value="title">Alphabetical</option>
-                        <option value="begin-datetime">Date</option>
+                    <select id="events-order" class="form-control" ng-model="eventsOrderProp">
+                        <option value="title">{{'Title' | translate}}</option>
+                        <option value="-title">{{'Title (descending)' | translate}}</option>
+                        <option value="begin-date">{{'Date' | translate}}</option>
+                        <option value="-begin-date">{{'Date (descending)' | translate}}</option>
                     </select>
                 </div>
             </form>
@@ -31,7 +33,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                <tr ng-repeat="event in events | filter:query | orderBy:orderProp">
+                <tr ng-repeat="event in events | splittedFilter:query | orderBy:eventsOrderProp">
                     <td>
                         <span><strong><a ui-sref="event.info({id: event._id})">{{event.title}}</a></strong></span>
                         <p>{{'Begins:' | translate}} {{event['begin-date']}}<br/>

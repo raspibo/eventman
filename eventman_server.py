@@ -32,6 +32,21 @@ import backend
 
 class BaseHandler(tornado.web.RequestHandler):
     """Base class for request handlers."""
+    _bool_convert = {
+        '0': False,
+        'n': False,
+        'no': False,
+        'off': False,
+        'false': False
+    }
+
+    def tobool(self, obj):
+        if isinstance(obj, (list, tuple)):
+            obj = obj[0]
+        if isinstance(obj, (str, unicode)):
+            obj = obj.lower()
+        return bool(self._bool_convert.get(obj, obj))
+
     def initialize(self, **kwargs):
         """Add every passed (key, value) as attributes of the instance."""
         for key, value in kwargs.iteritems():
@@ -75,7 +90,7 @@ class CollectionHandler(BaseHandler):
 
     @gen.coroutine
     def post(self, id_=None, resource=None, resource_id=None, **kwargs):
-        data = escape.json_decode(self.request.body or {})
+        data = escape.json_decode(self.request.body or '{}')
         if resource:
             method = getattr(self, 'handle_%s_%s' % (self.request.method.lower(), resource), None)
             if method and callable(method):
@@ -106,7 +121,10 @@ class PersonsHandler(CollectionHandler):
     object_id = 'person_id'
 
     def handle_get_events(self, id_, resource_id=None, **kwargs):
-        query = {'persons.person_id': id_}
+        args = self.request.arguments
+        query = {}
+        if id_ and not self.tobool(args.get('all')):
+            query = {'persons.person_id': id_}
         if resource_id:
             query['_id'] = resource_id
 
@@ -134,6 +152,19 @@ class EventsHandler(CollectionHandler):
                 if str(person.get('person_id')) == resource_id:
                     return {'person': person}
         return {'persons': event.get('persons') or {}}
+
+    def handle_post_persons(self, id_, person_id, data):
+        doc = self.db.query('events',
+                {'_id': id_, 'persons.person_id': person_id})
+        if '_id' in data:
+            del data['_id']
+        if not doc:
+            merged, doc = self.db.update('events',
+                    {'_id': id_},
+                    {'persons': data},
+                    operator='$push',
+                    create=False)
+        return {'event': doc}
 
     def handle_put_persons(self, id_, person_id, data):
         merged, doc = self.db.update('events',

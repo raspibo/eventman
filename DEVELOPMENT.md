@@ -100,7 +100,6 @@ Next to be done
 ---------------
 
 - easy way to add a new person to an event
-- search on both name and surname, for persons
 - add the minimum required fields to lists and detailed pages for persons and events
 - handle datetimes (on GUI with a calendar and on the backend deserializing ISO 8601 strings)
 - modal on event/person removal

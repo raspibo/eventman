@@ -6,7 +6,7 @@
             <div class="panel-title">{{'Import persons from eventbrite CSV' | translate}}</div>
         </div>
         <div class="panel-body">
-            <form name="ebCSVForm" class="well" ng-controller="FileUploadCtrl">
+            <form name="ebCSVForm" class="well">
                 <div class="form-group">
                     <label for="eb-csv-import">{{'CSV file' | translate}}</label>
                     <input name="file" ng-file-select ng-model="file" type="file" id="eb-csv-import" ng-required="true">
