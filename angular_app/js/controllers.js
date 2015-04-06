@@ -123,18 +123,27 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$stateParams', '
     function ($scope, $stateParams, Person, Event, $log) {
         $scope.personsOrderProp = 'name';
         $scope.eventsOrderProp = '-begin-date';
+        $scope.addToEvent = '';
+
         if ($stateParams.id) {
             $scope.person = Person.get($stateParams);
-            Person.getEvents({_id: $stateParams.id, all: true}, function(data) {
-                $scope.events = data;
-            });
+            $scope.events = Person.getEvents({_id: $stateParams.id, all: true});
         }
         // store a new Person or update an existing one
         $scope.save = function() {
+            $log.info($scope.addToEvent);
             if ($scope.person.id === undefined) {
                 $scope.person = Person.save($scope.person);
             } else {
                 $scope.person = Person.update($scope.person);
+            }
+
+            if ($scope.addToEvent) {
+                var data = angular.copy($scope.person);
+                data._id = $scope.addToEvent;
+                data.person_id = $scope.person._id;
+                data.attended = false;
+                Event.addAttendee(data);
             }
             $scope.personForm.$dirty = false;
         };
@@ -149,11 +158,7 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$stateParams', '
                     'persons.$.attended': attended
                 },
                 function(data) {
-                    Person.getEvents({_id: $stateParams.id, all: true}, function(data) {
-                        $log.debug('PersonDetailsCtrl.personAttended.data');
-                        $log.debug(data);
-                        $scope.events = data;
-                    });
+                    $scope.events = data = Person.getEvents({_id: $stateParams.id, all: true});
                 }
             );
         };
@@ -169,32 +174,16 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$stateParams', '
                 data.attended = true;
                 Event.addAttendee(data,
                     function(data) {
-                        Person.getEvents({_id: $stateParams.id, all: true}, function(data) {
-                                $scope.events = data;
-                            }
-                        );
+                        $scope.events = Person.getEvents({_id: $stateParams.id, all: true});
                     }
                 );
             } else {
                 Event.deleteAttendee({_id: evnt._id, person_id: person._id},
                     function(data) {
-                        Person.getEvents({_id: $stateParams.id, all: true}, function(data) {
-                                $scope.events = data;
-                            }
-                        );
+                        $scope.events = Person.getEvents({_id: $stateParams.id, all: true});
                     }
                 );
             }
-        };
-    }]
-);
-
-
-eventManControllers.controller('ImportPersonsCtrl', ['$scope', '$log',
-    function ($scope, $log) {
-            $scope.ebCSVimport = function() {
-                $log.debug("ImportPersonsCtrl");
-                $log.debug($scope);
         };
     }]
 );

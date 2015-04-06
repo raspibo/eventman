@@ -154,8 +154,11 @@ class EventsHandler(CollectionHandler):
         return {'persons': event.get('persons') or {}}
 
     def handle_post_persons(self, id_, person_id, data):
-        if not self.db.query('events',
-                {'_id': id_, 'persons.person_id': person_id}):
+        doc = self.db.query('events',
+                {'_id': id_, 'persons.person_id': person_id})
+        if '_id' in data:
+            del data['_id']
+        if not doc:
             merged, doc = self.db.update('events',
                     {'_id': id_},
                     {'persons': data},

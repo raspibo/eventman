@@ -49,6 +49,27 @@ eventManApp.filter('splittedFilter', ['$filter',
 );
 
 
+/* Filter for events that have (or not) information about a registered person. */
+eventManApp.filter('eventWithPersonData', ['$filter',
+    function($filter) {
+        return function(inputArray, mustBePresent) {
+            if (mustBePresent === undefined) {
+                mustBePresent = true;
+            }
+            inputArray = inputArray || [];
+            var returnArray = [];
+            for (var x=0; x < inputArray.length; x++) {
+                var found = inputArray[x].person_data && inputArray[x].person_data.person_id;
+                if ((found && mustBePresent) || (!found && !mustBePresent)) {
+                    returnArray.push(inputArray[x]);
+                }
+            }
+            return returnArray;
+        };
+    }]
+);
+
+
 /* Directive that can be used to make an input field react to the press of Enter. */
 eventManApp.directive('ngEnter', function () {
     return function (scope, element, attrs) {
@@ -124,7 +145,7 @@ eventManApp.config(['$stateProvider', '$urlRouterProvider',
             .state('import.persons', {
                 url: '/persons',
                 templateUrl: 'import-persons.html',
-                controller: 'ImportPersonsCtrl'
+                controller: 'FileUploadCtrl'
             });
     }
 ]);

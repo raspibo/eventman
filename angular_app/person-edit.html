@@ -27,6 +27,16 @@
             <input type="email" name="email" class="form-control" placeholder="{{'name.surname@example.com' | translate}}"  ng-model="person.email">
         </div>
 
+        <div class="form-group top5">
+            <label for="addToEvent">{{'Add to event:' | translate}}</label>
+            <select class="form-control" id="addToEvent" ng-model="addToEvent">
+                <option value=""></option>
+                <option ng-repeat="event in events | eventWithPersonData:false" value="{{event._id}}">{{event.title}}</option>
+            </select>
+            <option>
+                <tr ng-repeat="event in events | splittedFilter:query | orderBy:eventsOrderProp">
+        </div>
+
         <input type="submit" style="position: absolute; left: -9999px; width: 1px; height: 1px;"/>
     </form>
 </div>
