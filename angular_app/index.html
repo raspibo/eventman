@@ -41,7 +41,7 @@
     <body>
         <nav class="navbar navbar-default navbar-fixed-top" ng-controller="NavigationCtrl as n">
             <div class="container">
-                <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <div class="collapse navbar-collapse">
                     <ul class="nav navbar-nav">
                         <li ng-class="{active: n.isActive('/events') || n.isActive('/event')}"><a ui-sref="events">{{'Events' | translate}}</a></li>
                         <li ng-class="{active: n.isActive('/persons') ||  n.isActive('/person') || n.isActive('/import/persons')}"><a ui-sref="persons">{{'Persons' | translate}}</a></li>

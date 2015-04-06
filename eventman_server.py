@@ -154,11 +154,13 @@ class EventsHandler(CollectionHandler):
         return {'persons': event.get('persons') or {}}
 
     def handle_post_persons(self, id_, person_id, data):
-        merged, doc = self.db.update('events',
-                {'_id': id_},
-                {'persons': data},
-                operator='$push',
-                create=False)
+        if not self.db.query('events',
+                {'_id': id_, 'persons.person_id': person_id}):
+            merged, doc = self.db.update('events',
+                    {'_id': id_},
+                    {'persons': data},
+                    operator='$push',
+                    create=False)
         return {'event': doc}
 
     def handle_put_persons(self, id_, person_id, data):
