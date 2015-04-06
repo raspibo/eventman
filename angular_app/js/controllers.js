@@ -90,7 +90,7 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', '$statePa
                     $scope.event.persons = data;
             });
         };
-
+                
         $scope.removeAttendee = function(person) {
             Event.deleteAttendee({
                     _id: $stateParams.id,
@@ -125,7 +125,7 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$stateParams', '
         $scope.eventsOrderProp = '-begin-date';
         if ($stateParams.id) {
             $scope.person = Person.get($stateParams);
-            Person.getEvents($stateParams, function(data) {
+            Person.getEvents({_id: $stateParams.id, all: true}, function(data) {
                 $scope.events = data;
             });
         }
@@ -138,6 +138,7 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$stateParams', '
             }
             $scope.personForm.$dirty = false;
         };
+
         $scope.updateAttendee = function(event, attended) {
             $log.debug('PersonDetailsCtrl.event_id: ' + $stateParams.id);
             $log.debug('PersonDetailsCtrl.event_id: ' + event.event_id);
@@ -148,14 +149,43 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$stateParams', '
                     'persons.$.attended': attended
                 },
                 function(data) {
-                    Person.getEvents($stateParams, function(data) {
+                    Person.getEvents({_id: $stateParams.id, all: true}, function(data) {
                         $log.debug('PersonDetailsCtrl.personAttended.data');
                         $log.debug(data);
                         $scope.events = data;
                     });
                 }
             );
-        }
+        };
+
+        $scope.switchRegistered = function(evnt, person, add) {
+            $log.debug('PersonDetailsCtrl.switchRegistered.event_id: ' + evnt._id);
+            $log.debug('PersonDetailsCtrl.switchRegistered.person_id: ' + person._id);
+            $log.debug('PersonDetailsCtrl.switchRegistered.add: ' + add);
+            if (add) {
+                var data = angular.copy(person);
+                data._id = evnt._id;
+                data.person_id = person._id;
+                data.attended = true;
+                Event.addAttendee(data,
+                    function(data) {
+                        Person.getEvents({_id: $stateParams.id, all: true}, function(data) {
+                                $scope.events = data;
+                            }
+                        );
+                    }
+                );
+            } else {
+                Event.deleteAttendee({_id: evnt._id, person_id: person._id},
+                    function(data) {
+                        Person.getEvents({_id: $stateParams.id, all: true}, function(data) {
+                                $scope.events = data;
+                            }
+                        );
+                    }
+                );
+            }
+        };
     }]
 );
 

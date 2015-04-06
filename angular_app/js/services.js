@@ -35,6 +35,14 @@ eventManServices.factory('Event', ['$resource',
                     return angular.fromJson(data).event.persons;
                 }
             },
+            addAttendee: {
+                method: 'POST',
+                isArray: true,
+                url: 'events/:id/persons/:person_id',
+                transformResponse: function(data, headers) {
+                    return angular.fromJson(data).event.persons;
+                }
+            },
             deleteAttendee: {
                 method: 'DELETE',
                 isArray: true,
@@ -61,7 +69,7 @@ eventManServices.factory('Person', ['$resource',
             update: {method: 'PUT'},
             getEvents: {
                 method: 'GET',
-                url: 'persons/:id/events',
+                url: 'persons/:_id/events',
                 isArray: true,
                 transformResponse: function(data, headers) {
                     return angular.fromJson(data).events;

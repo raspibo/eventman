@@ -28,12 +28,16 @@
                 <thead>
                     <tr>
                         <th>{{'Event' | translate}}</th>
+                        <th>{{'Registered' | translate}}</th>
                         <th>{{'Attended' | translate}}</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr ng-repeat="event in events | splittedFilter:query | orderBy:eventsOrderProp">
                         <td><strong><a ui-sref="event.info({id: event._id})">{{event.title}}</a></strong></td>
+                        <td>
+                            <button class="btn btn-link" name="switch-registered" ng-click="switchRegistered(event, person, !event.person_data.person_id)"><span class="glyphicon {{(event.person_data.person_id) && 'glyphicon-ok-sign text-success' || 'glyphicon-remove-sign text-danger'}}"></span></button>
+                        </td>
                         <td>
                             <button class="btn btn-link" name="switch-attended" ng-click="updateAttendee(event, !event.person_data.attended)"><span class="glyphicon {{(event.person_data.attended) && 'glyphicon-ok-sign text-success' || 'glyphicon-remove-sign text-danger'}}"></span></button>
                         </td>
