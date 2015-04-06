@@ -35,7 +35,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                <tr ng-repeat="person in persons | filter:query | orderBy:orderProp">
+                <tr ng-repeat="person in persons | splittedFilter:query | orderBy:orderProp">
                     <td>
                         <span><strong><a ui-sref="person.info({id: person._id})"><span>{{person.name}}</span>&nbsp;<span>{{person.surname}}</span></a></strong></span>
                         <p>{{person.email}}</p>

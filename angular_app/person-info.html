@@ -2,7 +2,7 @@
 <div class="container">
     <h1>{{person.name}} {{person.surname}}
         <button ng-if="person._id" ng-click="$state.go('person.edit', {id: person._id})" class="btn btn-success">
-            <span class="glyphicon glyphicon-plus-sign"></span>
+            <span class="glyphicon glyphicon-edit"></span>
             {{'Edit' | translate}}
         </button>
     </h1>

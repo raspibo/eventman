@@ -2,7 +2,7 @@
 <div class="container">
     <h1>{{event.title}}
         <button ng-if="event._id" ng-click="$state.go('event.edit', {id: event._id})" class="btn btn-success">
-            <span class="glyphicon glyphicon-plus-sign"></span>
+            <span class="glyphicon glyphicon-edit"></span>
             {{'Edit' | translate}}
         </button>
     </h1>
@@ -31,7 +31,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr ng-repeat="person in event.persons | filter:query | orderBy:orderProp">
+                    <tr ng-repeat="person in event.persons | splittedFilter:query | orderBy:orderProp">
                         <td><strong><a ui-sref="person.info({id: person.person_id})">{{person.name}} {{person.surname}}</a></strong></td>
                         <td>
                             <button class="btn btn-link" name="switch-attended" ng-click="updateAttendee(person, !person.attended)"><span class="glyphicon {{(person.attended) && 'glyphicon-ok-sign text-success' || 'glyphicon-remove-sign text-danger'}}"></span></button>

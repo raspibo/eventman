@@ -27,10 +27,26 @@ var eventManApp = angular.module('eventManApp', [
 
 
 /* Add some utilities to the global scope. */
-eventManApp.run(function($rootScope, $state, $stateParams) {
-    $rootScope.$state = $state;
-    $rootScope.$stateParams = $stateParams;
-});
+eventManApp.run(['$rootScope', '$state', '$stateParams',
+    function($rootScope, $state, $stateParams) {
+        $rootScope.$state = $state;
+        $rootScope.$stateParams = $stateParams;
+    }]
+);
+
+
+/* Filter that handles splitted words. */
+eventManApp.filter('splittedFilter', ['$filter',
+    function($filter) {
+        return function(inputArray, searchText) {
+            var wordArray = searchText ? searchText.toLowerCase().split(/\s+/) : [];
+            for (var x=0; x < wordArray.length; x++) {
+                inputArray = $filter('filter')(inputArray, wordArray[x]);
+            }
+            return inputArray;
+        };
+    }]
+);
 
 
 /* Directive that can be used to make an input field react to the press of Enter. */

@@ -2,7 +2,7 @@
 <div class="container">
     <h1><span ng-if="!event.title">{{'New event' | translate}}</span>{{event.title}}&nbsp;
         <button ng-if="event._id" ng-click="$state.go('event.info', {id: event._id})" class="btn btn-success">
-            <span class="glyphicon glyphicon-plus-sign"></span>
+            <span class="glyphicon glyphicon-info-sign"></span>
             {{'Info' | translate}}
         </button>
     </h1>
