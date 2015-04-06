@@ -128,22 +128,32 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$stateParams', '
         if ($stateParams.id) {
             $scope.person = Person.get($stateParams);
             $scope.events = Person.getEvents({_id: $stateParams.id, all: true});
+        } else {
+            $scope.events = Event.all();
         }
         // store a new Person or update an existing one
         $scope.save = function() {
-            $log.info($scope.addToEvent);
             if ($scope.person.id === undefined) {
-                $scope.person = Person.save($scope.person);
+                $scope.person = new Person($scope.person);
+                $scope.person.$save(function(person) {
+                    if ($scope.addToEvent) {
+                        var data = angular.copy(person);
+                        data.person_id = data._id;
+                        data._id = $scope.addToEvent;
+                        data.attended = false;
+                        Event.addAttendee(data);
+                    }
+                });
             } else {
-                $scope.person = Person.update($scope.person);
-            }
-
-            if ($scope.addToEvent) {
-                var data = angular.copy($scope.person);
-                data._id = $scope.addToEvent;
-                data.person_id = $scope.person._id;
-                data.attended = false;
-                Event.addAttendee(data);
+                $scope.person = Person.update($scope.person, function(data) {
+                    if ($scope.addToEvent) {
+                        var data = angular.copy($scope.person);
+                        data._id = $scope.addToEvent;
+                        data.person_id = $scope.person._id;
+                        data.attended = false;
+                        Event.addAttendee(data);
+                    }
+                });
             }
             $scope.personForm.$dirty = false;
         };
