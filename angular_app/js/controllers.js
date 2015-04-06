@@ -41,7 +41,8 @@ eventManControllers.controller('DatetimePickerCtrl', ['$scope',
 eventManControllers.controller('EventsListCtrl', ['$scope', 'Event',
     function ($scope, Event) {
         $scope.events = Event.all();
-        $scope.orderProp = 'begin-datetime';
+        $scope.personsOrderProp = 'name';
+        $scope.eventsOrderProp = '-begin-date';
 
         $scope.remove = function(_id) {
             Event.remove({'id': _id}, function() {
@@ -54,6 +55,8 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event',
 
 eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', '$stateParams', '$log',
     function ($scope, Event, $stateParams, $log) {
+        $scope.personsOrderProp = 'name';
+        $scope.eventsOrderProp = '-begin-date';
         if ($stateParams.id) {
             $scope.event = Event.get($stateParams);
         }
@@ -104,7 +107,8 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', '$statePa
 eventManControllers.controller('PersonsListCtrl', ['$scope', 'Person',
     function ($scope, Person) {
         $scope.persons = Person.all();
-        $scope.orderProp = 'name';
+        $scope.personsOrderProp = 'name';
+        $scope.eventsOrderProp = '-begin-date';
 
         $scope.remove = function(_id) {
             Person.remove({'id': _id}, function() {
@@ -117,6 +121,8 @@ eventManControllers.controller('PersonsListCtrl', ['$scope', 'Person',
 
 eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$stateParams', 'Person', 'Event', '$log',
     function ($scope, $stateParams, Person, Event, $log) {
+        $scope.personsOrderProp = 'name';
+        $scope.eventsOrderProp = '-begin-date';
         if ($stateParams.id) {
             $scope.person = Person.get($stateParams);
             Person.getEvents($stateParams, function(data) {
