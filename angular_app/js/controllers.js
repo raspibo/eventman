@@ -76,21 +76,28 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
                 $scope.eventForm.$dirty = false;
         };
 
-        $scope.fastAddPerson = function(newPerson) {
-            $log.debug('EventDetailsCtrl.fastAddPerson.newPerson:');
-            $log.debug(newPerson);
-            var person = new Person(newPerson);
-            person.$save(function(p) {
-                var data = angular.copy(p);
-                data.person_id = data._id;
-                data._id = $stateParams.id;
-                data.attended = true;
-                Event.addAttendee(data, function() {
-                    $scope.event = Event.get($stateParams);
-                    $scope.allPersons = Person.all();
-                    $scope.newPerson = {};
-                });
+        $scope._addAttendee = function(person_data) {
+            person_data.person_id = person_data._id;
+            person_data._id = $stateParams.id;
+            person_data.attended = true;
+            Event.addAttendee(person_data, function() {
+                $scope.event = Event.get($stateParams);
+                $scope.allPersons = Person.all();
+                $scope.newPerson = {};
             });
+        };
+
+        $scope.fastAddPerson = function(person, isNew) {
+            $log.debug('EventDetailsCtrl.fastAddPerson.person:');
+            $log.debug(person);
+            if (isNew) {
+                var personObj = new Person(person);
+                personObj.$save(function(p) {
+                    $scope._addAttendee(angular.copy(p));
+                });
+            } else {
+                $scope._addAttendee(person);
+            }
         };
 
         $scope.updateAttendee = function(person, attended) {
@@ -116,6 +123,7 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
                 },
                 function(data) {
                     $scope.event.persons = data;
+                    $scope.allPersons = Person.all();
             });
         };
     }]

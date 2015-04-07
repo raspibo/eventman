@@ -72,7 +72,7 @@
                                 <span class="input-group-addon">{{'Email' | translate}}</span>
                                 <input type="email" name="email" class="form-control" placeholder="{{'name.surname@example.com' | translate}}"  ng-model="newPerson.email">
                             </div>
-                            <button ng-disabled="!(newPerson.name && newPerson.surname)" ng-click="fastAddPerson(newPerson)" class="btn btn-success top5">
+                            <button ng-disabled="!(newPerson.name && newPerson.surname)" ng-click="fastAddPerson(newPerson, true)" class="btn btn-success top5">
                                 <span class="glyphicon glyphicon-plus-sign"></span>
                                 {{'Add' | translate}}
                             </button>
@@ -91,14 +91,14 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr ng-repeat="person in allPersons | splittedFilter:query">
+                                <tr ng-repeat="person in allPersons | filter:newPerson">
                                     <td>
                                         <strong><a ui-sref="person.info({id: person.person_id})">{{person.name}} {{person.surname}}</a></strong>
                                         <br />
                                         {{person.email}}
                                     </td>
                                     <td>
-                                        <button ng-click="addAttendee(person)" type="button" class="btn btn-link glyphicon glyphicon-plus-sign"></button>
+                                        <button ng-click="fastAddPerson(person)" type="button" class="btn btn-link glyphicon glyphicon-plus-sign"></button>
                                     </td>
                                 </tr>
                             </tbody>
