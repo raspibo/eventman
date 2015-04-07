@@ -10,7 +10,7 @@ Definitions:
 Requirements:
 - create a new event (**DONE**)
 - create a new registered person manually (**DONE**)
-- associate to an event a list of registered persons, creating them if needed (manually and importing from external sources)
+- associate to an event a list of registered persons, creating them if needed (manually and importing from external sources) (**DONE**)
 - mark registered persons as present (including them in the list of attendees) (**DONE**)
 - mark when an attendee enters/leaves the event
 - execute actions when an attendee shows up or enters/leaves the event
@@ -99,7 +99,6 @@ TODO
 Next to be done
 ---------------
 
-- easy way to add a new person to an event
 - add the minimum required fields to lists and detailed pages for persons and events
 - handle datetimes (on GUI with a calendar and on the backend deserializing ISO 8601 strings)
 - modal on event/person removal
