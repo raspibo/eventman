@@ -53,12 +53,13 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event',
 );
 
 
-eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', '$stateParams', '$log',
-    function ($scope, Event, $stateParams, $log) {
+eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person', '$stateParams', '$log',
+    function ($scope, Event, Person, $stateParams, $log) {
         $scope.personsOrderProp = 'name';
         $scope.eventsOrderProp = '-begin-date';
         if ($stateParams.id) {
             $scope.event = Event.get($stateParams);
+            $scope.allPersons = Person.all();
         }
         // store a new Event or update an existing one
         $scope.save = function() {
@@ -73,6 +74,23 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', '$statePa
                     $scope.event = Event.update(this_event);
                 }
                 $scope.eventForm.$dirty = false;
+        };
+
+        $scope.fastAddPerson = function(newPerson) {
+            $log.debug('EventDetailsCtrl.fastAddPerson.newPerson:');
+            $log.debug(newPerson);
+            var person = new Person(newPerson);
+            person.$save(function(p) {
+                var data = angular.copy(p);
+                data.person_id = data._id;
+                data._id = $stateParams.id;
+                data.attended = true;
+                Event.addAttendee(data, function() {
+                    $scope.event = Event.get($stateParams);
+                    $scope.allPersons = Person.all();
+                    $scope.newPerson = {};
+                });
+            });
         };
 
         $scope.updateAttendee = function(person, attended) {
