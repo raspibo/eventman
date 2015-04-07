@@ -53,12 +53,13 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event',
 );
 
 
-eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', '$stateParams', '$log',
-    function ($scope, Event, $stateParams, $log) {
+eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person', '$stateParams', '$log',
+    function ($scope, Event, Person, $stateParams, $log) {
         $scope.personsOrderProp = 'name';
         $scope.eventsOrderProp = '-begin-date';
         if ($stateParams.id) {
             $scope.event = Event.get($stateParams);
+            $scope.allPersons = Person.all();
         }
         // store a new Event or update an existing one
         $scope.save = function() {
@@ -73,6 +74,30 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', '$statePa
                     $scope.event = Event.update(this_event);
                 }
                 $scope.eventForm.$dirty = false;
+        };
+
+        $scope._addAttendee = function(person_data) {
+            person_data.person_id = person_data._id;
+            person_data._id = $stateParams.id;
+            person_data.attended = true;
+            Event.addAttendee(person_data, function() {
+                $scope.event = Event.get($stateParams);
+                $scope.allPersons = Person.all();
+                $scope.newPerson = {};
+            });
+        };
+
+        $scope.fastAddPerson = function(person, isNew) {
+            $log.debug('EventDetailsCtrl.fastAddPerson.person:');
+            $log.debug(person);
+            if (isNew) {
+                var personObj = new Person(person);
+                personObj.$save(function(p) {
+                    $scope._addAttendee(angular.copy(p));
+                });
+            } else {
+                $scope._addAttendee(angular.copy(person));
+            }
         };
 
         $scope.updateAttendee = function(person, attended) {
@@ -98,6 +123,7 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', '$statePa
                 },
                 function(data) {
                     $scope.event.persons = data;
+                    $scope.allPersons = Person.all();
             });
         };
     }]

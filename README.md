@@ -4,12 +4,8 @@ Event Man(ager)
 Your friendly manager of attendees at an event.
 
 
-Notice
-======
-
-No, this project is not ready, yet.
-
-I'll let you know when I'm finished experimenting with it and you can contribute.
+Development
+===========
 
 See the DEVELOPMENT.md file for more information about how to contribute.
 
@@ -37,6 +33,8 @@ Python code documented following the [Sphinx](http://sphinx-doc.org/) syntax.
 
 Install and run
 ===============
+
+Be sure to have a running MongoDB server, locally.
 
     wget https://bootstrap.pypa.io/get-pip.py
     sudo python get-pip.py
