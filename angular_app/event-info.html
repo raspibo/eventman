@@ -91,9 +91,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr ng-repeat="person in allPersons | filter:newPerson">
+                                <tr ng-repeat="person in allPersons | filter:newPerson | personRegistered:{event: event, present: false}">
                                     <td>
-                                        <strong><a ui-sref="person.info({id: person.person_id})">{{person.name}} {{person.surname}}</a></strong>
+                                        <strong><a ui-sref="person.info({id: person._id})">{{person.name}} {{person.surname}}</a></strong>
                                         <br />
                                         {{person.email}}
                                     </td>

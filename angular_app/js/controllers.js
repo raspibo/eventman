@@ -96,7 +96,7 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
                     $scope._addAttendee(angular.copy(p));
                 });
             } else {
-                $scope._addAttendee(person);
+                $scope._addAttendee(angular.copy(person));
             }
         };
 
