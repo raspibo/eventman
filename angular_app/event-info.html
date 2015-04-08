@@ -1,11 +1,27 @@
 <!-- show details of an Event -->
 <div class="container">
-    <h1>{{event.title}}
-        <button ng-if="event._id" ng-click="$state.go('event.edit', {id: event._id})" class="btn btn-success">
-            <span class="glyphicon glyphicon-edit"></span>
-            {{'Edit' | translate}}
-        </button>
-    </h1>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-7 col-xs-7 vcenter">
+                <h1>{{event.title}}
+                    <button ng-if="event._id" ng-click="$state.go('event.edit', {id: event._id})" class="btn btn-success">
+                        <span class="glyphicon glyphicon-edit"></span>
+                        {{'Edit' | translate}}
+                    </button>
+                </h1>
+            </div><!--
+         --><div class="col-md-5 col-xs-5 vcenter">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h2><div class="label label-warning vcenter">{{'Registered:' | translate}} {{event.persons.length || 0}}</div></h2>
+                    </div>
+                    <div class="col-md-6">
+                        <h2><div class="label label-info vcenter">{{'Attendees:' | translate}} {{countAttendees}}</div></h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="container">
         <div class="row">
@@ -34,7 +50,7 @@
                                     <th>{{'Person' | translate}}</th>
                                     <th>{{'Email' | translate}}</th>
                                     <th>{{'Attended' | translate}}</th>
-                                    <th>{{'Actions' | translate}}</th>
+                                    <th>{{'Delete' | translate}}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -57,7 +73,7 @@
             <div class="col-md-4">
 
                 <div class="panel panel-info table-striped top5">
-                    <div class="panel-heading">{{'Fast add' | translate}}</div>
+                    <div class="panel-heading">{{'Quick add' | translate}}</div>
                     <div class="panel-body">
                         <form>
                             <div class="input-group input-group-sm">

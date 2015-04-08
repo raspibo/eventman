@@ -67,6 +67,8 @@ events collection
 
 Stores information about events and persons registered for a given event.
 
+Please notice that information about a person registered for a given event is solely taken from the event.persons entry, and not to the relative entry in the persons collection. This may change in the future (to integrate missing information), but in general it is correct that, editing (or deleting) a person, older information about the partecipation to an event is not changed.
+
 Main field:
 
 - title
