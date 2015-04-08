@@ -1,7 +1,7 @@
 'use strict';
 
 /* Controllers; their method are available where specified with the ng-controller
- * directive or for a given route (see app.js).  They use some services to
+ * directive or for a given route/state (see app.js).  They use some services to
  * connect to the backend (see services.js). */
 var eventManControllers = angular.module('eventManControllers', []);
 
@@ -57,8 +57,15 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
     function ($scope, Event, Person, $stateParams, $log) {
         $scope.personsOrderProp = 'name';
         $scope.eventsOrderProp = '-begin-date';
+        $scope.countAttendees = 0;
         if ($stateParams.id) {
-            $scope.event = Event.get($stateParams);
+            $scope.event = Event.get($stateParams, function() {
+                $scope.$watchCollection(function() {
+                        return $scope.event.persons;
+                    }, function(prev, old) {
+                        $scope.calcAttendees();
+                    });
+            });
             $scope.allPersons = Person.all();
         }
         // store a new Event or update an existing one
@@ -74,6 +81,20 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
                     $scope.event = Event.update(this_event);
                 }
                 $scope.eventForm.$dirty = false;
+        };
+
+        $scope.calcAttendees = function() {
+            if (!($scope.event && $scope.event.persons)) {
+                return;
+            }
+            var attendees = 0;
+            $log.info($scope.event.persons.length);
+            angular.forEach($scope.event.persons, function(value, key) {
+                if (value.attended) {
+                    attendees += 1;
+                }
+            });
+            $scope.countAttendees = attendees;
         };
 
         $scope._addAttendee = function(person_data) {

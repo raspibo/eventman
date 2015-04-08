@@ -14,5 +14,9 @@ body { padding-top: 70px; }
 
 .vcenter {
     vertical-align: middle;
+    /* display: table-cell !important; */
+    display: inline-block !important;
+    float: none;
 }
 
+/* .row { display: table; } */
