@@ -228,7 +228,7 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$stateParams', '
                 var data = angular.copy(person);
                 data._id = evnt._id;
                 data.person_id = person._id;
-                data.attended = true;
+                data.attended = false;
                 Event.addAttendee(data,
                     function(data) {
                         $scope.events = Person.getEvents({_id: $stateParams.id, all: true});
