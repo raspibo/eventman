@@ -42,7 +42,7 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event',
     function ($scope, Event) {
         $scope.events = Event.all();
         $scope.personsOrderProp = 'name';
-        $scope.eventsOrderProp = '-begin-date';
+        $scope.eventsOrderProp = "'-begin-date'";
 
         $scope.remove = function(_id) {
             Event.remove({'id': _id}, function() {
@@ -228,7 +228,7 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$stateParams', '
                 var data = angular.copy(person);
                 data._id = evnt._id;
                 data.person_id = person._id;
-                data.attended = true;
+                data.attended = false;
                 Event.addAttendee(data,
                     function(data) {
                         $scope.events = Person.getEvents({_id: $stateParams.id, all: true});

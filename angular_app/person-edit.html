@@ -27,6 +27,11 @@
             <input type="email" name="email" class="form-control" placeholder="{{'name.surname@example.com' | translate}}"  ng-model="person.email">
         </div>
 
+        <div class="input-group top5">
+            <span class="input-group-addon">{{'Company' | translate}}</span>
+            <input name="company" class="form-control" placeholder="{{'Acme Corporation' | translate}}"  ng-model="person.company">
+        </div>
+
         <div class="form-group top5">
             <label for="addToEvent">{{'Add to event:' | translate}}</label>
             <select class="form-control" id="addToEvent" ng-model="addToEvent">

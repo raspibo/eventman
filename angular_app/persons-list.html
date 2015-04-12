@@ -39,8 +39,8 @@
                 <tbody>
                 <tr ng-repeat="person in persons | splittedFilter:query | orderBy:personsOrderProp">
                     <td>
-                        <span><strong><a ui-sref="person.info({id: person._id})"><span>{{person.name}}</span>&nbsp;<span>{{person.surname}}</span></a></strong></span>
-                        <p>{{person.email}}</p>
+                        <span><strong><a ui-sref="person.info({id: person._id})"><span>{{person.name}}</span>&nbsp;<span>{{person.surname}}</span></a></strong></span><span ng-if="person.email">&nbsp;&lt;{{person.email}}&gt;</span>
+                        <p ng-if="person.company"><i>{{person.company}}</i></p>
                     </td>
                     <td>
                         <button ng-click="remove(person._id)" type="button" class="btn btn-link glyphicon glyphicon-trash"></button>
