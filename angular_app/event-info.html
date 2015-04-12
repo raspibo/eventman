@@ -113,7 +113,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr ng-repeat="person in allPersons | filter:newPerson | personRegistered:{event: event, present: false}">
+                                <tr ng-repeat="person in allPersons | splittedFilter:query | personRegistered:{event: event, present: false}">
                                     <td>
                                         <strong><a ui-sref="person.info({id: person._id})">{{person.name}} {{person.surname}}</a></strong>
                                         <br />
