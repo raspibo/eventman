@@ -42,7 +42,7 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event',
     function ($scope, Event) {
         $scope.events = Event.all();
         $scope.personsOrderProp = 'name';
-        $scope.eventsOrderProp = '-begin-date';
+        $scope.eventsOrderProp = "'-begin-date'";
 
         $scope.remove = function(_id) {
             Event.remove({'id': _id}, function() {
