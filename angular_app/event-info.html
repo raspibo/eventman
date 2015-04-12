@@ -48,15 +48,16 @@
                             <thead>
                                 <tr>
                                     <th>{{'Person' | translate}}</th>
-                                    <th>{{'Email' | translate}}</th>
                                     <th>{{'Attended' | translate}}</th>
                                     <th>{{'Delete' | translate}}</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr ng-repeat="person in event.persons | splittedFilter:query | orderBy:personsOrderProp">
-                                    <td><strong><a ui-sref="person.info({id: person.person_id})">{{person.name}} {{person.surname}}</a></strong></td>
-                                    <td>{{person.email}}</td>
+                                    <td>
+                                        <span><strong><a ui-sref="person.info({id: person._id})"><span>{{person.name}}</span>&nbsp;<span>{{person.surname}}</span></a></strong></span><span ng-if="person.email">&nbsp;&lt;{{person.email}}&gt;</span>
+                                        <p ng-if="person.company"><i>{{person.company}}</i></p>
+                                    </td>
                                     <td>
                                         <button class="btn btn-link" name="switch-attended" ng-click="updateAttendee(person, !person.attended)"><span class="glyphicon {{(person.attended) && 'glyphicon-ok-sign text-success' || 'glyphicon-remove-sign text-danger'}}"></span></button>
                                     </td>
@@ -88,6 +89,11 @@
                                 <span class="input-group-addon">{{'Email' | translate}}</span>
                                 <input type="email" name="email" class="form-control" placeholder="{{'name.surname@example.com' | translate}}"  ng-model="newPerson.email">
                             </div>
+                            <div class="input-group top5">
+                                <span class="input-group-addon">{{'Company' | translate}}</span>
+                                <input name="company" class="form-control" placeholder="{{'Acme Corporation' | translate}}"  ng-model="newPerson.company">
+                            </div>
+
                             <button ng-disabled="!(newPerson.name && newPerson.surname)" ng-click="fastAddPerson(newPerson, true)" class="btn btn-success top5">
                                 <span class="glyphicon glyphicon-plus-sign"></span>
                                 {{'Add' | translate}}
