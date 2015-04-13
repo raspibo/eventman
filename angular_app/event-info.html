@@ -55,7 +55,7 @@
                             <tbody>
                                 <tr ng-repeat="person in event.persons | splittedFilter:query | orderBy:personsOrderProp">
                                     <td>
-                                        <span><strong><a ui-sref="person.info({id: person._id})"><span>{{person.name}}</span>&nbsp;<span>{{person.surname}}</span></a></strong></span><span ng-if="person.email">&nbsp;&lt;{{person.email}}&gt;</span>
+                                        <span><strong><a ui-sref="person.info({id: person.person_id})"><span>{{person.name}}</span>&nbsp;<span>{{person.surname}}</span></a></strong></span><span ng-if="person.email">&nbsp;&lt;{{person.email}}&gt;</span>
                                         <p ng-if="person.company"><i>{{person.company}}</i></p>
                                     </td>
                                     <td>
