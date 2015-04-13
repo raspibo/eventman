@@ -74,6 +74,7 @@ class CollectionHandler(BaseHandler):
     @gen.coroutine
     def get(self, id_=None, resource=None, resource_id=None, **kwargs):
         if resource:
+            # Handle access to sub-resources.
             method = getattr(self, 'handle_get_%s' % resource, None)
             if method and callable(method):
                 self.write(method(id_, resource_id, **kwargs))
@@ -92,6 +93,7 @@ class CollectionHandler(BaseHandler):
     def post(self, id_=None, resource=None, resource_id=None, **kwargs):
         data = escape.json_decode(self.request.body or '{}')
         if resource:
+            # Handle access to sub-resources.
             method = getattr(self, 'handle_%s_%s' % (self.request.method.lower(), resource), None)
             if method and callable(method):
                 self.write(method(id_, resource_id, data, **kwargs))
@@ -108,11 +110,14 @@ class CollectionHandler(BaseHandler):
     @gen.coroutine
     def delete(self, id_=None, resource=None, resource_id=None, **kwargs):
         if resource:
+            # Handle access to sub-resources.
             method = getattr(self, 'handle_delete_%s' % resource, None)
             if method and callable(method):
                 self.write(method(id_, resource_id, **kwargs))
                 return
-        self.db.delete(self.collection, id_)
+        if id_:
+            self.db.delete(self.collection, id_)
+        self.write({'success': True})
 
 
 class PersonsHandler(CollectionHandler):
@@ -121,6 +126,14 @@ class PersonsHandler(CollectionHandler):
     object_id = 'person_id'
 
     def handle_get_events(self, id_, resource_id=None, **kwargs):
+        # Get a list of events attended by this person.
+        # Inside the data of each event, a 'person_data' dictionary is
+        # created, duplicating the entry for the current person (so that
+        # there's no need to parse the 'persons' list on the client).
+        #
+        # If resource_id is given, only the specified event is considered.
+        #
+        # If the 'all' parameter is given, every event (also unattended ones) is returned.
         args = self.request.arguments
         query = {}
         if id_ and not self.tobool(args.get('all')):
@@ -136,6 +149,8 @@ class PersonsHandler(CollectionHandler):
                     person_data = persons
                     break
             event['person_data'] = person_data
+        if resource_id and events:
+            return events[0]
         return {'events': events}
 
 
@@ -145,6 +160,8 @@ class EventsHandler(CollectionHandler):
     object_id = 'event_id'
 
     def handle_get_persons(self, id_, resource_id=None):
+        # Return every person registered at this event, or the information
+        # about a specific person.
         query = {'_id': id_}
         event = self.db.query('events', query)[0]
         if resource_id:
@@ -154,6 +171,7 @@ class EventsHandler(CollectionHandler):
         return {'persons': event.get('persons') or {}}
 
     def handle_post_persons(self, id_, person_id, data):
+        # Add a person to the list of persons registered at this event.
         doc = self.db.query('events',
                 {'_id': id_, 'persons.person_id': person_id})
         if '_id' in data:
@@ -167,12 +185,14 @@ class EventsHandler(CollectionHandler):
         return {'event': doc}
 
     def handle_put_persons(self, id_, person_id, data):
+        # Update an existing entry for a person registered at this event.
         merged, doc = self.db.update('events',
                 {'_id': id_, 'persons.person_id': person_id},
                 data, create=False)
         return {'event': doc}
 
     def handle_delete_persons(self, id_, person_id):
+        # Remove a specific person from the list of persons registered at this event.
         merged, doc = self.db.update('events',
                 {'_id': id_},
                 {'persons': {'person_id': person_id}},
