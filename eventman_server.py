@@ -72,6 +72,24 @@ class CollectionHandler(BaseHandler):
     # set of documents we're managing (a collection in MongoDB or a table in a SQL database)
     collection = None
 
+    def _filter_results(self, results, params):
+        """Filter a list using keys and values from a dictionary."""
+        if not params:
+            return results
+        filtered = []
+        for result in results:
+            add = True
+            for key, value in params.iteritems():
+                if key not in result or result[key] != value:
+                    add = False
+                    break
+            if add:
+                filtered.append(result)
+        return filtered
+
+    arguments = property(lambda self: dict([(k, v[0])
+        for k, v in self.request.arguments.iteritems()]))
+
     @gen.coroutine
     def get(self, id_=None, resource=None, resource_id=None, **kwargs):
         if resource:
@@ -171,7 +189,8 @@ class EventsHandler(CollectionHandler):
                     return {'person': person}
         if resource_id:
             return {'person': {}}
-        return {'persons': event.get('persons') or []}
+        persons = self._filter_results(event.get('persons') or [], self.arguments)
+        return {'persons': persons}
 
     def handle_post_persons(self, id_, person_id, data):
         # Add a person to the list of persons registered at this event.
