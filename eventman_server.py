@@ -169,6 +169,8 @@ class EventsHandler(CollectionHandler):
             for person in event.get('persons', []):
                 if str(person.get('person_id')) == resource_id:
                     return {'person': person}
+        if resource_id:
+            return {'person': {}}
         return {'persons': event.get('persons') or []}
 
     def handle_post_persons(self, id_, person_id, data):
