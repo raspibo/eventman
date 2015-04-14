@@ -169,7 +169,7 @@ class EventsHandler(CollectionHandler):
             for person in event.get('persons', []):
                 if str(person.get('person_id')) == resource_id:
                     return {'person': person}
-        return {'persons': event.get('persons') or {}}
+        return {'persons': event.get('persons') or []}
 
     def handle_post_persons(self, id_, person_id, data):
         # Add a person to the list of persons registered at this event.
