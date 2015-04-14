@@ -128,7 +128,7 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
             Event.personAttended({
                     _id: $stateParams.id,
                     person_id: person.person_id,
-                    'persons.$.attended': attended
+                    'attended': attended
                 },
                 function(data) {
                     $log.debug('EventDetailsCtrl.personAttended.data');
@@ -212,10 +212,10 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$stateParams', '
             Event.personAttended({
                     _id: event._id,
                     person_id: $stateParams.id,
-                    'persons.$.attended': attended
+                    'attended': attended
                 },
                 function(data) {
-                    $scope.events = data = Person.getEvents({_id: $stateParams.id, all: true});
+                    $scope.events = Person.getEvents({_id: $stateParams.id, all: true});
                 }
             );
         };

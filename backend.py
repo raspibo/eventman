@@ -171,7 +171,8 @@ class EventManDB(object):
                 continue
         return _or
 
-    def update(self, collection, _id_or_query, data, operation='update', create=True):
+    def update(self, collection, _id_or_query, data, operation='update',
+            updateList=None, create=True):
         """Update an existing document or create it, if requested.
         _id_or_query can be an ID, a dict representing a query or a list of tuples.
         In the latter case, the tuples are put in OR; a tuple match if all of its
@@ -185,6 +186,8 @@ class EventManDB(object):
         :type data: dict
         :param operation: operation used to update the document or a portion of it, like a list (update, append, appendUnique, delete)
         :type operation: str
+        :param updateList: if set, it's considered the name of a list (the first matching element will be updated)
+        :type updateList: str
         :param create: if True, the document is created if no document matches
         :type create: bool
 
@@ -201,6 +204,11 @@ class EventManDB(object):
         if '_id' in data:
             del data['_id']
         operator = self._operations.get(operation)
+        if updateList:
+            newData = {}
+            for key, value in data.iteritems():
+                newData['%s.$.%s' % (updateList, key)] = value
+            data = newData
         res = db[collection].find_and_modify(query=_id_or_query,
                 update={operator: data}, full_response=True, new=True, upsert=create)
         lastErrorObject = res.get('lastErrorObject') or {}

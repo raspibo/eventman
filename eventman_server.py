@@ -191,7 +191,7 @@ class EventsHandler(CollectionHandler):
         # Update an existing entry for a person registered at this event.
         merged, doc = self.db.update('events',
                 {'_id': id_, 'persons.person_id': person_id},
-                data, create=False)
+                data, updateList='persons', create=False)
         return {'event': doc}
 
     def handle_delete_persons(self, id_, person_id):
