@@ -35,6 +35,7 @@ class BaseHandler(tornado.web.RequestHandler):
     _bool_convert = {
         '0': False,
         'n': False,
+        'f': False,
         'no': False,
         'off': False,
         'false': False
