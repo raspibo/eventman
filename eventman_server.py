@@ -72,6 +72,32 @@ class CollectionHandler(BaseHandler):
     # set of documents we're managing (a collection in MongoDB or a table in a SQL database)
     collection = None
 
+    def _filter_results(self, results, params):
+        """Filter a list using keys and values from a dictionary.
+        
+        :param results: the list to be filtered
+        :type results: list
+        :param params: a dictionary of items that must all be present in an original list item to be included in the return
+        
+        :return: list of items that have all the keys with the same values as params
+        :rtype: list"""
+        if not params:
+            return results
+        filtered = []
+        for result in results:
+            add = True
+            for key, value in params.iteritems():
+                if key not in result or result[key] != value:
+                    add = False
+                    break
+            if add:
+                filtered.append(result)
+        return filtered
+
+    # A property to access the first value of each argument.
+    arguments = property(lambda self: dict([(k, v[0])
+        for k, v in self.request.arguments.iteritems()]))
+
     @gen.coroutine
     def get(self, id_=None, resource=None, resource_id=None, **kwargs):
         if resource:
@@ -171,7 +197,8 @@ class EventsHandler(CollectionHandler):
                     return {'person': person}
         if resource_id:
             return {'person': {}}
-        return {'persons': event.get('persons') or []}
+        persons = self._filter_results(event.get('persons') or [], self.arguments)
+        return {'persons': persons}
 
     def handle_post_persons(self, id_, person_id, data):
         # Add a person to the list of persons registered at this event.
@@ -189,8 +216,11 @@ class EventsHandler(CollectionHandler):
 
     def handle_put_persons(self, id_, person_id, data):
         # Update an existing entry for a person registered at this event.
-        merged, doc = self.db.update('events',
-                {'_id': id_, 'persons.person_id': person_id},
+        query = dict([('persons.%s' % k, v) for k, v in self.arguments.iteritems()])
+        query['_id'] = id_
+        if person_id is not None:
+            query['persons.person_id'] = person_id
+        merged, doc = self.db.update('events', query,
                 data, updateList='persons', create=False)
         return {'event': doc}
 
