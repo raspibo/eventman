@@ -221,7 +221,7 @@ class EbCSVImportPersonsHandler(BaseHandler):
         'ID ordine': 'order_nr',
         'Prefisso (Sig., Sig.ra, ecc.)': 'name_title',
     }
-    keepPersonData = ('name', 'surname', 'email')
+    keepPersonData = ('name', 'surname', 'email', 'name_title')
 
     @gen.coroutine
     def post(self, **kwargs):
