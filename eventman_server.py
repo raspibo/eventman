@@ -73,7 +73,14 @@ class CollectionHandler(BaseHandler):
     collection = None
 
     def _filter_results(self, results, params):
-        """Filter a list using keys and values from a dictionary."""
+        """Filter a list using keys and values from a dictionary.
+        
+        :param results: the list to be filtered
+        :type results: list
+        :param params: a dictionary of items that must all be present in an original list item to be included in the return
+        
+        :return: list of items that have all the keys with the same values as params
+        :rtype: list"""
         if not params:
             return results
         filtered = []
@@ -87,6 +94,7 @@ class CollectionHandler(BaseHandler):
                 filtered.append(result)
         return filtered
 
+    # A property to access the first value of each argument.
     arguments = property(lambda self: dict([(k, v[0])
         for k, v in self.request.arguments.iteritems()]))
 
@@ -208,8 +216,11 @@ class EventsHandler(CollectionHandler):
 
     def handle_put_persons(self, id_, person_id, data):
         # Update an existing entry for a person registered at this event.
-        merged, doc = self.db.update('events',
-                {'_id': id_, 'persons.person_id': person_id},
+        query = dict([('persons.%s' % k, v) for k, v in self.arguments.iteritems()])
+        query['_id'] = id_
+        if person_id is not None:
+            query['persons.person_id'] = person_id
+        merged, doc = self.db.update('events', query,
                 data, updateList='persons', create=False)
         return {'event': doc}
 
