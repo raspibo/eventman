@@ -180,7 +180,7 @@ class EventsHandler(CollectionHandler):
             merged, doc = self.db.update('events',
                     {'_id': id_},
                     {'persons': data},
-                    operator='$push',
+                    operation='append',
                     create=False)
         return {'event': doc}
 
@@ -196,7 +196,7 @@ class EventsHandler(CollectionHandler):
         merged, doc = self.db.update('events',
                 {'_id': id_},
                 {'persons': {'person_id': person_id}},
-                operator='$pull',
+                operation='delete',
                 create=False)
         return {'event': doc}
 
@@ -257,7 +257,7 @@ class EbCSVImportPersonsHandler(BaseHandler):
                                 {'_id': event_id, 'persons.person_id': person_id}):
                             self.db.update('events', {'_id': event_id},
                                     {'persons': person},
-                                    operator='$addToSet')
+                                    operation='appendUnique')
                             reply['new_in_event'] += 1
         self.write(reply)
 

@@ -27,6 +27,14 @@ class EventManDB(object):
     db = None
     connection = None
 
+    # map operations on lists of items.
+    _operations = {
+            'update': '$set',
+            'append': '$push',
+            'appendUnique': '$addToSet',
+            'delete': '$pull'
+    }
+
     def __init__(self, url=None, dbName='eventman'):
         """Initialize the instance, connecting to the database.
 
@@ -163,7 +171,7 @@ class EventManDB(object):
                 continue
         return _or
 
-    def update(self, collection, _id_or_query, data, operator='$set', create=True):
+    def update(self, collection, _id_or_query, data, operation='update', create=True):
         """Update an existing document or create it, if requested.
         _id_or_query can be an ID, a dict representing a query or a list of tuples.
         In the latter case, the tuples are put in OR; a tuple match if all of its
@@ -175,8 +183,8 @@ class EventManDB(object):
         :type _id_or_query: str or :class:`~bson.objectid.ObjectId` or iterable
         :param data: the updated information to store
         :type data: dict
-        :param operator: operator used to update the document
-        :type operator: str
+        :param operation: operation used to update the document or a portion of it, like a list (update, append, appendUnique, delete)
+        :type operation: str
         :param create: if True, the document is created if no document matches
         :type create: bool
 
@@ -192,6 +200,7 @@ class EventManDB(object):
             _id_or_query = {'_id': _id_or_query}
         if '_id' in data:
             del data['_id']
+        operator = self._operations.get(operation)
         res = db[collection].find_and_modify(query=_id_or_query,
                 update={operator: data}, full_response=True, new=True, upsert=create)
         lastErrorObject = res.get('lastErrorObject') or {}
