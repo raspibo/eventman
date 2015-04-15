@@ -18,6 +18,7 @@ limitations under the License.
 """
 
 import os
+import subprocess
 
 import tornado.httpserver
 import tornado.ioloop
@@ -71,6 +72,24 @@ class CollectionHandler(BaseHandler):
     Introduce basic CRUD operations."""
     # set of documents we're managing (a collection in MongoDB or a table in a SQL database)
     collection = None
+
+    def run_command(self, cmd, callback=None):
+        self.ioloop = tornado.ioloop.IOLoop.instance()
+        p = subprocess.Popen(cmd, close_fds=True,
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        import datetime
+        self.tm = self.ioloop.add_timeout(datetime.timedelta(seconds=3), lambda: self.timeout(callback))
+        self.ioloop.add_handler(p.stdout.fileno(),
+                self.async_callback(self.on_response, callback, p), self.ioloop.READ)
+
+    def timeout(self, callback, *args):
+        callback((None, 'aaaaazzzz'))
+
+    def on_response(self, callback, pipe, fd, events):
+        self.ioloop.remove_timeout(self.tm)
+        stdoutdata, stderrdata = pipe.communicate()
+        callback((pipe.returncode, stdoutdata))
+        self.ioloop.remove_handler(fd)
 
     def _filter_results(self, results, params):
         """Filter a list using keys and values from a dictionary.
@@ -146,6 +165,17 @@ class CollectionHandler(BaseHandler):
             self.db.delete(self.collection, id_)
         self.write({'success': True})
 
+
+
+class TestHandler(CollectionHandler):
+
+    @tornado.web.asynchronous
+    @gen.engine
+    def get(self):
+        #ret, resp = yield gen.Task(self.run_command, ['echo', str(self.arguments)])
+        ret, resp = yield gen.Task(self.run_command, ['sleep', '10'])
+        self.write('ok: %s: %s\n' % (ret, resp))
+        self.finish()
 
 class PersonsHandler(CollectionHandler):
     """Handle requests for Persons."""
@@ -320,6 +350,8 @@ def run():
             (r"/events/?(?P<id_>\w+)?/?(?P<resource>\w+)?/?(?P<resource_id>\w+)?", EventsHandler, init_params),
             (r"/(?:index.html)?", RootHandler, init_params),
             (r"/ebcsvpersons", EbCSVImportPersonsHandler, init_params),
+
+            (r"/test", TestHandler, init_params),
             (r'/(.*)', tornado.web.StaticFileHandler, {"path": "angular_app"})
         ],
         template_path=os.path.join(os.path.dirname(__file__), "templates"),
