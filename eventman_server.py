@@ -18,6 +18,7 @@ limitations under the License.
 """
 
 import os
+import glob
 import subprocess
 
 import tornado.httpserver
@@ -78,12 +79,13 @@ class CollectionHandler(BaseHandler):
         p = subprocess.Popen(cmd, close_fds=True,
                 stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         import datetime
-        self.tm = self.ioloop.add_timeout(datetime.timedelta(seconds=3), lambda: self.timeout(callback))
+        self.tm = self.ioloop.add_timeout(datetime.timedelta(seconds=3), lambda: self.timeout(callback, p))
         self.ioloop.add_handler(p.stdout.fileno(),
                 self.async_callback(self.on_response, callback, p), self.ioloop.READ)
 
-    def timeout(self, callback, *args):
-        callback((None, 'aaaaazzzz'))
+    def timeout(self, callback, pipe, *args):
+        pipe.kill()
+        callback((pipe, 'killed process'))
 
     def on_response(self, callback, pipe, fd, events):
         self.ioloop.remove_timeout(self.tm)
@@ -165,12 +167,37 @@ class CollectionHandler(BaseHandler):
             self.db.delete(self.collection, id_)
         self.write({'success': True})
 
+    def run(self, cmd):
+        p = subprocess.Popen([cmd],)
+
+    @gen.coroutine
+    def run_triggers(self, action):
+        for script in glob.glob(os.path.join(self.data_dir, 'triggers', '%s.d' % action, '*')):
+            if not (os.path.isfile(script) and os.access(script, os.X_OK)):
+                continue
+            print script
+            #self.run_command(script)
+            ret, resp = yield gen.Task(self.run_command, [script])
+            print ret, resp
+
+class TestHandler2(CollectionHandler):
+    def get(self):
+        self.run_triggers('attends')
+
+def action(action):
+    def action_decorator(funct):
+        def funct_wrapper(*args, **kwrds):
+            result = funct(*args, **kwrds)
+            print 'aaaa', args, kwrds
+            return result
+        return funct_wrapper
+    return action_decorator
 
 
 class TestHandler(CollectionHandler):
 
-    @tornado.web.asynchronous
-    @gen.engine
+    @gen.coroutine
+    @action('salta')
     def get(self):
         #ret, resp = yield gen.Task(self.run_command, ['echo', str(self.arguments)])
         ret, resp = yield gen.Task(self.run_command, ['sleep', '10'])
@@ -343,7 +370,7 @@ def run():
 
     # database backend connector
     db_connector = backend.EventManDB(url=options.mongodbURL, dbName=options.dbName)
-    init_params = dict(db=db_connector)
+    init_params = dict(db=db_connector, data_dir=options.data)
 
     application = tornado.web.Application([
             (r"/persons/?(?P<id_>\w+)?/?(?P<resource>\w+)?/?(?P<resource_id>\w+)?", PersonsHandler, init_params),
@@ -352,6 +379,7 @@ def run():
             (r"/ebcsvpersons", EbCSVImportPersonsHandler, init_params),
 
             (r"/test", TestHandler, init_params),
+            (r"/test2", TestHandler2, init_params),
             (r'/(.*)', tornado.web.StaticFileHandler, {"path": "angular_app"})
         ],
         template_path=os.path.join(os.path.dirname(__file__), "templates"),
