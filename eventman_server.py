@@ -19,6 +19,7 @@ limitations under the License.
 
 import os
 import glob
+import datetime
 import subprocess
 
 import tornado.httpserver
@@ -30,6 +31,8 @@ from tornado import gen, escape
 
 import utils
 import backend
+
+PROCESS_TIMEOUT = 60
 
 
 class BaseHandler(tornado.web.RequestHandler):
@@ -73,25 +76,6 @@ class CollectionHandler(BaseHandler):
     Introduce basic CRUD operations."""
     # set of documents we're managing (a collection in MongoDB or a table in a SQL database)
     collection = None
-
-    def run_command(self, cmd, callback=None):
-        self.ioloop = tornado.ioloop.IOLoop.instance()
-        p = subprocess.Popen(cmd, close_fds=True,
-                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        import datetime
-        self.tm = self.ioloop.add_timeout(datetime.timedelta(seconds=3), lambda: self.timeout(callback, p))
-        self.ioloop.add_handler(p.stdout.fileno(),
-                self.async_callback(self.on_response, callback, p), self.ioloop.READ)
-
-    def timeout(self, callback, pipe, *args):
-        pipe.kill()
-        callback((pipe, 'killed process'))
-
-    def on_response(self, callback, pipe, fd, events):
-        self.ioloop.remove_timeout(self.tm)
-        stdoutdata, stderrdata = pipe.communicate()
-        callback((pipe.returncode, stdoutdata))
-        self.ioloop.remove_handler(fd)
 
     def _filter_results(self, results, params):
         """Filter a list using keys and values from a dictionary.
@@ -167,42 +151,45 @@ class CollectionHandler(BaseHandler):
             self.db.delete(self.collection, id_)
         self.write({'success': True})
 
-    def run(self, cmd):
-        p = subprocess.Popen([cmd],)
+    def run_command(self, cmd, callback=None):
+        """Execute the given action.
+
+        :param cmd: the command to be run with its command line arguments
+        :type cmd: list
+        """
+        self.ioloop = tornado.ioloop.IOLoop.instance()
+        p = subprocess.Popen(cmd, close_fds=True,
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        self.ioloop.add_handler(p.stdout.fileno(),
+                self.async_callback(self.on_response, callback, p), self.ioloop.READ)
+        # also set a timeout
+        self.timeout = self.ioloop.add_timeout(datetime.timedelta(seconds=PROCESS_TIMEOUT),
+                lambda: self.on_timeout(callback, p))
+
+    def on_timeout(self, callback, pipe, *args):
+        """Kill a process that is taking too long to complete."""
+        pipe.kill()
+        callback((None, 'killed process pid:%d' % pipe.pid))
+
+    def on_response(self, callback, pipe, fd, events):
+        """Handle the execution of a script."""
+        self.ioloop.remove_timeout(self.timeout)
+        stdoutdata, stderrdata = pipe.communicate()
+        callback((pipe.returncode, stdoutdata))
+        self.ioloop.remove_handler(fd)
 
     @gen.coroutine
     def run_triggers(self, action):
+        """Asynchronously execute triggers for the given action.
+
+        :param action: action name; scripts in directory ./data/triggers/{action}.d will be run
+        :type action: str
+        """
         for script in glob.glob(os.path.join(self.data_dir, 'triggers', '%s.d' % action, '*')):
             if not (os.path.isfile(script) and os.access(script, os.X_OK)):
                 continue
-            print script
-            #self.run_command(script)
             ret, resp = yield gen.Task(self.run_command, [script])
-            print ret, resp
 
-class TestHandler2(CollectionHandler):
-    def get(self):
-        self.run_triggers('attends')
-
-def action(action):
-    def action_decorator(funct):
-        def funct_wrapper(*args, **kwrds):
-            result = funct(*args, **kwrds)
-            print 'aaaa', args, kwrds
-            return result
-        return funct_wrapper
-    return action_decorator
-
-
-class TestHandler(CollectionHandler):
-
-    @gen.coroutine
-    @action('salta')
-    def get(self):
-        #ret, resp = yield gen.Task(self.run_command, ['echo', str(self.arguments)])
-        ret, resp = yield gen.Task(self.run_command, ['sleep', '10'])
-        self.write('ok: %s: %s\n' % (ret, resp))
-        self.finish()
 
 class PersonsHandler(CollectionHandler):
     """Handle requests for Persons."""
@@ -377,9 +364,6 @@ def run():
             (r"/events/?(?P<id_>\w+)?/?(?P<resource>\w+)?/?(?P<resource_id>\w+)?", EventsHandler, init_params),
             (r"/(?:index.html)?", RootHandler, init_params),
             (r"/ebcsvpersons", EbCSVImportPersonsHandler, init_params),
-
-            (r"/test", TestHandler, init_params),
-            (r"/test2", TestHandler2, init_params),
             (r'/(.*)', tornado.web.StaticFileHandler, {"path": "angular_app"})
         ],
         template_path=os.path.join(os.path.dirname(__file__), "templates"),
