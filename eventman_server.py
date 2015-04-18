@@ -20,6 +20,7 @@ limitations under the License.
 import os
 import glob
 import json
+import logging
 import datetime
 
 import tornado.httpserver
@@ -164,8 +165,9 @@ class CollectionHandler(BaseHandler):
             self.db.delete(self.collection, id_)
         self.write({'success': True})
 
-    def on_timeout(self, pipe):
+    def on_timeout(self, cmd, pipe):
         """Kill a process that is taking too long to complete."""
+        logging.debug('cmd %s is taking too long: killing it' % ' '.join(cmd))
         try:
             pipe.proc.kill()
         except:
@@ -174,6 +176,7 @@ class CollectionHandler(BaseHandler):
     def on_exit(self, returncode, cmd, pipe):
         """Callback executed when a subprocess execution is over."""
         self.ioloop.remove_timeout(self.timeout)
+        logging.debug('cmd: %s returncode: %d' % (' '.join(cmd), returncode))
 
     @gen.coroutine
     def run_subprocess(self, cmd, stdin_data=None, env=None):
@@ -192,12 +195,14 @@ class CollectionHandler(BaseHandler):
                 stdout=process.Subprocess.STREAM, stderr=process.Subprocess.STREAM, env=env)
         p.set_exit_callback(lambda returncode: self.on_exit(returncode, cmd, p))
         self.timeout = self.ioloop.add_timeout(datetime.timedelta(seconds=PROCESS_TIMEOUT),
-                lambda: self.on_timeout(p))
+                lambda: self.on_timeout(cmd, p))
         yield gen.Task(p.stdin.write, stdin_data or '')
         p.stdin.close()
         out, err = yield [gen.Task(p.stdout.read_until_close),
                 gen.Task(p.stderr.read_until_close)]
-        print 'out', out
+        logging.debug('cmd: %s' % ' '.join(cmd))
+        logging.debug('cmd stdout: %s' % out)
+        logging.debug('cmd strerr: %s' % err)
         raise gen.Return((out, err))
 
     @gen.coroutine
@@ -211,6 +216,7 @@ class CollectionHandler(BaseHandler):
         :param env: environment of the process
         :type stdin_data: dict
         """
+        logging.debug('running triggers for action "%s"' % action)
         stdin_data = stdin_data or {}
         try:
             stdin_data = json.dumps(stdin_data)
@@ -404,6 +410,10 @@ def run():
     define("config", help="read configuration file",
             callback=lambda path: tornado.options.parse_config_file(path, final=False))
     tornado.options.parse_command_line()
+
+    if options.debug:
+        logger = logging.getLogger()
+        logger.setLevel(logging.DEBUG)
 
     # database backend connector
     db_connector = backend.EventManDB(url=options.mongodbURL, dbName=options.dbName)
