@@ -53,11 +53,14 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event',
 );
 
 
-eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person', '$stateParams', '$log',
-    function ($scope, Event, Person, $stateParams, $log) {
+eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person', '$stateParams', 'Setting', '$log',
+    function ($scope, Event, Person, $stateParams, Setting, $log) {
         $scope.personsOrderProp = 'name';
         $scope.eventsOrderProp = '-begin-date';
         $scope.countAttendees = 0;
+        $scope.customFields = Setting.query({setting: 'person_custom_field',
+            in_event_details: true});
+
         if ($stateParams.id) {
             $scope.event = Event.get($stateParams, function() {
                 $scope.$watchCollection(function() {
@@ -68,6 +71,7 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
             });
             $scope.allPersons = Person.all();
         }
+
         // store a new Event or update an existing one
         $scope.save = function() {
                 // avoid override of event.persons list.
@@ -97,11 +101,11 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
             $scope.countAttendees = attendees;
         };
 
-        $scope._addAttendee = function(person_data) {
+        $scope._addPerson = function(person_data) {
             person_data.person_id = person_data._id;
             person_data._id = $stateParams.id;
             person_data.attended = true;
-            Event.addAttendee(person_data, function() {
+            Event.addPerson(person_data, function() {
                 $scope.event = Event.get($stateParams);
                 $scope.allPersons = Person.all();
                 $scope.newPerson = {};
@@ -114,31 +118,29 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
             if (isNew) {
                 var personObj = new Person(person);
                 personObj.$save(function(p) {
-                    $scope._addAttendee(angular.copy(p));
+                    $scope._addPerson(angular.copy(p));
                 });
             } else {
-                $scope._addAttendee(angular.copy(person));
+                $scope._addPerson(angular.copy(person));
             }
         };
 
-        $scope.updateAttendee = function(person, attended) {
-            $log.debug('EventDetailsCtrl.event_id: ' + $stateParams.id);
-            $log.debug('EventDetailsCtrl.person_id: ' + person.person_id);
-            $log.debug('EventDetailsCtrl.attended: ' + attended);
-            Event.personAttended({
-                    _id: $stateParams.id,
-                    person_id: person.person_id,
-                    'attended': attended
-                },
+        $scope.setPersonAttribute = function(person, key, value) {
+            $log.debug('EventDetailsCtrl.setPersonAttribute.event_id: ' + $stateParams.id);
+            $log.debug('EventDetailsCtrl.setPersonAttribute.person_id: ' + person.person_id);
+            $log.debug('EventDetailsCtrl.setPersonAttribute.key: ' + key + ' value: ' + value);
+            var data = {_id: $stateParams.id, person_id: person.person_id};
+            data[key] = value;
+            Event.updatePerson(data,
                 function(data) {
-                    $log.debug('EventDetailsCtrl.personAttended.data');
+                    $log.debug('EventDetailsCtrl.setPersonAttribute.data');
                     $log.debug(data);
                     $scope.event.persons = data;
             });
         };
-                
+
         $scope.removeAttendee = function(person) {
-            Event.deleteAttendee({
+            Event.deletePerson({
                     _id: $stateParams.id,
                     person_id: person.person_id
                 },
@@ -151,11 +153,21 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
 );
 
 
-eventManControllers.controller('PersonsListCtrl', ['$scope', 'Person',
-    function ($scope, Person) {
+eventManControllers.controller('PersonsListCtrl', ['$scope', 'Person', 'Setting',
+    function ($scope, Person, Setting) {
         $scope.persons = Person.all();
         $scope.personsOrderProp = 'name';
         $scope.eventsOrderProp = '-begin-date';
+        $scope.customFields = Setting.query({setting: 'person_custom_field',
+            in_persons_list: true});
+
+        $scope.setAttribute = function(person, key, value) {
+            var data = {_id: person._id};
+            data[key] = value;
+            Person.update(data, function() {
+                $scope.persons = Person.all();
+            });
+        };
 
         $scope.remove = function(_id) {
             Person.remove({'id': _id}, function() {
@@ -166,11 +178,12 @@ eventManControllers.controller('PersonsListCtrl', ['$scope', 'Person',
 );
 
 
-eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$stateParams', 'Person', 'Event', '$log',
-    function ($scope, $stateParams, Person, Event, $log) {
+eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$stateParams', 'Person', 'Event', 'Setting', '$log',
+    function ($scope, $stateParams, Person, Event, Setting, $log) {
         $scope.personsOrderProp = 'name';
         $scope.eventsOrderProp = '-begin-date';
         $scope.addToEvent = '';
+        $scope.customFields = Setting.query({setting: 'person_custom_field'});
 
         if ($stateParams.id) {
             $scope.person = Person.get($stateParams);
@@ -188,7 +201,7 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$stateParams', '
                         data.person_id = data._id;
                         data._id = $scope.addToEvent;
                         data.attended = false;
-                        Event.addAttendee(data);
+                        Event.addPerson(data);
                     }
                 });
             } else {
@@ -198,22 +211,17 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$stateParams', '
                         data._id = $scope.addToEvent;
                         data.person_id = $scope.person._id;
                         data.attended = false;
-                        Event.addAttendee(data);
+                        Event.addPerson(data);
                     }
                 });
             }
             $scope.personForm.$dirty = false;
         };
 
-        $scope.updateAttendee = function(event, attended) {
-            $log.debug('PersonDetailsCtrl.event_id: ' + $stateParams.id);
-            $log.debug('PersonDetailsCtrl.event_id: ' + event.event_id);
-            $log.debug('PersonDetailsCtrl.attended: ' + attended);
-            Event.personAttended({
-                    _id: event._id,
-                    person_id: $stateParams.id,
-                    'attended': attended
-                },
+        $scope.setPersonAttributeAtEvent = function(evnt, key, value) {
+            var attrs = {_id: evnt._id, person_id: $stateParams.id};
+            attrs[key] = value;
+            Event.updatePerson(attrs,
                 function(data) {
                     $scope.events = Person.getEvents({_id: $stateParams.id, all: true});
                 }
@@ -229,13 +237,13 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$stateParams', '
                 data._id = evnt._id;
                 data.person_id = person._id;
                 data.attended = false;
-                Event.addAttendee(data,
+                Event.addPerson(data,
                     function(data) {
                         $scope.events = Person.getEvents({_id: $stateParams.id, all: true});
                     }
                 );
             } else {
-                Event.deleteAttendee({_id: evnt._id, person_id: person._id},
+                Event.deletePerson({_id: evnt._id, person_id: person._id},
                     function(data) {
                         $scope.events = Person.getEvents({_id: $stateParams.id, all: true});
                     }

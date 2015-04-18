@@ -33,6 +33,9 @@
                 <thead>
                     <tr>
                         <td><strong>{{'Name' | translate}}</strong></td>
+                        <td ng-repeat="col in customFields">
+                            <strong>{{col.label | translate}}</strong>
+                        </td>
                         <td><strong>{{'Delete' | translate}}</strong></td>
                     </tr>
                 </thead>
@@ -41,6 +44,14 @@
                     <td>
                         <span><strong><a ui-sref="person.info({id: person._id})"><span>{{person.name}}</span>&nbsp;<span>{{person.surname}}</span></a></strong></span><span ng-if="person.email">&nbsp;&lt;{{person.email}}&gt;</span>
                         <p ng-if="person.company || person.job"><i ng-if="person.job">{{person.job}}</i><span ng-if="person.company && person.job">&nbsp;@&nbsp;</span><i ng-if="person.company">{{person.company}}</i></p>
+                    </td>
+                    <td ng-repeat="col in customFields">
+                        <span ng-if="col.type == 'boolean'">
+                            <button class="btn btn-link" ng-click="setAttribute(person, col.key, !person[col.key])"><span class="glyphicon {{(person[col.key]) && 'glyphicon-ok-sign text-success' || 'glyphicon-remove-sign text-danger'}}"></span></button>
+                        </span>
+                        <span ng-if="col.type != 'boolean'">
+                            {{person[col.key]}}
+                        </span>
                     </td>
                     <td>
                         <button ng-click="remove(person._id)" type="button" class="btn btn-link glyphicon glyphicon-trash"></button>

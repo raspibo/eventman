@@ -39,7 +39,7 @@
                             <button class="btn btn-link" name="switch-registered" ng-click="switchRegistered(event, person, !event.person_data.person_id)"><span class="glyphicon {{(event.person_data.person_id) && 'glyphicon-ok-sign text-success' || 'glyphicon-remove-sign text-danger'}}"></span></button>
                         </td>
                         <td>
-                            <button ng-disabled="!event.person_data.person_id" class="btn btn-link" name="switch-attended" ng-click="updateAttendee(event, !event.person_data.attended)"><span class="glyphicon {{(event.person_data.attended) && 'glyphicon-ok-sign text-success' || 'glyphicon-remove-sign text-danger'}}"></span></button>
+                            <button ng-disabled="!event.person_data.person_id" class="btn btn-link" name="switch-attended" ng-click="setPersonAttributeAtEvent(event, 'attended', !event.person_data.attended)"><span class="glyphicon {{(event.person_data.attended) && 'glyphicon-ok-sign text-success' || 'glyphicon-remove-sign text-danger'}}"></span></button>
                         </td>
                     </tr>
                 </tbody>

@@ -39,13 +39,23 @@ PROCESS_TIMEOUT = 60
 
 class BaseHandler(tornado.web.RequestHandler):
     """Base class for request handlers."""
+    # A property to access the first value of each argument.
+    arguments = property(lambda self: dict([(k, v[0])
+        for k, v in self.request.arguments.iteritems()]))
+
     _bool_convert = {
         '0': False,
         'n': False,
         'f': False,
         'no': False,
         'off': False,
-        'false': False
+        'false': False,
+        '1': True,
+        'y': True,
+        't': True,
+        'on': True,
+        'yes': True,
+        'true': True
     }
 
     def tobool(self, obj):
@@ -53,7 +63,10 @@ class BaseHandler(tornado.web.RequestHandler):
             obj = obj[0]
         if isinstance(obj, (str, unicode)):
             obj = obj.lower()
-        return bool(self._bool_convert.get(obj, obj))
+        return self._bool_convert.get(obj, obj)
+
+    def _arguments_tobool(self):
+        return dict([(k, self.tobool(v)) for k, v in self.arguments.iteritems()])
 
     def initialize(self, **kwargs):
         """Add every passed (key, value) as attributes of the instance."""
@@ -100,10 +113,6 @@ class CollectionHandler(BaseHandler):
             if add:
                 filtered.append(result)
         return filtered
-
-    # A property to access the first value of each argument.
-    arguments = property(lambda self: dict([(k, v[0])
-        for k, v in self.request.arguments.iteritems()]))
 
     def _dict2env(self, data):
         """Convert a dictionary into a form suitable to be passed as environment variables."""
@@ -399,6 +408,15 @@ class EbCSVImportPersonsHandler(BaseHandler):
         self.write(reply)
 
 
+class SettingsHandler(BaseHandler):
+    """Handle requests for Settings."""
+    @gen.coroutine
+    def get(self, **kwds):
+        query = self._arguments_tobool()
+        settings = self.db.query('settings', query)
+        self.write({'settings': settings})
+
+
 def run():
     """Run the Tornado web application."""
     # command line arguments; can also be written in a configuration file,
@@ -428,6 +446,7 @@ def run():
             (r"/events/?(?P<id_>\w+)?/?(?P<resource>\w+)?/?(?P<resource_id>\w+)?", EventsHandler, init_params),
             (r"/(?:index.html)?", RootHandler, init_params),
             (r"/ebcsvpersons", EbCSVImportPersonsHandler, init_params),
+            (r"/settings", SettingsHandler, init_params),
             (r'/(.*)', tornado.web.StaticFileHandler, {"path": "angular_app"})
         ],
         template_path=os.path.join(os.path.dirname(__file__), "templates"),
