@@ -92,7 +92,6 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
                 return;
             }
             var attendees = 0;
-            $log.info($scope.event.persons.length);
             angular.forEach($scope.event.persons, function(value, key) {
                 if (value.attended) {
                     attendees += 1;
@@ -102,12 +101,22 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
         };
 
         $scope._addPerson = function(person_data) {
+            var original_data = angular.copy(person_data);
             person_data.person_id = person_data._id;
             person_data._id = $stateParams.id;
             person_data.attended = true;
             Event.addPerson(person_data, function() {
-                $scope.event = Event.get($stateParams);
-                $scope.allPersons = Person.all();
+                // This could be improved adding it only locally.
+                //$scope.event.persons.push(person_data);
+                Event.get($stateParams, function(data) {
+                    $scope.event.persons = angular.fromJson(data).persons;
+                });
+                var idx = $scope.allPersons.indexOf(original_data);
+                if (idx != -1) {
+                    $scope.allPersons.splice(idx, 1);
+                } else {
+                    $scope.allPersons = Person.all();
+                }
                 $scope.newPerson = {};
             });
         };
@@ -183,7 +192,8 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$stateParams', '
         $scope.personsOrderProp = 'name';
         $scope.eventsOrderProp = '-begin-date';
         $scope.addToEvent = '';
-        $scope.customFields = Setting.query({setting: 'person_custom_field'});
+        $scope.customFields = Setting.query({setting: 'person_custom_field',
+            in_persons_list: true});
 
         if ($stateParams.id) {
             $scope.person = Person.get($stateParams);
