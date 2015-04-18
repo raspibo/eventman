@@ -56,7 +56,7 @@
                                 <tr ng-repeat="person in event.persons | splittedFilter:query | orderBy:personsOrderProp">
                                     <td>
                                         <span><strong><a ui-sref="person.info({id: person.person_id})"><span>{{person.name}}</span>&nbsp;<span>{{person.surname}}</span></a></strong></span><span ng-if="person.email">&nbsp;&lt;{{person.email}}&gt;</span>
-                                        <p ng-if="person.company"><i>{{person.company}}</i></p>
+                                        <p ng-if="person.company || person.job"><i ng-if="person.job">{{person.job}}</i><span ng-if="person.company && person.job">&nbsp;@&nbsp;</span><i ng-if="person.company">{{person.company}}</i></p>
                                     </td>
                                     <td>
                                         <button class="btn btn-link" name="switch-attended" ng-click="updateAttendee(person, !person.attended)"><span class="glyphicon {{(person.attended) && 'glyphicon-ok-sign text-success' || 'glyphicon-remove-sign text-danger'}}"></span></button>

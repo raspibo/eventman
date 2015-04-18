@@ -352,9 +352,13 @@ class EbCSVImportPersonsHandler(BaseHandler):
         'Data check-in': 'checkin_datetime',
         'Ordine n.': 'order_nr',
         'ID ordine': 'order_nr',
+        'Titolo professionale': 'job',
+        'Azienda': 'company',
+        'Prefisso': 'name_title',
         'Prefisso (Sig., Sig.ra, ecc.)': 'name_title',
     }
-    keepPersonData = ('name', 'surname', 'email', 'name_title')
+    # Only these information are stored in the person collection.
+    keepPersonData = ('name', 'surname', 'email', 'name_title', 'company', 'job')
 
     @gen.coroutine
     def post(self, **kwargs):
