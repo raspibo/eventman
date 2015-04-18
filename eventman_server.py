@@ -19,6 +19,7 @@ limitations under the License.
 
 import os
 import glob
+import json
 import datetime
 import subprocess
 
@@ -27,7 +28,7 @@ import tornado.ioloop
 import tornado.options
 from tornado.options import define, options
 import tornado.web
-from tornado import gen, escape
+from tornado import gen, escape, process
 
 import utils
 import backend
@@ -151,44 +152,58 @@ class CollectionHandler(BaseHandler):
             self.db.delete(self.collection, id_)
         self.write({'success': True})
 
-    def run_command(self, cmd, callback=None):
+    def on_timeout(self, pipe):
+        """Kill a process that is taking too long to complete."""
+        try:
+            pipe.proc.kill()
+        except:
+            pass
+
+    def on_exit(self, returncode, cmd, pipe):
+        """Callback executed when a subprocess execution is over."""
+        self.ioloop.remove_timeout(self.timeout)
+
+    @gen.coroutine
+    def run_subprocess(self, cmd, stdin_data=None):
         """Execute the given action.
 
         :param cmd: the command to be run with its command line arguments
         :type cmd: list
+
+        :param stdin_data: data to be sent over stdin
+        :type stdin_data: str
         """
         self.ioloop = tornado.ioloop.IOLoop.instance()
-        p = subprocess.Popen(cmd, close_fds=True,
-                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        self.ioloop.add_handler(p.stdout.fileno(),
-                self.async_callback(self.on_response, callback, p), self.ioloop.READ)
-        # also set a timeout
+        p = process.Subprocess(cmd, close_fds=True, stdin=process.Subprocess.STREAM,
+                stdout=process.Subprocess.STREAM, stderr=process.Subprocess.STREAM)
+        p.set_exit_callback(lambda returncode: self.on_exit(returncode, cmd, p))
         self.timeout = self.ioloop.add_timeout(datetime.timedelta(seconds=PROCESS_TIMEOUT),
-                lambda: self.on_timeout(callback, p))
-
-    def on_timeout(self, callback, pipe, *args):
-        """Kill a process that is taking too long to complete."""
-        pipe.kill()
-        callback((None, 'killed process pid:%d' % pipe.pid))
-
-    def on_response(self, callback, pipe, fd, events):
-        """Handle the execution of a script."""
-        self.ioloop.remove_timeout(self.timeout)
-        stdoutdata, stderrdata = pipe.communicate()
-        callback((pipe.returncode, stdoutdata))
-        self.ioloop.remove_handler(fd)
+                lambda: self.on_timeout(p))
+        yield gen.Task(p.stdin.write, stdin_data or '')
+        p.stdin.close()
+        out, err = yield [gen.Task(p.stdout.read_until_close),
+                gen.Task(p.stderr.read_until_close)]
+        raise gen.Return((out, err))
 
     @gen.coroutine
-    def run_triggers(self, action):
+    def run_triggers(self, action, stdin_data=None):
         """Asynchronously execute triggers for the given action.
 
         :param action: action name; scripts in directory ./data/triggers/{action}.d will be run
         :type action: str
+
+        :param stdin_data: a python dictionary that will be serialized in JSON and sent to the process over stdin
+        :type stdin_data: dict
         """
+        stdin_data = stdin_data or {}
+        try:
+            stdin_data = json.dumps(stdin_data)
+        except:
+            stdin_data = '{}'
         for script in glob.glob(os.path.join(self.data_dir, 'triggers', '%s.d' % action, '*')):
             if not (os.path.isfile(script) and os.access(script, os.X_OK)):
                 continue
-            ret, resp = yield gen.Task(self.run_command, [script])
+            out, err = yield gen.Task(self.run_subprocess, [script], stdin_data)
 
 
 class PersonsHandler(CollectionHandler):
@@ -230,17 +245,19 @@ class EventsHandler(CollectionHandler):
     collection = 'events'
     object_id = 'event_id'
 
+    def _get_person_data(self, person_id, persons):
+        for person in persons:
+            if str(person.get('person_id')) == person_id:
+                return person
+        return {}
+
     def handle_get_persons(self, id_, resource_id=None):
         # Return every person registered at this event, or the information
         # about a specific person.
         query = {'_id': id_}
         event = self.db.query('events', query)[0]
         if resource_id:
-            for person in event.get('persons', []):
-                if str(person.get('person_id')) == resource_id:
-                    return {'person': person}
-        if resource_id:
-            return {'person': {}}
+            return {'person': self._get_person_data(resource_id, event.get('persons') or [])}
         persons = self._filter_results(event.get('persons') or [], self.arguments)
         return {'persons': persons}
 
@@ -264,8 +281,22 @@ class EventsHandler(CollectionHandler):
         query['_id'] = id_
         if person_id is not None:
             query['persons.person_id'] = person_id
+        old_person_data = {}
+        current_event = self.db.query(self.collection, query)
+        if current_event:
+            current_event = current_event[0]
+        old_person_data = self._get_person_data(person_id, current_event.get('persons') or [])
         merged, doc = self.db.update('events', query,
                 data, updateList='persons', create=False)
+        new_person_data = self._get_person_data(person_id, doc.get('persons') or [])
+        #if old_person_data and old_person_data.get('attended') != new_person_data.get('attended') \
+        #        and new_person_data.get('attended'):
+        self.run_triggers('update_person_in_event', {
+            'old': old_person_data,
+            'new': new_person_data,
+            'event': doc,
+            'merged': merged
+        })
         return {'event': doc}
 
     def handle_delete_persons(self, id_, person_id):
