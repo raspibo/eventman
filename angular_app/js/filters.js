@@ -50,3 +50,17 @@ eventManApp.filter('personRegistered', ['$filter',
     }]
 );
 
+
+/* Filter that handles splitted words. */
+eventManApp.filter('splittedFilter', ['$filter',
+    function($filter) {
+        return function(inputArray, searchText) {
+            var wordArray = searchText ? searchText.toLowerCase().split(/\s+/) : [];
+            for (var x=0; x < wordArray.length; x++) {
+                inputArray = $filter('filter')(inputArray, wordArray[x]);
+            }
+            return inputArray;
+        };
+    }]
+);
+

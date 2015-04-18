@@ -35,20 +35,6 @@ eventManApp.run(['$rootScope', '$state', '$stateParams',
 );
 
 
-/* Filter that handles splitted words. */
-eventManApp.filter('splittedFilter', ['$filter',
-    function($filter) {
-        return function(inputArray, searchText) {
-            var wordArray = searchText ? searchText.toLowerCase().split(/\s+/) : [];
-            for (var x=0; x < wordArray.length; x++) {
-                inputArray = $filter('filter')(inputArray, wordArray[x]);
-            }
-            return inputArray;
-        };
-    }]
-);
-
-
 /* Directive that can be used to make an input field react to the press of Enter. */
 eventManApp.directive('ngEnter', function () {
     return function (scope, element, attrs) {
