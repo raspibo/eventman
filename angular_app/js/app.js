@@ -35,21 +35,6 @@ eventManApp.run(['$rootScope', '$state', '$stateParams',
 );
 
 
-/* Directive that can be used to make an input field react to the press of Enter. */
-eventManApp.directive('ngEnter', function () {
-    return function (scope, element, attrs) {
-        element.bind("keydown keypress", function (event) {
-            if(event.which === 13) {
-                scope.$apply(function (){
-                    scope.$eval(attrs.ngEnter);
-                });
-                event.preventDefault();
-            }
-        });
-    };
-});
-
-
 /* Configure the states. */
 eventManApp.config(['$stateProvider', '$urlRouterProvider',
     function($stateProvider, $urlRouterProvider) {
