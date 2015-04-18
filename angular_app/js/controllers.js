@@ -131,7 +131,7 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
             $log.debug('EventDetailsCtrl.setPersonAttribute.key: ' + key + ' value: ' + value);
             var data = {_id: $stateParams.id, person_id: person.person_id};
             data[key] = value;
-            Event.personAttended(data,
+            Event.updatePerson(data,
                 function(data) {
                     $log.debug('EventDetailsCtrl.setPersonAttribute.data');
                     $log.debug(data);
@@ -218,15 +218,10 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$stateParams', '
             $scope.personForm.$dirty = false;
         };
 
-        $scope.updateAttendee = function(event, attended) {
-            $log.debug('PersonDetailsCtrl.event_id: ' + $stateParams.id);
-            $log.debug('PersonDetailsCtrl.event_id: ' + event.event_id);
-            $log.debug('PersonDetailsCtrl.attended: ' + attended);
-            Event.personAttended({
-                    _id: event._id,
-                    person_id: $stateParams.id,
-                    'attended': attended
-                },
+        $scope.setPersonAttributeAtEvent = function(evnt, key, value) {
+            var attrs = {_id: evnt._id, person_id: $stateParams.id};
+            attrs[key] = value;
+            Event.updatePerson(attrs,
                 function(data) {
                     $scope.events = Person.getEvents({_id: $stateParams.id, all: true});
                 }

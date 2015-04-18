@@ -31,7 +31,7 @@ eventManServices.factory('Event', ['$resource',
 
             update: {method: 'PUT'},
 
-            personAttended: {
+            updatePerson: {
                 method: 'PUT',
                 isArray: true,
                 url: 'events/:id/persons/:person_id',
