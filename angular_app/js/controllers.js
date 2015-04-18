@@ -156,7 +156,6 @@ eventManControllers.controller('PersonsListCtrl', ['$scope', 'Person', 'Setting'
         $scope.persons = Person.all();
         $scope.personsOrderProp = 'name';
         $scope.eventsOrderProp = '-begin-date';
-
         $scope.customFields = Setting.query({setting: 'person_custom_field',
             in_persons_list: true});
 
@@ -177,11 +176,12 @@ eventManControllers.controller('PersonsListCtrl', ['$scope', 'Person', 'Setting'
 );
 
 
-eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$stateParams', 'Person', 'Event', '$log',
-    function ($scope, $stateParams, Person, Event, $log) {
+eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$stateParams', 'Person', 'Event', 'Setting', '$log',
+    function ($scope, $stateParams, Person, Event, Setting, $log) {
         $scope.personsOrderProp = 'name';
         $scope.eventsOrderProp = '-begin-date';
         $scope.addToEvent = '';
+        $scope.customFields = Setting.query({setting: 'person_custom_field'});
 
         if ($stateParams.id) {
             $scope.person = Person.get($stateParams);

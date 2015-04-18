@@ -42,6 +42,12 @@
                 <tr ng-repeat="event in events | splittedFilter:query | orderBy:eventsOrderProp">
         </div>
 
+        <div ng-repeat="custom in customFields" class="form-group top5">
+            <label for="custom_{{custom['key']}}">{{custom.label | translate}}</span>
+            <input ng-if="custom.type == 'boolean'" id="custom_{{custm['key']}}" type="checkbox" class="form-control" placeholder="{{custom.label | translate}}" ng-model="person[custom.key]">
+            <input ng-if="custom.type != 'boolean'" id="custom_{{custm['key']}}" type="text" class="form-control" placeholder="{{custom.label | translate}}" ng-model="person[custom.key]">
+        </div>
+
         <input type="submit" style="position: absolute; left: -9999px; width: 1px; height: 1px;"/>
     </form>
 </div>
