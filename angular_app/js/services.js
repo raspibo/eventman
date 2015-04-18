@@ -31,7 +31,7 @@ eventManServices.factory('Event', ['$resource',
 
             update: {method: 'PUT'},
 
-            personAttended: {
+            updatePerson: {
                 method: 'PUT',
                 isArray: true,
                 url: 'events/:id/persons/:person_id',
@@ -40,7 +40,7 @@ eventManServices.factory('Event', ['$resource',
                 }
             },
 
-            addAttendee: {
+            addPerson: {
                 method: 'POST',
                 isArray: true,
                 url: 'events/:id/persons/:person_id',
@@ -49,7 +49,7 @@ eventManServices.factory('Event', ['$resource',
                 }
             },
 
-            deleteAttendee: {
+            deletePerson: {
                 method: 'DELETE',
                 isArray: true,
                 url: 'events/:_id/persons/:person_id',
@@ -84,6 +84,51 @@ eventManServices.factory('Person', ['$resource',
                     return angular.fromJson(data).events;
                 }
             }
+        });
+    }]
+);
+
+
+eventManServices.factory('Person', ['$resource',
+    function($resource) {
+        return $resource('persons/:id', {id: '@_id'}, {
+
+            all: {
+                method: 'GET',
+                isArray: true,
+                transformResponse: function(data, headers) {
+                    return angular.fromJson(data).persons;
+                }
+            },
+
+            update: {method: 'PUT'},
+
+            getEvents: {
+                method: 'GET',
+                url: 'persons/:_id/events',
+                isArray: true,
+                transformResponse: function(data, headers) {
+                    return angular.fromJson(data).events;
+                }
+            }
+        });
+    }]
+);
+
+
+eventManServices.factory('Setting', ['$resource',
+    function($resource) {
+        return $resource('settings/', {}, {
+
+            query: {
+                method: 'GET',
+                isArray: true,
+                transformResponse: function(data, headers) {
+                    return angular.fromJson(data).settings;
+                }
+            },
+
+            update: {method: 'PUT'},
         });
     }]
 );
