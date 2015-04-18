@@ -21,7 +21,6 @@ import os
 import glob
 import json
 import datetime
-import subprocess
 
 import tornado.httpserver
 import tornado.ioloop
@@ -33,6 +32,7 @@ from tornado import gen, escape, process
 import utils
 import backend
 
+ENCODING = 'utf8'
 PROCESS_TIMEOUT = 60
 
 
@@ -104,6 +104,18 @@ class CollectionHandler(BaseHandler):
     arguments = property(lambda self: dict([(k, v[0])
         for k, v in self.request.arguments.iteritems()]))
 
+    def _dict2env(self, data):
+        """Convert a dictionary into a form suitable to be passed as environment variables."""
+        ret = {}
+        for key, value in data.iteritems():
+            if isinstance(value, (list, tuple, dict)):
+                continue
+            try:
+                ret[key.upper()] = unicode(value).encode(ENCODING)
+            except:
+                continue
+        return ret
+
     @gen.coroutine
     def get(self, id_=None, resource=None, resource_id=None, **kwargs):
         if resource:
@@ -164,7 +176,7 @@ class CollectionHandler(BaseHandler):
         self.ioloop.remove_timeout(self.timeout)
 
     @gen.coroutine
-    def run_subprocess(self, cmd, stdin_data=None):
+    def run_subprocess(self, cmd, stdin_data=None, env=None):
         """Execute the given action.
 
         :param cmd: the command to be run with its command line arguments
@@ -172,10 +184,12 @@ class CollectionHandler(BaseHandler):
 
         :param stdin_data: data to be sent over stdin
         :type stdin_data: str
+        :param env: environment of the process
+        :type env: dict
         """
         self.ioloop = tornado.ioloop.IOLoop.instance()
         p = process.Subprocess(cmd, close_fds=True, stdin=process.Subprocess.STREAM,
-                stdout=process.Subprocess.STREAM, stderr=process.Subprocess.STREAM)
+                stdout=process.Subprocess.STREAM, stderr=process.Subprocess.STREAM, env=env)
         p.set_exit_callback(lambda returncode: self.on_exit(returncode, cmd, p))
         self.timeout = self.ioloop.add_timeout(datetime.timedelta(seconds=PROCESS_TIMEOUT),
                 lambda: self.on_timeout(p))
@@ -183,16 +197,18 @@ class CollectionHandler(BaseHandler):
         p.stdin.close()
         out, err = yield [gen.Task(p.stdout.read_until_close),
                 gen.Task(p.stderr.read_until_close)]
+        print 'out', out
         raise gen.Return((out, err))
 
     @gen.coroutine
-    def run_triggers(self, action, stdin_data=None):
+    def run_triggers(self, action, stdin_data=None, env=None):
         """Asynchronously execute triggers for the given action.
 
         :param action: action name; scripts in directory ./data/triggers/{action}.d will be run
         :type action: str
-
         :param stdin_data: a python dictionary that will be serialized in JSON and sent to the process over stdin
+        :type stdin_data: dict
+        :param env: environment of the process
         :type stdin_data: dict
         """
         stdin_data = stdin_data or {}
@@ -203,7 +219,7 @@ class CollectionHandler(BaseHandler):
         for script in glob.glob(os.path.join(self.data_dir, 'triggers', '%s.d' % action, '*')):
             if not (os.path.isfile(script) and os.access(script, os.X_OK)):
                 continue
-            out, err = yield gen.Task(self.run_subprocess, [script], stdin_data)
+            out, err = yield gen.Task(self.run_subprocess, [script], stdin_data, env)
 
 
 class PersonsHandler(CollectionHandler):
@@ -289,14 +305,17 @@ class EventsHandler(CollectionHandler):
         merged, doc = self.db.update('events', query,
                 data, updateList='persons', create=False)
         new_person_data = self._get_person_data(person_id, doc.get('persons') or [])
-        #if old_person_data and old_person_data.get('attended') != new_person_data.get('attended') \
-        #        and new_person_data.get('attended'):
-        self.run_triggers('update_person_in_event', {
-            'old': old_person_data,
+        env = self._dict2env(new_person_data)
+        env.update({'PERSON_ID': person_id, 'EVENT_ID': id_, 'EVENT_TITLE': doc.get('title', '')})
+        stdin_data = {'old': old_person_data,
             'new': new_person_data,
             'event': doc,
             'merged': merged
-        })
+        }
+        self.run_triggers('update_person_in_event', stdin_data=stdin_data, env=env)
+        if old_person_data and old_person_data.get('attended') != new_person_data.get('attended') \
+                and new_person_data.get('attended'):
+            self.run_triggers('attends', stdin_data=stdin_data, env=env)
         return {'event': doc}
 
     def handle_delete_persons(self, id_, person_id):
