@@ -101,11 +101,11 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
             $scope.countAttendees = attendees;
         };
 
-        $scope._addAttendee = function(person_data) {
+        $scope._addPerson = function(person_data) {
             person_data.person_id = person_data._id;
             person_data._id = $stateParams.id;
             person_data.attended = true;
-            Event.addAttendee(person_data, function() {
+            Event.addPerson(person_data, function() {
                 $scope.event = Event.get($stateParams);
                 $scope.allPersons = Person.all();
                 $scope.newPerson = {};
@@ -118,10 +118,10 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
             if (isNew) {
                 var personObj = new Person(person);
                 personObj.$save(function(p) {
-                    $scope._addAttendee(angular.copy(p));
+                    $scope._addPerson(angular.copy(p));
                 });
             } else {
-                $scope._addAttendee(angular.copy(person));
+                $scope._addPerson(angular.copy(person));
             }
         };
 
@@ -140,7 +140,7 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
         };
 
         $scope.removeAttendee = function(person) {
-            Event.deleteAttendee({
+            Event.deletePerson({
                     _id: $stateParams.id,
                     person_id: person.person_id
                 },
@@ -201,7 +201,7 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$stateParams', '
                         data.person_id = data._id;
                         data._id = $scope.addToEvent;
                         data.attended = false;
-                        Event.addAttendee(data);
+                        Event.addPerson(data);
                     }
                 });
             } else {
@@ -211,7 +211,7 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$stateParams', '
                         data._id = $scope.addToEvent;
                         data.person_id = $scope.person._id;
                         data.attended = false;
-                        Event.addAttendee(data);
+                        Event.addPerson(data);
                     }
                 });
             }
@@ -237,13 +237,13 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$stateParams', '
                 data._id = evnt._id;
                 data.person_id = person._id;
                 data.attended = false;
-                Event.addAttendee(data,
+                Event.addPerson(data,
                     function(data) {
                         $scope.events = Person.getEvents({_id: $stateParams.id, all: true});
                     }
                 );
             } else {
-                Event.deleteAttendee({_id: evnt._id, person_id: person._id},
+                Event.deletePerson({_id: evnt._id, person_id: person._id},
                     function(data) {
                         $scope.events = Person.getEvents({_id: $stateParams.id, all: true});
                     }

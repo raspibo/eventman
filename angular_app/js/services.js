@@ -40,7 +40,7 @@ eventManServices.factory('Event', ['$resource',
                 }
             },
 
-            addAttendee: {
+            addPerson: {
                 method: 'POST',
                 isArray: true,
                 url: 'events/:id/persons/:person_id',
@@ -49,7 +49,7 @@ eventManServices.factory('Event', ['$resource',
                 }
             },
 
-            deleteAttendee: {
+            deletePerson: {
                 method: 'DELETE',
                 isArray: true,
                 url: 'events/:_id/persons/:person_id',
