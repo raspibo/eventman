@@ -73,6 +73,8 @@ class EventManDB(object):
         """
         if obj is None:
             return None
+        if isinstance(obj, bool):
+            return obj
         try:
             return ObjectId(obj)
         except:

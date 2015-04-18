@@ -88,3 +88,48 @@ eventManServices.factory('Person', ['$resource',
     }]
 );
 
+
+eventManServices.factory('Person', ['$resource',
+    function($resource) {
+        return $resource('persons/:id', {id: '@_id'}, {
+
+            all: {
+                method: 'GET',
+                isArray: true,
+                transformResponse: function(data, headers) {
+                    return angular.fromJson(data).persons;
+                }
+            },
+
+            update: {method: 'PUT'},
+
+            getEvents: {
+                method: 'GET',
+                url: 'persons/:_id/events',
+                isArray: true,
+                transformResponse: function(data, headers) {
+                    return angular.fromJson(data).events;
+                }
+            }
+        });
+    }]
+);
+
+
+eventManServices.factory('Setting', ['$resource',
+    function($resource) {
+        return $resource('settings/', {}, {
+
+            query: {
+                method: 'GET',
+                isArray: true,
+                transformResponse: function(data, headers) {
+                    return angular.fromJson(data).settings;
+                }
+            },
+
+            update: {method: 'PUT'},
+        });
+    }]
+);
+

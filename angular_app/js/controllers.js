@@ -151,11 +151,22 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
 );
 
 
-eventManControllers.controller('PersonsListCtrl', ['$scope', 'Person',
-    function ($scope, Person) {
+eventManControllers.controller('PersonsListCtrl', ['$scope', 'Person', 'Setting',
+    function ($scope, Person, Setting) {
         $scope.persons = Person.all();
         $scope.personsOrderProp = 'name';
         $scope.eventsOrderProp = '-begin-date';
+
+        $scope.customFields = Setting.query({setting: 'person_custom_field',
+            in_persons_list: true});
+
+        $scope.setAttribute = function(person, key, value) {
+            var data = {_id: person._id};
+            data[key] = value;
+            Person.update(data, function() {
+                $scope.persons = Person.all();
+            });
+        };
 
         $scope.remove = function(_id) {
             Person.remove({'id': _id}, function() {
