@@ -125,14 +125,6 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
             }
         };
 
-        $scope.setAttribute = function(person, key, value) {
-            var data = {_id: person._id};
-            data[key] = value;
-            Person.update(data, function() {
-                $scope.persons = Person.all();
-            });
-        };
-
         $scope.setPersonAttribute = function(person, key, value) {
             $log.debug('EventDetailsCtrl.setPersonAttribute.event_id: ' + $stateParams.id);
             $log.debug('EventDetailsCtrl.setPersonAttribute.person_id: ' + person.person_id);
@@ -142,22 +134,6 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
             Event.personAttended(data,
                 function(data) {
                     $log.debug('EventDetailsCtrl.setPersonAttribute.data');
-                    $log.debug(data);
-                    $scope.event.persons = data;
-            });
-        };
-
-        $scope.updateAttendee = function(person, attended) {
-            $log.debug('EventDetailsCtrl.event_id: ' + $stateParams.id);
-            $log.debug('EventDetailsCtrl.person_id: ' + person.person_id);
-            $log.debug('EventDetailsCtrl.attended: ' + attended);
-            Event.personAttended({
-                    _id: $stateParams.id,
-                    person_id: person.person_id,
-                    'attended': attended
-                },
-                function(data) {
-                    $log.debug('EventDetailsCtrl.personAttended.data');
                     $log.debug(data);
                     $scope.event.persons = data;
             });

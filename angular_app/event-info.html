@@ -62,7 +62,7 @@
                                         <p ng-if="person.company"><i>{{person.company}}</i></p>
                                     </td>
                                     <td>
-                                        <button class="btn btn-link" name="switch-attended" ng-click="updateAttendee(person, !person.attended)"><span class="glyphicon {{(person.attended) && 'glyphicon-ok-sign text-success' || 'glyphicon-remove-sign text-danger'}}"></span></button>
+                                        <button class="btn btn-link" name="switch-attended" ng-click="setPersonAttribute(person, 'attended', !person.attended)"><span class="glyphicon {{(person.attended) && 'glyphicon-ok-sign text-success' || 'glyphicon-remove-sign text-danger'}}"></span></button>
                                     </td>
                                 <td ng-repeat="col in customFields">
                                     <span ng-if="col.type == 'boolean'">
