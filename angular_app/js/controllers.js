@@ -53,11 +53,14 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event',
 );
 
 
-eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person', '$stateParams', '$log',
-    function ($scope, Event, Person, $stateParams, $log) {
+eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person', '$stateParams', 'Setting', '$log',
+    function ($scope, Event, Person, $stateParams, Setting, $log) {
         $scope.personsOrderProp = 'name';
         $scope.eventsOrderProp = '-begin-date';
         $scope.countAttendees = 0;
+        $scope.customFields = Setting.query({setting: 'person_custom_field',
+            in_event_details: true});
+
         if ($stateParams.id) {
             $scope.event = Event.get($stateParams, function() {
                 $scope.$watchCollection(function() {
@@ -68,6 +71,7 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
             });
             $scope.allPersons = Person.all();
         }
+
         // store a new Event or update an existing one
         $scope.save = function() {
                 // avoid override of event.persons list.
@@ -121,6 +125,28 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
             }
         };
 
+        $scope.setAttribute = function(person, key, value) {
+            var data = {_id: person._id};
+            data[key] = value;
+            Person.update(data, function() {
+                $scope.persons = Person.all();
+            });
+        };
+
+        $scope.setPersonAttribute = function(person, key, value) {
+            $log.debug('EventDetailsCtrl.setPersonAttribute.event_id: ' + $stateParams.id);
+            $log.debug('EventDetailsCtrl.setPersonAttribute.person_id: ' + person.person_id);
+            $log.debug('EventDetailsCtrl.setPersonAttribute.key: ' + key + ' value: ' + value);
+            var data = {_id: $stateParams.id, person_id: person.person_id};
+            data[key] = value;
+            Event.personAttended(data,
+                function(data) {
+                    $log.debug('EventDetailsCtrl.setPersonAttribute.data');
+                    $log.debug(data);
+                    $scope.event.persons = data;
+            });
+        };
+
         $scope.updateAttendee = function(person, attended) {
             $log.debug('EventDetailsCtrl.event_id: ' + $stateParams.id);
             $log.debug('EventDetailsCtrl.person_id: ' + person.person_id);
@@ -136,7 +162,7 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
                     $scope.event.persons = data;
             });
         };
-                
+
         $scope.removeAttendee = function(person) {
             Event.deleteAttendee({
                     _id: $stateParams.id,

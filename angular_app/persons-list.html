@@ -47,7 +47,7 @@
                     </td>
                     <td ng-repeat="col in customFields">
                         <span ng-if="col.type == 'boolean'">
-                            <button class="btn btn-link" name="switch-attended" ng-click="setAttribute(person, col.key, !person[col.key])"><span class="glyphicon {{(person[col.key]) && 'glyphicon-ok-sign text-success' || 'glyphicon-remove-sign text-danger'}}"></span></button>
+                            <button class="btn btn-link" ng-click="setAttribute(person, col.key, !person[col.key])"><span class="glyphicon {{(person[col.key]) && 'glyphicon-ok-sign text-success' || 'glyphicon-remove-sign text-danger'}}"></span></button>
                         </span>
                         <span ng-if="col.type != 'boolean'">
                             {{person[col.key]}}

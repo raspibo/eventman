@@ -49,6 +49,9 @@
                                 <tr>
                                     <th>{{'Person' | translate}}</th>
                                     <th>{{'Attended' | translate}}</th>
+                                    <td ng-repeat="col in customFields">
+                                        <strong>{{col.label | translate}}</strong>
+                                    </td>
                                     <th>{{'Delete' | translate}}</th>
                                 </tr>
                             </thead>
@@ -61,6 +64,14 @@
                                     <td>
                                         <button class="btn btn-link" name="switch-attended" ng-click="updateAttendee(person, !person.attended)"><span class="glyphicon {{(person.attended) && 'glyphicon-ok-sign text-success' || 'glyphicon-remove-sign text-danger'}}"></span></button>
                                     </td>
+                                <td ng-repeat="col in customFields">
+                                    <span ng-if="col.type == 'boolean'">
+                                        <button class="btn btn-link" ng-click="setPersonAttribute(person, col.key, !person[col.key])"><span class="glyphicon {{(person[col.key]) && 'glyphicon-ok-sign text-success' || 'glyphicon-remove-sign text-danger'}}"></span></button>
+                                    </span>
+                                    <span ng-if="col.type != 'boolean'">
+                                        {{person[col.key]}}
+                                    </span>
+                                </td>
                                     <td>
                                         <button ng-click="removeAttendee(person)" type="button" class="btn btn-link glyphicon glyphicon-trash"></button>
                                     </td>
