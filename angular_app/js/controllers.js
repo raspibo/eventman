@@ -120,7 +120,6 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
                 $scope.newPerson = {};
             });
             $scope.query = '';
-            console.log(angular.element($scope.query));
         };
 
         $scope.fastAddPerson = function(person, isNew) {

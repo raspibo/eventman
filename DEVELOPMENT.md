@@ -12,9 +12,8 @@ Requirements:
 - create a new registered person manually (**DONE**)
 - associate to an event a list of registered persons, creating them if needed (manually and importing from external sources) (**DONE**)
 - mark registered persons as present (including them in the list of attendees) (**DONE**)
-- mark when an attendee enters/leaves the event
-- execute actions when an attendee shows up or enters/leaves the event
-- show information and statistics about registered persons, attendees and events
+- execute actions when an attendee shows up or enters/leaves the event (**DONE**)
+- show information and statistics about registered persons, attendees and events (**DONE**)
 
 
 Paths
@@ -56,6 +55,35 @@ The paths used to communicate with the Tornado web server:
 - /ebcsvpersons POST - csv file upload to import persons
 
 
+Triggers
+========
+
+Sometimes we have to execute some script in reaction to an event.
+
+In the **data/triggers** we have a series of directories; scripts inside of them will be executed when the related action was performed on the GUI or calling the controller.
+
+Available triggers:
+- **update_person_in_event**: executed every time a person data in a given event is updated.
+- **attends**: executed only when a person is marked as attending an event.
+
+update_person_in_event and attends will receive these information:
+- via *environment*:
+  - NAME
+  - SURNAME
+  - EMAIL
+  - COMPANY
+  - JOB
+  - PERSON_ID
+  - EVENT_ID
+  - EVENT_TITLE
+- via stdin, a dictionary containing:
+  - dictionary **old** with the old data of the person
+  - dictionary **new** with the new data of the person
+  - dictionary **event** with the event information
+  - boolean **merged**, true if the data was updated
+
+In the **data/triggers-available** there is an example of script: **echo.py**.
+
 Database layout
 ===============
 
@@ -82,7 +110,8 @@ Main field:
   - persons.$.name
   - persons.$.surname
   - persons.$.email
-  - persons.$.email
+  - persons.$.company
+  - persons.$.job
   - persons.$.ebqrcode
 
 
@@ -93,6 +122,8 @@ Basic information about a person:
 - persons.name
 - persons.surname
 - persons.email
+- persons.company
+- persons.job
 
 
 TODO
@@ -101,7 +132,6 @@ TODO
 Next to be done
 ---------------
 
-- add the minimum required fields to lists and detailed pages for persons and events
 - handle datetimes (on GUI with a calendar and on the backend deserializing ISO 8601 strings)
 - modal on event/person removal
 
@@ -114,5 +144,4 @@ Nice to have
 - authentication for administrators
 - i18n
 - logging and debugging code
-
 

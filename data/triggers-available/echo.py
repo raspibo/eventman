@@ -16,4 +16,4 @@ if __name__ == '__main__':
         main()
     except Exception, e:
         print 'echo.py error: %s' % e
-        pass
+
