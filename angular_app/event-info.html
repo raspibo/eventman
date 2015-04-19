@@ -104,6 +104,10 @@
                                 <span class="input-group-addon">{{'Company' | translate}}</span>
                                 <input name="company" class="form-control" placeholder="{{'Acme Corporation' | translate}}"  ng-model="newPerson.company">
                             </div>
+                            <div class="input-group top5">
+                                <span class="input-group-addon">{{'Job' | translate}}</span>
+                                <input name="job" class="form-control" placeholder="{{'Evil Ruler' | translate}}"  ng-model="newPerson.job">
+                            </div>
 
                             <button ng-disabled="!(newPerson.name && newPerson.surname)" ng-click="fastAddPerson(newPerson, true)" class="btn btn-success top5">
                                 <span class="glyphicon glyphicon-plus-sign"></span>
