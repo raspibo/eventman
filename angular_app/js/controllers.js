@@ -119,6 +119,8 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
                 }
                 $scope.newPerson = {};
             });
+            $scope.query = '';
+            console.log(angular.element($scope.query));
         };
 
         $scope.fastAddPerson = function(person, isNew) {
@@ -146,6 +148,13 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
                     $log.debug(data);
                     $scope.event.persons = data;
             });
+        };
+
+        $scope.focusinControl = {};
+
+        $scope.setPersonAttributeAndRefocus = function(person, key, value) {
+            $scope.setPersonAttribute(person, key, value);
+            $scope.query = '';
         };
 
         $scope.removeAttendee = function(person) {
