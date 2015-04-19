@@ -62,16 +62,16 @@
                                         <p ng-if="person.company || person.job"><i ng-if="person.job">{{person.job}}</i><span ng-if="person.company && person.job">&nbsp;@&nbsp;</span><i ng-if="person.company">{{person.company}}</i></p>
                                     </td>
                                     <td>
-                                        <button class="btn btn-link" name="switch-attended" ng-click="setPersonAttribute(person, 'attended', !person.attended)"><span class="glyphicon {{(person.attended) && 'glyphicon-ok-sign text-success' || 'glyphicon-remove-sign text-danger'}}"></span></button>
+                                        <button class="btn btn-link" reset-focus name="switch-attended" ng-click="setPersonAttributeAndRefocus(person, 'attended', !person.attended)"><span class="glyphicon {{(person.attended) && 'glyphicon-ok-sign text-success' || 'glyphicon-remove-sign text-danger'}}"></span></button>
                                     </td>
-                                <td ng-repeat="col in customFields">
-                                    <span ng-if="col.type == 'boolean'">
-                                        <button class="btn btn-link" ng-click="setPersonAttribute(person, col.key, !person[col.key])"><span class="glyphicon {{(person[col.key]) && 'glyphicon-ok-sign text-success' || 'glyphicon-remove-sign text-danger'}}"></span></button>
-                                    </span>
-                                    <span ng-if="col.type != 'boolean'">
-                                        {{person[col.key]}}
-                                    </span>
-                                </td>
+                                    <td ng-repeat="col in customFields">
+                                        <span ng-if="col.type == 'boolean'">
+                                            <button class="btn btn-link" ng-click="setPersonAttribute(person, col.key, !person[col.key])"><span class="glyphicon {{(person[col.key]) && 'glyphicon-ok-sign text-success' || 'glyphicon-remove-sign text-danger'}}"></span></button>
+                                        </span>
+                                        <span ng-if="col.type != 'boolean'">
+                                            {{person[col.key]}}
+                                        </span>
+                                    </td>
                                     <td>
                                         <button ng-click="removeAttendee(person)" type="button" class="btn btn-link glyphicon glyphicon-trash"></button>
                                     </td>
@@ -104,8 +104,12 @@
                                 <span class="input-group-addon">{{'Company' | translate}}</span>
                                 <input name="company" class="form-control" placeholder="{{'Acme Corporation' | translate}}"  ng-model="newPerson.company">
                             </div>
+                            <div class="input-group top5">
+                                <span class="input-group-addon">{{'Job' | translate}}</span>
+                                <input name="job" class="form-control" placeholder="{{'Evil Ruler' | translate}}"  ng-model="newPerson.job">
+                            </div>
 
-                            <button ng-disabled="!(newPerson.name && newPerson.surname)" ng-click="fastAddPerson(newPerson, true)" class="btn btn-success top5">
+                            <button reset-focus ng-disabled="!(newPerson.name && newPerson.surname)" ng-click="fastAddPerson(newPerson, true)" class="btn btn-success top5">
                                 <span class="glyphicon glyphicon-plus-sign"></span>
                                 {{'Add' | translate}}
                             </button>
@@ -131,7 +135,7 @@
                                         {{person.email}}
                                     </td>
                                     <td>
-                                        <button ng-click="fastAddPerson(person)" type="button" class="btn btn-link glyphicon glyphicon-plus-sign"></button>
+                                        <button reset-focus ng-click="fastAddPerson(person)" type="button" class="btn btn-link glyphicon glyphicon-plus-sign"></button>
                                     </td>
                                 </tr>
                             </tbody>

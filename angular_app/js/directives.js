@@ -25,3 +25,16 @@ eventManApp.directive('eventmanFocus', function () {
     };
 });
 
+
+eventManApp.directive('resetFocus', function () {
+    function link(scope, element, attrs) {
+        element.on('click', function() {
+            var el = angular.element(document.querySelector('#query-persons'));
+            el.length && el[0].focus();
+        });
+    };
+    return {
+        link: link
+    };
+});
+
