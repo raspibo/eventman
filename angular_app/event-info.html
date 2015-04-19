@@ -109,7 +109,7 @@
                                 <input name="job" class="form-control" placeholder="{{'Evil Ruler' | translate}}"  ng-model="newPerson.job">
                             </div>
 
-                            <button ng-disabled="!(newPerson.name && newPerson.surname)" ng-click="fastAddPerson(newPerson, true)" class="btn btn-success top5">
+                            <button reset-focus ng-disabled="!(newPerson.name && newPerson.surname)" ng-click="fastAddPerson(newPerson, true)" class="btn btn-success top5">
                                 <span class="glyphicon glyphicon-plus-sign"></span>
                                 {{'Add' | translate}}
                             </button>
@@ -135,7 +135,7 @@
                                         {{person.email}}
                                     </td>
                                     <td>
-                                        <button ng-click="fastAddPerson(person)" type="button" class="btn btn-link glyphicon glyphicon-plus-sign"></button>
+                                        <button reset-focus ng-click="fastAddPerson(person)" type="button" class="btn btn-link glyphicon glyphicon-plus-sign"></button>
                                     </td>
                                 </tr>
                             </tbody>
