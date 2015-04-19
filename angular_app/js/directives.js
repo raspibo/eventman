@@ -29,6 +29,7 @@ eventManApp.directive('eventmanFocus', function () {
 eventManApp.directive('resetFocus', function () {
     function link(scope, element, attrs) {
         element.on('click', function() {
+            // FIXME: that's so wrong!  We need to make the new directive communicate.
             var el = angular.element(document.querySelector('#query-persons'));
             el.length && el[0].focus();
         });
