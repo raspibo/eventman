@@ -104,20 +104,21 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
             var original_data = angular.copy(person_data);
             person_data.person_id = person_data._id;
             person_data._id = $stateParams.id;
-            person_data.attended = true;
             Event.addPerson(person_data, function() {
                 // This could be improved adding it only locally.
                 //$scope.event.persons.push(person_data);
-                Event.get($stateParams, function(data) {
-                    $scope.event.persons = angular.fromJson(data).persons;
+                $scope.setPersonAttribute(person_data, 'attended', true, function() {
+                    Event.get($stateParams, function(data) {
+                        $scope.event.persons = angular.fromJson(data).persons;
+                    });
+                    var idx = $scope.allPersons.indexOf(original_data);
+                    if (idx != -1) {
+                        $scope.allPersons.splice(idx, 1);
+                    } else {
+                        $scope.allPersons = Person.all();
+                    }
+                    $scope.newPerson = {};
                 });
-                var idx = $scope.allPersons.indexOf(original_data);
-                if (idx != -1) {
-                    $scope.allPersons.splice(idx, 1);
-                } else {
-                    $scope.allPersons = Person.all();
-                }
-                $scope.newPerson = {};
             });
             $scope.query = '';
         };
@@ -135,7 +136,7 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
             }
         };
 
-        $scope.setPersonAttribute = function(person, key, value) {
+        $scope.setPersonAttribute = function(person, key, value, callback) {
             $log.debug('EventDetailsCtrl.setPersonAttribute.event_id: ' + $stateParams.id);
             $log.debug('EventDetailsCtrl.setPersonAttribute.person_id: ' + person.person_id);
             $log.debug('EventDetailsCtrl.setPersonAttribute.key: ' + key + ' value: ' + value);
@@ -146,10 +147,11 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
                     $log.debug('EventDetailsCtrl.setPersonAttribute.data');
                     $log.debug(data);
                     $scope.event.persons = data;
+                    if (callback) {
+                        callback(data);
+                    }
             });
         };
-
-        $scope.focusinControl = {};
 
         $scope.setPersonAttributeAndRefocus = function(person, key, value) {
             $scope.setPersonAttribute(person, key, value);
