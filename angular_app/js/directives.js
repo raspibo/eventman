@@ -39,3 +39,32 @@ eventManApp.directive('resetFocus', function () {
     };
 });
 
+
+eventManApp.directive('eventmanMessage', ['$timeout',
+    function($timeout) {
+        function link(scope, element, attrs) {
+            scope.dControl = scope.control || {};
+            scope.dControl.isVisible = false;
+
+            scope.dControl.show = function(cfg) {
+                cfg = cfg || {};
+                scope.dControl.isVisible = true;
+                scope.dControl.message = cfg.message;
+                scope.dControl.isError = cfg.isError;
+                $timeout(function () {
+                    scope.dControl.isVisible = false;
+                }, cfg.timeout || 2000);
+            };
+        };
+
+        return {
+            scope: {
+                control: '='
+            },
+            link: link,
+            replace: true,
+            template: '<div ng-if="dControl.isVisible">{{dControl.message}}</div>'
+        };
+    }]
+);
+

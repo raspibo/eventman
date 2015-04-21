@@ -19,4 +19,14 @@ body { padding-top: 70px; }
     float: none;
 }
 
+.eventman-message {
+    position: fixed;
+    top: 2%;
+    width: 40%;
+    left: 30%;
+    text-align: center;
+    display: inline-block;
+    z-index: 10000;
+}
+
 /* .row { display: table; } */
