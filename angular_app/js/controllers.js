@@ -58,6 +58,7 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
         $scope.personsOrderProp = 'name';
         $scope.eventsOrderProp = '-begin-date';
         $scope.countAttendees = 0;
+        $scope.message = {};
         $scope.customFields = Setting.query({setting: 'person_custom_field',
             in_event_details: true});
 
@@ -118,6 +119,9 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
                         $scope.allPersons = Person.all();
                     }
                     $scope.newPerson = {};
+                    // XXX: must be converted in a i18n-able form.
+                    var msg = '' + person_data.name + ' ' + person_data.surname + ' successfully added to event ' + $scope.event.title;
+                    $scope.showMessage({message: msg});
                 });
             });
             $scope.query = '';
@@ -150,6 +154,16 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
                     if (callback) {
                         callback(data);
                     }
+                    if (key === 'attended') {
+                        var msg = {};
+                        if (value) {
+                            msg.message = '' + person.name + ' ' + person.surname + ' successfully added to event ' + $scope.event.title;
+                        } else {
+                            msg.message = '' + person.name + ' ' + person.surname + ' successfully removed from event ' + $scope.event.title;
+                            msg.isError = true;
+                        }
+                        $scope.showMessage(msg);
+                    }
             });
         };
 
@@ -167,6 +181,10 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
                     $scope.event.persons = data;
                     $scope.allPersons = Person.all();
             });
+        };
+
+        $scope.showMessage = function(cfg) {
+            $scope.message.show(cfg);
         };
     }]
 );
