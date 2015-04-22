@@ -276,10 +276,16 @@ class EventsHandler(CollectionHandler):
     collection = 'events'
     object_id = 'event_id'
 
-    def _get_person_data(self, person_id, persons):
+    def _get_person_data(self, person_id_or_query, persons):
+        """Filter a list of persons returning the first item with a given person_id
+        or which set of keys specified in a dictionary match their respective values."""
         for person in persons:
-            if str(person.get('person_id')) == person_id:
-                return person
+            if isinstance(person_id_or_query, dict):
+                if all(person.get(k) == v for k, v in person_id_or_query.iteritems()):
+                    return person
+            else:
+                if str(person.get('person_id')) == person_id_or_query:
+                    return person
         return {}
 
     def handle_get_persons(self, id_, resource_id=None):
@@ -316,10 +322,14 @@ class EventsHandler(CollectionHandler):
         current_event = self.db.query(self.collection, query)
         if current_event:
             current_event = current_event[0]
-        old_person_data = self._get_person_data(person_id, current_event.get('persons') or [])
+        else:
+            current_event = {}
+        old_person_data = self._get_person_data(person_id or self.arguments,
+                current_event.get('persons') or [])
         merged, doc = self.db.update('events', query,
                 data, updateList='persons', create=False)
-        new_person_data = self._get_person_data(person_id, doc.get('persons') or [])
+        new_person_data = self._get_person_data(person_id or self.arguments,
+                doc.get('persons') or [])
         env = self._dict2env(new_person_data)
         env.update({'PERSON_ID': person_id, 'EVENT_ID': id_, 'EVENT_TITLE': doc.get('title', '')})
         stdin_data = {'old': old_person_data,
@@ -386,14 +396,14 @@ class EbCSVImportPersonsHandler(BaseHandler):
                 for person in persons:
                     person_data = dict([(k, person[k]) for k in self.keepPersonData
                         if k in person])
-                    merged, person = self.db.update('persons',
+                    merged, stored_person = self.db.update('persons',
                             [('email',), ('name', 'surname')],
                             person_data)
                     if merged:
                         reply['merged'] += 1
-                    if targetEvent and person:
+                    if targetEvent and stored_person:
                         event_id = targetEvent
-                        person_id = person['_id']
+                        person_id = stored_person['_id']
                         registered_data = {
                                 'person_id': person_id,
                                 'attended': False,
