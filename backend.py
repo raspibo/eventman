@@ -80,7 +80,10 @@ class EventManDB(object):
         except:
             pass
         try:
-            return int(obj)
+            i_obj = int(obj)
+            if i_obj > 2**64 - 1:
+                return obj
+            return i_obj
         except:
             pass
         return obj
