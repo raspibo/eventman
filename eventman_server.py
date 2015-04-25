@@ -39,6 +39,7 @@ ENCODING = 'utf-8'
 PROCESS_TIMEOUT = 60
 
 re_env_key = re.compile('[^A-Z_]+')
+re_slashes = re.compile(r'//+')
 
 
 class BaseHandler(tornado.web.RequestHandler):
@@ -90,7 +91,7 @@ class RootHandler(BaseHandler):
 
 
 # Keep track of WebSocket connections.
-_ws_clients = []
+_ws_clients = {}
 
 class CollectionHandler(BaseHandler):
     """Base class for handlers that need to interact with the database backend.
@@ -469,15 +470,19 @@ class SettingsHandler(BaseHandler):
 
 
 class WebSocketEventUpdatesHandler(tornado.websocket.WebSocketHandler):
+    def _clean_url(self, url):
+        return re_slashes.sub('/', url)
+
     def open(self, event_id, *args, **kwds):
         logging.debug('WebSocketEventUpdatesHandler.on_open event_id:%s' % event_id)
-        _ws_clients.append(self)
+
+        _ws_clients.setdefault(self._clean_url(self.request.uri), set()).add(self)
         logging.debug('WebSocketEventUpdatesHandler.on_open %s clients connected' % len(_ws_clients))
 
     def on_message(self, message):
         logging.debug('WebSocketEventUpdatesHandler.on_message')
         count = 0
-        for client in _ws_clients:
+        for client in _ws_clients.get(self._clean_url(self.request.uri), []):
             if client == self:
                 continue
             client.write_message(message)
@@ -487,7 +492,8 @@ class WebSocketEventUpdatesHandler(tornado.websocket.WebSocketHandler):
     def on_close(self):
         logging.debug('WebSocketEventUpdatesHandler.on_close')
         try:
-            _ws_clients.remove(self)
+            if self in _ws_clients.get(self._clean_url(self.request.uri), []):
+                _ws_clients[self._clean_url(self.request.uri)].remove(self)
         except Exception, e:
             logging.warn('WebSocketEventUpdatesHandler.on_close error closing websocket: %s', str(e))
 
