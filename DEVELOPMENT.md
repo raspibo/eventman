@@ -4,7 +4,7 @@ Goals
 Definitions:
 - **event**: a faire, convention, congress or any other kind of meeting
 - **registered person**: someone who said it will attend at the event
-- **attendee**: a person who actually *show up* at the event
+- **attendee**: a person who actually *show up* (checked in) at the event
 
 
 Requirements:
