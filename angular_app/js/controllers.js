@@ -53,8 +53,8 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event',
 );
 
 
-eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person', '$stateParams', 'Setting', '$log',
-    function ($scope, Event, Person, $stateParams, Setting, $log) {
+eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person', 'EventUpdates', '$stateParams', 'Setting', '$log',
+    function ($scope, Event, Person, EventUpdates, $stateParams, Setting, $log) {
         $scope.personsOrderProp = 'name';
         $scope.eventsOrderProp = '-begin-date';
         $scope.countAttendees = 0;
@@ -68,8 +68,21 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
                         return $scope.event.persons;
                     }, function(prev, old) {
                         $scope.calcAttendees();
-                    });
+                    }
+                );
             });
+
+            // Handle WebSocket connection used to update the list of persons.
+            $scope.EventUpdates = EventUpdates;
+            $scope.$watchCollection(function() {
+                    return $scope.EventUpdates.data;
+                }, function(prev, old) {
+                    if (!($scope.EventUpdates.data && $scope.EventUpdates.data.persons)) {
+                        return;
+                    }
+                    $scope.event.persons = $scope.EventUpdates.data.persons;
+                }
+            );
             $scope.allPersons = Person.all();
         }
 

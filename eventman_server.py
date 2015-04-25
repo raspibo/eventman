@@ -29,6 +29,7 @@ import tornado.ioloop
 import tornado.options
 from tornado.options import define, options
 import tornado.web
+import tornado.websocket
 from tornado import gen, escape, process
 
 import utils
@@ -38,6 +39,7 @@ ENCODING = 'utf-8'
 PROCESS_TIMEOUT = 60
 
 re_env_key = re.compile('[^A-Z_]+')
+re_slashes = re.compile(r'//+')
 
 
 class BaseHandler(tornado.web.RequestHandler):
@@ -87,6 +89,9 @@ class RootHandler(BaseHandler):
         with open(self.angular_app_path + "/index.html", 'r') as fd:
             self.write(fd.read())
 
+
+# Keep track of WebSocket connections.
+_ws_clients = {}
 
 class CollectionHandler(BaseHandler):
     """Base class for handlers that need to interact with the database backend.
@@ -243,6 +248,23 @@ class CollectionHandler(BaseHandler):
                 continue
             out, err = yield gen.Task(self.run_subprocess, [script], stdin_data, env)
 
+    def build_ws_url(self, path, proto='ws', host=None):
+        """Return a WebSocket url from a path."""
+        return '%s://%s/ws/%s' % (proto, host or self.request.host, path)
+
+    @gen.coroutine
+    def send_ws_message(self, url, message):
+        """Send a WebSocket message to all the connected clients.
+
+        :param url: WebSocket url
+        :type url: str
+        :param message: message to send
+        :type message: str
+        """
+        ws = yield tornado.websocket.websocket_connect(url)
+        ws.write_message(message)
+        ws.close()
+
 
 class PersonsHandler(CollectionHandler):
     """Handle requests for Persons."""
@@ -345,9 +367,11 @@ class EventsHandler(CollectionHandler):
             'merged': merged
         }
         self.run_triggers('update_person_in_event', stdin_data=stdin_data, env=env)
-        if old_person_data and old_person_data.get('attended') != new_person_data.get('attended') \
-                and new_person_data.get('attended'):
-            self.run_triggers('attends', stdin_data=stdin_data, env=env)
+        if old_person_data and old_person_data.get('attended') != new_person_data.get('attended'):
+            ws_url = self.build_ws_url(path='event/%s/updates' % id_)
+            self.send_ws_message(ws_url, json.dumps(doc.get('persons') or []))
+            if new_person_data.get('attended'):
+                self.run_triggers('attends', stdin_data=stdin_data, env=env)
         return {'event': doc}
 
     def handle_delete_persons(self, id_, person_id):
@@ -445,6 +469,35 @@ class SettingsHandler(BaseHandler):
         self.write({'settings': settings})
 
 
+class WebSocketEventUpdatesHandler(tornado.websocket.WebSocketHandler):
+    def _clean_url(self, url):
+        return re_slashes.sub('/', url)
+
+    def open(self, event_id, *args, **kwds):
+        logging.debug('WebSocketEventUpdatesHandler.on_open event_id:%s' % event_id)
+
+        _ws_clients.setdefault(self._clean_url(self.request.uri), set()).add(self)
+        logging.debug('WebSocketEventUpdatesHandler.on_open %s clients connected' % len(_ws_clients))
+
+    def on_message(self, message):
+        logging.debug('WebSocketEventUpdatesHandler.on_message')
+        count = 0
+        for client in _ws_clients.get(self._clean_url(self.request.uri), []):
+            if client == self:
+                continue
+            client.write_message(message)
+            count += 1
+        logging.debug('WebSocketEventUpdatesHandler.on_message sent message to %d clients' % count)
+
+    def on_close(self):
+        logging.debug('WebSocketEventUpdatesHandler.on_close')
+        try:
+            if self in _ws_clients.get(self._clean_url(self.request.uri), []):
+                _ws_clients[self._clean_url(self.request.uri)].remove(self)
+        except Exception, e:
+            logging.warn('WebSocketEventUpdatesHandler.on_close error closing websocket: %s', str(e))
+
+
 def run():
     """Run the Tornado web application."""
     # command line arguments; can also be written in a configuration file,
@@ -475,6 +528,7 @@ def run():
             (r"/(?:index.html)?", RootHandler, init_params),
             (r"/ebcsvpersons", EbCSVImportPersonsHandler, init_params),
             (r"/settings", SettingsHandler, init_params),
+            (r"/ws/+event/+(?P<event_id>\w+)/+updates/?", WebSocketEventUpdatesHandler),
             (r'/(.*)', tornado.web.StaticFileHandler, {"path": "angular_app"})
         ],
         template_path=os.path.join(os.path.dirname(__file__), "templates"),
