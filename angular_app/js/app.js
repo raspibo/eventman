@@ -22,7 +22,8 @@ var eventManApp = angular.module('eventManApp', [
     'ui.bootstrap',
     'ui.router',
     'pascalprecht.translate',
-    'angularFileUpload'
+    'angularFileUpload',
+    'angular-websocket'
 ]);
 
 
