@@ -18,6 +18,7 @@ limitations under the License.
 """
 
 import os
+import re
 import glob
 import json
 import logging
@@ -33,8 +34,10 @@ from tornado import gen, escape, process
 import utils
 import backend
 
-ENCODING = 'utf8'
+ENCODING = 'utf-8'
 PROCESS_TIMEOUT = 60
+
+re_env_key = re.compile('[^A-Z_]+')
 
 
 class BaseHandler(tornado.web.RequestHandler):
@@ -121,7 +124,11 @@ class CollectionHandler(BaseHandler):
             if isinstance(value, (list, tuple, dict)):
                 continue
             try:
-                ret[key.upper()] = unicode(value).encode(ENCODING)
+                key = key.upper().encode('ascii', 'ignore')
+                key = re_env_key.sub('', key)
+                if not key:
+                    continue
+                ret[key] = unicode(value).encode(ENCODING)
             except:
                 continue
         return ret
