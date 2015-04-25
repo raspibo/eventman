@@ -387,7 +387,8 @@ class EbCSVImportPersonsHandler(BaseHandler):
         'Company': 'company',
     }
     # Only these information are stored in the person collection.
-    keepPersonData = ('name', 'surname', 'email', 'name_title', 'company', 'job_title')
+    keepPersonData = ('name', 'surname', 'email', 'name_title', 'name_suffix',
+            'company', 'job_title')
 
     @gen.coroutine
     def post(self, **kwargs):
@@ -407,7 +408,7 @@ class EbCSVImportPersonsHandler(BaseHandler):
                     person_data = dict([(k, person[k]) for k in self.keepPersonData
                         if k in person])
                     merged, stored_person = self.db.update('persons',
-                            [('email',), ('name', 'surname')],
+                            [('email', 'name', 'surname')],
                             person_data)
                     if merged:
                         reply['merged'] += 1
