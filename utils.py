@@ -52,6 +52,8 @@ def csvParse(csvStr, remap=None, merge=None):
     for idx, header in enumerate(headers):
         if header in remap:
             headers[idx] = remap[header]
+        else:
+            headers[idx] = header.lower().replace(' ', '_')
     try:
         for row in reader:
             try:
