@@ -55,7 +55,7 @@
                 <tr ng-repeat="person in persons | splittedFilter:query | orderBy:personsOrderProp">
                     <td>
                         <span><strong><a ui-sref="person.info({id: person._id})"><span>{{person.name}}</span>&nbsp;<span>{{person.surname}}</span></a></strong></span><span ng-if="person.email">&nbsp;&lt;{{person.email}}&gt;</span>
-                        <p ng-if="person.company || person.job"><i ng-if="person.job">{{person.job}}</i><span ng-if="person.company && person.job">&nbsp;@&nbsp;</span><i ng-if="person.company">{{person.company}}</i></p>
+                        <p ng-if="person.company || person.job_title"><i ng-if="person.job_title">{{person.job_title}}</i><span ng-if="person.company && person.job_title">&nbsp;@&nbsp;</span><i ng-if="person.company">{{person.company}}</i></p>
                     </td>
                     <td ng-repeat="col in customFields">
                         <span ng-if="col.type == 'boolean'">

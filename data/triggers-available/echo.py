@@ -6,9 +6,10 @@ import sys
 import json
 
 def main():
-    print 'STDIN JSON:', json.loads(sys.stdin.read())
+    # NOTE: even if not used, ALWAYS consume sys.stdin to close the pipe.
+    print 'STDIN JSON:', repr(json.loads(sys.stdin.read()))
     print ''
-    print 'ENV:', os.environ
+    print 'ENV:', repr(os.environ)
 
 
 if __name__ == '__main__':

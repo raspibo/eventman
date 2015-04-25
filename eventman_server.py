@@ -18,6 +18,7 @@ limitations under the License.
 """
 
 import os
+import re
 import glob
 import json
 import logging
@@ -33,8 +34,10 @@ from tornado import gen, escape, process
 import utils
 import backend
 
-ENCODING = 'utf8'
+ENCODING = 'utf-8'
 PROCESS_TIMEOUT = 60
+
+re_env_key = re.compile('[^A-Z_]+')
 
 
 class BaseHandler(tornado.web.RequestHandler):
@@ -121,7 +124,11 @@ class CollectionHandler(BaseHandler):
             if isinstance(value, (list, tuple, dict)):
                 continue
             try:
-                ret[key.upper()] = unicode(value).encode(ENCODING)
+                key = key.upper().encode('ascii', 'ignore')
+                key = re_env_key.sub('', key)
+                if not key:
+                    continue
+                ret[key] = unicode(value).encode(ENCODING)
             except:
                 continue
         return ret
@@ -371,13 +378,24 @@ class EbCSVImportPersonsHandler(BaseHandler):
         'Data check-in': 'checkin_datetime',
         'Ordine n.': 'order_nr',
         'ID ordine': 'order_nr',
-        'Titolo professionale': 'job',
+        'Titolo professionale': 'job_title',
         'Azienda': 'company',
         'Prefisso': 'name_title',
         'Prefisso (Sig., Sig.ra, ecc.)': 'name_title',
+
+        'Order #': 'order_nr',
+        'Prefix': 'name_title',
+        'First Name': 'name',
+        'Last Name': 'surname',
+        'Suffix': 'name_suffix',
+        'Email': 'email',
+        'Attendee #': 'attendee_nr',
+        'Barcode #': 'ebqrcode',
+        'Company': 'company',
     }
     # Only these information are stored in the person collection.
-    keepPersonData = ('name', 'surname', 'email', 'name_title', 'company', 'job')
+    keepPersonData = ('name', 'surname', 'email', 'name_title', 'name_suffix',
+            'company', 'job_title')
 
     @gen.coroutine
     def post(self, **kwargs):
@@ -397,7 +415,7 @@ class EbCSVImportPersonsHandler(BaseHandler):
                     person_data = dict([(k, person[k]) for k in self.keepPersonData
                         if k in person])
                     merged, stored_person = self.db.update('persons',
-                            [('email',), ('name', 'surname')],
+                            [('email', 'name', 'surname')],
                             person_data)
                     if merged:
                         reply['merged'] += 1
