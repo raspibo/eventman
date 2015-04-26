@@ -161,8 +161,6 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
             data[key] = value;
             Event.updatePerson(data,
                 function(data) {
-                    $log.debug('EventDetailsCtrl.setPersonAttribute.data');
-                    $log.debug(data);
                     $scope.event.persons = data;
                     if (callback) {
                         callback(data);
