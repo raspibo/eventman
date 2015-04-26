@@ -137,7 +137,9 @@ eventManServices.factory('Setting', ['$resource',
 /* WebSocket collection used to update the list of persons of an Event. */
 eventManApp.factory('EventUpdates', ['$websocket', '$location', '$log',
     function($websocket, $location, $log) {
-        var dataStream = $websocket('ws://' + $location.host() + ':' + $location.port() +
+        var proto = $location.protocol() == 'https' ? 'wss' : 'ws';
+
+        var dataStream = $websocket(proto + '://' + $location.host() + ':' + $location.port() +
             '/ws/' + $location.path() + '/updates');
 
         var data = {};

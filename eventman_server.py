@@ -360,6 +360,8 @@ class EventsHandler(CollectionHandler):
         new_person_data = self._get_person_data(person_id or self.arguments,
                 doc.get('persons') or [])
         env = self._dict2env(new_person_data)
+        if person_id is None:
+            person_id = new_person_data.get('person_id')
         env.update({'PERSON_ID': person_id, 'EVENT_ID': id_, 'EVENT_TITLE': doc.get('title', '')})
         stdin_data = {'old': old_person_data,
             'new': new_person_data,
@@ -505,6 +507,10 @@ def run():
     define("port", default=5242, help="run on the given port", type=int)
     define("data", default=os.path.join(os.path.dirname(__file__), "data"),
             help="specify the directory used to store the data")
+    define("ssl_cert", default=os.path.join(os.path.dirname(__file__), 'ssl', 'eventman_cert.pem'),
+            help="specify the SSL certificate to use for secure connections")
+    define("ssl_key", default=os.path.join(os.path.dirname(__file__), 'ssl', 'eventman_key.pem'),
+            help="specify the SSL private key to use for secure connections")
     define("mongodbURL", default=None,
             help="URL to MongoDB server", type=str)
     define("dbName", default='eventman',
@@ -534,7 +540,10 @@ def run():
         template_path=os.path.join(os.path.dirname(__file__), "templates"),
         static_path=os.path.join(os.path.dirname(__file__), "static"),
         debug=options.debug)
-    http_server = tornado.httpserver.HTTPServer(application)
+    ssl_options = {}
+    if os.path.isfile(options.ssl_key) and os.path.isfile(options.ssl_cert):
+        ssl_options = dict(certfile=options.ssl_cert, keyfile=options.ssl_key)
+    http_server = tornado.httpserver.HTTPServer(application, ssl_options=ssl_options)
     http_server.listen(options.port)
     tornado.ioloop.IOLoop.instance().start()
 
