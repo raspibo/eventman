@@ -543,7 +543,7 @@ def run():
     ssl_options = {}
     if os.path.isfile(options.ssl_key) and os.path.isfile(options.ssl_cert):
         ssl_options = dict(certfile=options.ssl_cert, keyfile=options.ssl_key)
-    http_server = tornado.httpserver.HTTPServer(application, ssl_options=ssl_options)
+    http_server = tornado.httpserver.HTTPServer(application, ssl_options=ssl_options or None)
     http_server.listen(options.port)
     tornado.ioloop.IOLoop.instance().start()
 
