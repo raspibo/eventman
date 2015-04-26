@@ -253,15 +253,15 @@ class CollectionHandler(BaseHandler):
         return 'ws://127.0.0.1:%s/ws/%s' % (self.listen_port + 1, path)
 
     @gen.coroutine
-    def send_ws_message(self, url, message):
+    def send_ws_message(self, path, message):
         """Send a WebSocket message to all the connected clients.
 
-        :param url: WebSocket url
-        :type url: str
+        :param path: partial path used to build the WebSocket url
+        :type path: str
         :param message: message to send
         :type message: str
         """
-        ws = yield tornado.websocket.websocket_connect(url)
+        ws = yield tornado.websocket.websocket_connect(self.build_ws_url(path))
         ws.write_message(message)
         ws.close()
 
@@ -370,10 +370,12 @@ class EventsHandler(CollectionHandler):
         }
         self.run_triggers('update_person_in_event', stdin_data=stdin_data, env=env)
         if old_person_data and old_person_data.get('attended') != new_person_data.get('attended'):
-            ws_url = self.build_ws_url(path='event/%s/updates' % id_)
-            self.send_ws_message(ws_url, json.dumps(doc.get('persons') or []))
             if new_person_data.get('attended'):
                 self.run_triggers('attends', stdin_data=stdin_data, env=env)
+
+        if old_person_data != new_person_data:
+            self.send_ws_message('event/%s/updates' % id_,
+                    json.dumps(doc.get('persons') or []))
         return {'event': doc}
 
     def handle_delete_persons(self, id_, person_id):

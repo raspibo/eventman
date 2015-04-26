@@ -137,20 +137,29 @@ eventManServices.factory('Setting', ['$resource',
 /* WebSocket collection used to update the list of persons of an Event. */
 eventManApp.factory('EventUpdates', ['$websocket', '$location', '$log',
     function($websocket, $location, $log) {
-        var proto = $location.protocol() == 'https' ? 'wss' : 'ws';
 
-        var dataStream = $websocket(proto + '://' + $location.host() + ':' + $location.port() +
-            '/ws/' + $location.path() + '/updates');
+        var dataStream = null;
 
         var data = {};
 
-        dataStream.onMessage(function(message) {
-            $log.debug('EventUpdates message received');
-            data.persons = angular.fromJson(message.data);
-        });
-
         var methods = {
             data: data,
+            close: function() {
+                $log.debug('close WebSocket connection');
+                dataStream.close();
+            },
+            open: function() {
+                $log.debug('open WebSocket connection');
+                dataStream && dataStream.close();
+                var proto = $location.protocol() == 'https' ? 'wss' : 'ws';
+                dataStream = $websocket(proto + '://' + $location.host() + ':' + $location.port() +
+                                    '/ws/' + $location.path() + '/updates');
+                dataStream.onMessage(function(message) {
+                    $log.debug('EventUpdates message received');
+                    data.persons = angular.fromJson(message.data);
+        });
+
+            }
         };
 
         return methods;
