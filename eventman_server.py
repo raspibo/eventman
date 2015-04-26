@@ -360,6 +360,8 @@ class EventsHandler(CollectionHandler):
         new_person_data = self._get_person_data(person_id or self.arguments,
                 doc.get('persons') or [])
         env = self._dict2env(new_person_data)
+        if person_id is None:
+            person_id = new_person_data.get('person_id')
         env.update({'PERSON_ID': person_id, 'EVENT_ID': id_, 'EVENT_TITLE': doc.get('title', '')})
         stdin_data = {'old': old_person_data,
             'new': new_person_data,
