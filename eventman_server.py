@@ -507,6 +507,10 @@ def run():
     define("port", default=5242, help="run on the given port", type=int)
     define("data", default=os.path.join(os.path.dirname(__file__), "data"),
             help="specify the directory used to store the data")
+    define("ssl_cert", default=os.path.join(os.path.dirname(__file__), 'ssl', 'eventman_cert.pem'),
+            help="specify the SSL certificate to use for secure connections")
+    define("ssl_key", default=os.path.join(os.path.dirname(__file__), 'ssl', 'eventman_key.pem'),
+            help="specify the SSL private key to use for secure connections")
     define("mongodbURL", default=None,
             help="URL to MongoDB server", type=str)
     define("dbName", default='eventman',
@@ -536,7 +540,10 @@ def run():
         template_path=os.path.join(os.path.dirname(__file__), "templates"),
         static_path=os.path.join(os.path.dirname(__file__), "static"),
         debug=options.debug)
-    http_server = tornado.httpserver.HTTPServer(application)
+    ssl_options = {}
+    if os.path.isfile(options.ssl_key) and os.path.isfile(options.ssl_cert):
+        ssl_options = dict(certfile=options.ssl_cert, keyfile=options.ssl_key)
+    http_server = tornado.httpserver.HTTPServer(application, ssl_options=ssl_options)
     http_server.listen(options.port)
     tornado.ioloop.IOLoop.instance().start()
 
