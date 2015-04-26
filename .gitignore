@@ -1,4 +1,5 @@
 data/triggers/*.d
+ssl/*.pem
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
