@@ -74,6 +74,7 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
 
             // Handle WebSocket connection used to update the list of persons.
             $scope.EventUpdates = EventUpdates;
+            $scope.EventUpdates.open();
             $scope.$watchCollection(function() {
                     return $scope.EventUpdates.data;
                 }, function(prev, old) {
@@ -197,6 +198,11 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
         $scope.showMessage = function(cfg) {
             $scope.message.show(cfg);
         };
+
+        $scope.$on('$destroy', function() {
+            $log.debug('destroying controller');
+            $scope.EventUpdates && $scope.EventUpdates.close();
+        });
     }]
 );
 
