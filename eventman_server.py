@@ -250,7 +250,7 @@ class CollectionHandler(BaseHandler):
 
     def build_ws_url(self, path, proto='ws', host=None):
         """Return a WebSocket url from a path."""
-        return '%s://%s/ws/%s' % (proto, host or self.request.host, path)
+        return 'ws://127.0.0.1:%s/ws/%s' % (self.listen_port + 1, path)
 
     @gen.coroutine
     def send_ws_message(self, url, message):
@@ -526,15 +526,16 @@ def run():
 
     # database backend connector
     db_connector = backend.EventManDB(url=options.mongodbURL, dbName=options.dbName)
-    init_params = dict(db=db_connector, data_dir=options.data)
+    init_params = dict(db=db_connector, data_dir=options.data, listen_port=options.port)
 
+    _ws_handler = (r"/ws/+event/+(?P<event_id>\w+)/+updates/?", WebSocketEventUpdatesHandler)
     application = tornado.web.Application([
             (r"/persons/?(?P<id_>\w+)?/?(?P<resource>\w+)?/?(?P<resource_id>\w+)?", PersonsHandler, init_params),
             (r"/events/?(?P<id_>\w+)?/?(?P<resource>\w+)?/?(?P<resource_id>\w+)?", EventsHandler, init_params),
             (r"/(?:index.html)?", RootHandler, init_params),
             (r"/ebcsvpersons", EbCSVImportPersonsHandler, init_params),
             (r"/settings", SettingsHandler, init_params),
-            (r"/ws/+event/+(?P<event_id>\w+)/+updates/?", WebSocketEventUpdatesHandler),
+            _ws_handler,
             (r'/(.*)', tornado.web.StaticFileHandler, {"path": "angular_app"})
         ],
         template_path=os.path.join(os.path.dirname(__file__), "templates"),
@@ -545,6 +546,14 @@ def run():
         ssl_options = dict(certfile=options.ssl_cert, keyfile=options.ssl_key)
     http_server = tornado.httpserver.HTTPServer(application, ssl_options=ssl_options or None)
     http_server.listen(options.port)
+
+    # Also listen on options.port+1 for our local ws connection.
+    ws_application = tornado.web.Application([
+            _ws_handler,
+        ],
+        debug=options.debug)
+    ws_http_server = tornado.httpserver.HTTPServer(ws_application)
+    ws_http_server.listen(options.port+1, address='127.0.0.1')
     tornado.ioloop.IOLoop.instance().start()
 
 
