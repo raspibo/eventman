@@ -55,8 +55,7 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event',
 
 eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person', 'EventUpdates', '$stateParams', 'Setting', '$log',
     function ($scope, Event, Person, EventUpdates, $stateParams, Setting, $log) {
-        $scope.personsOrderProp = 'name';
-        $scope.eventsOrderProp = '-begin-date';
+        $scope.personsOrder = ["name", "surname"];
         $scope.countAttendees = 0;
         $scope.message = {};
         $scope.event = {};
@@ -88,6 +87,25 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
             );
             $scope.allPersons = Person.all();
         }
+
+        $scope.updateOrded = function(key) {
+            var new_order = [key];
+            var inv_key;
+            if (key && key[0] === '-') {
+                inv_key = key.substring(1);
+            } else {
+                inv_key = '-' + key;
+            }
+            angular.forEach($scope.personsOrder,
+                function(value, idx) {
+                    if (value !== key && value !== inv_key) {
+                        new_order.push(value)
+                    }
+                }
+            );
+            $scope.personsOrder = new_order;
+            $log.debug(new_order);
+        };
 
         // store a new Event or update an existing one
         $scope.save = function() {
@@ -202,7 +220,6 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
         };
 
         $scope.$on('$destroy', function() {
-            $log.debug('destroying controller');
             $scope.EventUpdates && $scope.EventUpdates.close();
         });
     }]
