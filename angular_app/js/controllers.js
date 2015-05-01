@@ -59,6 +59,7 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
         $scope.eventsOrderProp = '-begin-date';
         $scope.countAttendees = 0;
         $scope.message = {};
+        $scope.event = {};
         $scope.customFields = Setting.query({setting: 'person_custom_field',
             in_event_details: true});
 
