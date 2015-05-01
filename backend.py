@@ -32,7 +32,13 @@ class EventManDB(object):
             'update': '$set',
             'append': '$push',
             'appendUnique': '$addToSet',
-            'delete': '$pull'
+            'delete': '$pull',
+            'increment': '$inc'
+    }
+
+    _force_conversion = {
+            'seq_hex': str,
+            'persons.seq_hex': str
     }
 
     def __init__(self, url=None, dbName='eventman'):
@@ -99,7 +105,10 @@ class EventManDB(object):
         if isinstance(seq, dict):
             d = {}
             for key, item in seq.iteritems():
-                d[key] = self.convert(item)
+                if key in self._force_conversion:
+                    d[key] = self._force_conversion[key](item)
+                else:
+                    d[key] = self.convert(item)
             return d
         if isinstance(seq, (list, tuple)):
             return [self.convert(x) for x in seq]
@@ -189,7 +198,7 @@ class EventManDB(object):
         :type _id_or_query: str or :class:`~bson.objectid.ObjectId` or iterable
         :param data: the updated information to store
         :type data: dict
-        :param operation: operation used to update the document or a portion of it, like a list (update, append, appendUnique, delete)
+        :param operation: operation used to update the document or a portion of it, like a list (update, append, appendUnique, delete, increment)
         :type operation: str
         :param updateList: if set, it's considered the name of a list (the first matching element will be updated)
         :type updateList: str

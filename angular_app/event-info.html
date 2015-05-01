@@ -35,29 +35,20 @@
                                 <label for="query-persons">{{'Search:' | translate}}</label>
                                 <input eventman-focus type="text" id="query-persons" class="form-control" placeholder="{{'Name or email' | translate}}" ng-model="query">
                             </div>
-                            <div class="form-group">
-                                <label for="persons-order">{{'Sort by:' | translate}}</label>
-                                <select id="persons-order" class="form-control" ng-model="personsOrderProp">
-                                    <option value="name" ng-selected="selected">{{'Name' | translate}}</option>
-                                    <option value="-name" ng-selected="selected">{{'Name (descending)' | translate}}</option>
-                                    <option value="surname" ng-selected="selected">{{'Surname' | translate}}</option>
-                                    <option value="-surname" ng-selected="selected">{{'Surname (descending)' | translate}}</option>
-                                </select>
-                            </div>
                         </form>
                         <table class="table table-striped">
                             <thead>
                                 <tr>
-                                    <th>{{'Person' | translate}}</th>
-                                    <th>{{'Attended' | translate}}</th>
+                                    <th>{{'Person' | translate}} <a ng-click="updateOrded('name')" href=""><i class="fa fa-caret-up"></i></a>{{'Name' | translate}}<a ng-click="updateOrded('-name')" href=""><i class="fa fa-caret-down"></i></a> <a ng-click="updateOrded('surname')" href=""><i class="fa fa-caret-up"></i></a>{{'Surname' | translate}}<a ng-click="updateOrded('-surname')" href=""><i class="fa fa-caret-down"></i></a></th>
+                                    <th><a ng-click="updateOrded('-attended')" href=""><i class="fa fa-caret-up"></i></a>{{'Attended' | translate}}<a ng-click="updateOrded('attended')" href=""><i class="fa fa-caret-down"></i></a></th>
                                     <th ng-repeat="col in customFields">
-                                        <strong>{{col.label | translate}}</strong>
+                                        <a ng-click="updateOrded(col.key)" href=""><i class="fa fa-caret-up"></i></a>{{col.label | translate}}<a ng-click="updateOrded('-' + col.key)" href=""><i class="fa fa-caret-down"></i></a>
                                     </th>
                                     <th>{{'Delete' | translate}}</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr ng-repeat="person in event.persons | splittedFilter:query | orderBy:personsOrderProp">
+                                <tr ng-repeat="person in event.persons | splittedFilter:query | orderBy:personsOrder">
                                     <td>
                                         <span><strong><a ui-sref="person.info({id: person.person_id})"><span>{{person.name}}</span>&nbsp;<span>{{person.surname}}</span></a></strong></span><span ng-if="person.email">&nbsp;&lt;{{person.email}}&gt;</span>
                                         <p ng-if="person.company || person.job_title"><i ng-if="person.job_title">{{person.job_title}}</i><span ng-if="person.company && person.job_title">&nbsp;@&nbsp;</span><i ng-if="person.company">{{person.company}}</i></p>

@@ -48,6 +48,8 @@ Be sure to have a running MongoDB server, locally.
 
 Open browser and navigate to: http://localhost:5242/
 
+If you store SSL key and certificate in the *ssl* directory (default names: eventman\_key.pem and eventman\_cert.pem), HTTPS will be used: https://localhost:5242/
+
 
 License and copyright
 =====================

@@ -100,6 +100,26 @@ class CollectionHandler(BaseHandler):
     # set of documents we're managing (a collection in MongoDB or a table in a SQL database)
     collection = None
 
+    # set of documents used to store incremental sequences
+    counters_collection = 'counters'
+
+    def get_next_seq(self, seq):
+        """Increment and return the new value of a ever-incrementing counter.
+
+        :param seq: unique name of the sequence
+        :type seq: str
+
+        :return: the next value of the sequence
+        :rtype: int
+        """
+        if not self.db.query(self.counters_collection, {'seq_name': seq}):
+            self.db.add(self.counters_collection, {'seq_name': seq, 'seq': 0})
+        merged, doc = self.db.update(self.counters_collection,
+                {'seq_name': seq},
+                {'seq': 1},
+                operation='increment')
+        return doc.get('seq', 0)
+
     def _filter_results(self, results, params):
         """Filter a list using keys and values from a dictionary.
         
@@ -329,6 +349,8 @@ class EventsHandler(CollectionHandler):
 
     def handle_post_persons(self, id_, person_id, data):
         # Add a person to the list of persons registered at this event.
+        data['seq'] = self.get_next_seq('event_%s_persons' % id_)
+        data['seq_hex'] = '%06X' % data['seq']
         doc = self.db.query('events',
                 {'_id': id_, 'persons.person_id': person_id})
         if '_id' in data:
@@ -337,7 +359,7 @@ class EventsHandler(CollectionHandler):
             merged, doc = self.db.update('events',
                     {'_id': id_},
                     {'persons': data},
-                    operation='append',
+                    operation='appendUnique',
                     create=False)
         return {'event': doc}
 
@@ -361,7 +383,7 @@ class EventsHandler(CollectionHandler):
                 doc.get('persons') or [])
         env = self._dict2env(new_person_data)
         if person_id is None:
-            person_id = new_person_data.get('person_id')
+            person_id = str(new_person_data.get('person_id'))
         env.update({'PERSON_ID': person_id, 'EVENT_ID': id_, 'EVENT_TITLE': doc.get('title', '')})
         stdin_data = {'old': old_person_data,
             'new': new_person_data,
@@ -427,6 +449,8 @@ class EbCSVImportPersonsHandler(BaseHandler):
 
     @gen.coroutine
     def post(self, **kwargs):
+        event_handler = EventsHandler(self.application, self.request)
+        event_handler.db = self.db
         targetEvent = None
         try:
             targetEvent = self.get_body_argument('targetEvent')
@@ -457,9 +481,7 @@ class EbCSVImportPersonsHandler(BaseHandler):
                         person.update(registered_data)
                         if not self.db.query('events',
                                 {'_id': event_id, 'persons.person_id': person_id}):
-                            self.db.update('events', {'_id': event_id},
-                                    {'persons': person},
-                                    operation='appendUnique')
+                            event_handler.handle_post_persons(event_id, person_id, person)
                             reply['new_in_event'] += 1
         self.write(reply)
 
