@@ -104,7 +104,6 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
                 }
             );
             $scope.personsOrder = new_order;
-            $log.debug(new_order);
         };
 
         // store a new Event or update an existing one

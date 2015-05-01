@@ -39,24 +39,26 @@
                         <table class="table table-striped">
                             <thead>
                                 <tr>
+                                    <th class="text-right">#</th>
                                     <th>{{'Person' | translate}} <a ng-click="updateOrded('name')" href=""><i class="fa fa-caret-up"></i></a>{{'Name' | translate}}<a ng-click="updateOrded('-name')" href=""><i class="fa fa-caret-down"></i></a> <a ng-click="updateOrded('surname')" href=""><i class="fa fa-caret-up"></i></a>{{'Surname' | translate}}<a ng-click="updateOrded('-surname')" href=""><i class="fa fa-caret-down"></i></a></th>
-                                    <th><a ng-click="updateOrded('-attended')" href=""><i class="fa fa-caret-up"></i></a>{{'Attended' | translate}}<a ng-click="updateOrded('attended')" href=""><i class="fa fa-caret-down"></i></a></th>
-                                    <th ng-repeat="col in customFields">
+                                    <th class="text-center"><a ng-click="updateOrded('-attended')" href=""><i class="fa fa-caret-up"></i></a>{{'Attended' | translate}}<a ng-click="updateOrded('attended')" href=""><i class="fa fa-caret-down"></i></a></th>
+                                    <th class="text-center" ng-repeat="col in customFields">
                                         <a ng-click="updateOrded(col.key)" href=""><i class="fa fa-caret-up"></i></a>{{col.label | translate}}<a ng-click="updateOrded('-' + col.key)" href=""><i class="fa fa-caret-down"></i></a>
                                     </th>
-                                    <th>{{'Delete' | translate}}</th>
+                                    <th class="text-center">{{'Delete' | translate}}</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr ng-repeat="person in event.persons | splittedFilter:query | orderBy:personsOrder">
+                                    <td class="text-right">{{$index}}</td>
                                     <td>
                                         <span><strong><a ui-sref="person.info({id: person.person_id})"><span>{{person.name}}</span>&nbsp;<span>{{person.surname}}</span></a></strong></span><span ng-if="person.email">&nbsp;&lt;{{person.email}}&gt;</span>
                                         <p ng-if="person.company || person.job_title"><i ng-if="person.job_title">{{person.job_title}}</i><span ng-if="person.company && person.job_title">&nbsp;@&nbsp;</span><i ng-if="person.company">{{person.company}}</i></p>
                                     </td>
-                                    <td>
+                                    <td class="text-center">
                                         <button class="btn btn-link" reset-focus name="switch-attended" ng-click="setPersonAttributeAndRefocus(person, 'attended', !person.attended)"><span class="glyphicon {{(person.attended) && 'glyphicon-ok-sign text-success' || 'glyphicon-remove-sign text-danger'}}"></span></button>
                                     </td>
-                                    <td ng-repeat="col in customFields">
+                                    <td class="text-center" ng-repeat="col in customFields">
                                         <span ng-if="col.type == 'boolean'">
                                             <button class="btn btn-link" ng-click="setPersonAttribute(person, col.key, !person[col.key])"><span class="glyphicon {{(person[col.key]) && 'glyphicon-ok-sign text-success' || 'glyphicon-remove-sign text-danger'}}"></span></button>
                                         </span>
@@ -64,7 +66,7 @@
                                             {{person[col.key]}}
                                         </span>
                                     </td>
-                                    <td>
+                                    <td class="text-center">
                                         <button ng-click="removeAttendee(person)" type="button" class="btn btn-link glyphicon glyphicon-trash"></button>
                                     </td>
                                 </tr>
