@@ -36,6 +36,11 @@ class EventManDB(object):
             'increment': '$inc'
     }
 
+    _force_conversion = {
+            'seq_hex': str,
+            'persons.seq_hex': str
+    }
+
     def __init__(self, url=None, dbName='eventman'):
         """Initialize the instance, connecting to the database.
 
@@ -100,7 +105,10 @@ class EventManDB(object):
         if isinstance(seq, dict):
             d = {}
             for key, item in seq.iteritems():
-                d[key] = self.convert(item)
+                if key in self._force_conversion:
+                    d[key] = self._force_conversion[key](item)
+                else:
+                    d[key] = self.convert(item)
             return d
         if isinstance(seq, (list, tuple)):
             return [self.convert(x) for x in seq]
