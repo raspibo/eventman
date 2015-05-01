@@ -337,7 +337,7 @@ class EventsHandler(CollectionHandler):
             merged, doc = self.db.update('events',
                     {'_id': id_},
                     {'persons': data},
-                    operation='append',
+                    operation='appendUnique',
                     create=False)
         return {'event': doc}
 
@@ -427,6 +427,8 @@ class EbCSVImportPersonsHandler(BaseHandler):
 
     @gen.coroutine
     def post(self, **kwargs):
+        event_handler = EventsHandler(self.application, self.request)
+        event_handler.db = self.db
         targetEvent = None
         try:
             targetEvent = self.get_body_argument('targetEvent')
@@ -457,9 +459,7 @@ class EbCSVImportPersonsHandler(BaseHandler):
                         person.update(registered_data)
                         if not self.db.query('events',
                                 {'_id': event_id, 'persons.person_id': person_id}):
-                            self.db.update('events', {'_id': event_id},
-                                    {'persons': person},
-                                    operation='appendUnique')
+                            event_handler.handle_post_persons(event_id, person_id, person)
                             reply['new_in_event'] += 1
         self.write(reply)
 
