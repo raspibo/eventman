@@ -60,6 +60,7 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
         $scope.countAttendees = 0;
         $scope.message = {};
         $scope.event = {};
+        $scope.event.persons = [];
         $scope.customFields = Setting.query({setting: 'person_custom_field',
             in_event_details: true});
 
