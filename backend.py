@@ -32,7 +32,8 @@ class EventManDB(object):
             'update': '$set',
             'append': '$push',
             'appendUnique': '$addToSet',
-            'delete': '$pull'
+            'delete': '$pull',
+            'increment': '$inc'
     }
 
     def __init__(self, url=None, dbName='eventman'):
@@ -189,7 +190,7 @@ class EventManDB(object):
         :type _id_or_query: str or :class:`~bson.objectid.ObjectId` or iterable
         :param data: the updated information to store
         :type data: dict
-        :param operation: operation used to update the document or a portion of it, like a list (update, append, appendUnique, delete)
+        :param operation: operation used to update the document or a portion of it, like a list (update, append, appendUnique, delete, increment)
         :type operation: str
         :param updateList: if set, it's considered the name of a list (the first matching element will be updated)
         :type updateList: str

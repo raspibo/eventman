@@ -100,6 +100,26 @@ class CollectionHandler(BaseHandler):
     # set of documents we're managing (a collection in MongoDB or a table in a SQL database)
     collection = None
 
+    # set of documents used to store incremental sequences
+    counters_collection = 'counters'
+
+    def get_next_seq(self, seq):
+        """Increment and return the new value of a ever-incrementing counter.
+
+        :param seq: unique name of the sequence
+        :type seq: str
+
+        :return: the next value of the sequence
+        :rtype: int
+        """
+        if not self.db.query(self.counters_collection, {'seq_name': seq}):
+            self.db.add(self.counters_collection, {'seq_name': seq, 'seq': 0})
+        merged, doc = self.db.update(self.counters_collection,
+                {'seq_name': seq},
+                {'seq': 1},
+                operation='increment')
+        return doc.get('seq', 0)
+
     def _filter_results(self, results, params):
         """Filter a list using keys and values from a dictionary.
         
@@ -329,6 +349,8 @@ class EventsHandler(CollectionHandler):
 
     def handle_post_persons(self, id_, person_id, data):
         # Add a person to the list of persons registered at this event.
+        data['seq'] = self.get_next_seq('event_%s_persons' % id_)
+        data['seq_hex'] = '%06X' % data['seq']
         doc = self.db.query('events',
                 {'_id': id_, 'persons.person_id': person_id})
         if '_id' in data:
