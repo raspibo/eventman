@@ -568,8 +568,11 @@ class LoginHandler(RootHandler):
         username = self.get_body_argument('username')
         password = self.get_body_argument('password')
         if self._authorize(username, password):
+            logging.info('successful login for user %s' % username)
             self.set_secure_cookie("user", username)
             self.redirect('/')
+            return
+        logging.info('login failed for user %s' % username)
         self.redirect('/login?failed=1')
 
 
@@ -577,6 +580,7 @@ class LogoutHandler(RootHandler):
     """Handle user logout requests."""
     @gen.coroutine
     def get(self, **kwds):
+        logging.info('logout')
         self.logout()
         self.redirect('/login')
 
