@@ -78,12 +78,21 @@ class BaseHandler(tornado.web.RequestHandler):
         for key, value in kwargs.iteritems():
             setattr(self, key, value)
 
+    def get_current_user(self):
+        """Retrieve current user from the secure cookie."""
+        return self.get_secure_cookie("user")
+
+    def logout(self):
+        """Remove the secure cookie used fro authentication."""
+        self.clear_cookie("user")
+
 
 class RootHandler(BaseHandler):
     """Handler for the / path."""
     angular_app_path = os.path.join(os.path.dirname(__file__), "angular_app")
 
     @gen.coroutine
+    @tornado.web.authenticated
     def get(self, *args, **kwargs):
         # serve the ./angular_app/index.html file
         with open(self.angular_app_path + "/index.html", 'r') as fd:
@@ -159,6 +168,7 @@ class CollectionHandler(BaseHandler):
         return ret
 
     @gen.coroutine
+    @tornado.web.authenticated
     def get(self, id_=None, resource=None, resource_id=None, **kwargs):
         if resource:
             # Handle access to sub-resources.
@@ -177,6 +187,7 @@ class CollectionHandler(BaseHandler):
             self.write({self.collection: self.db.query(self.collection)})
 
     @gen.coroutine
+    @tornado.web.authenticated
     def post(self, id_=None, resource=None, resource_id=None, **kwargs):
         data = escape.json_decode(self.request.body or '{}')
         if resource:
@@ -195,6 +206,7 @@ class CollectionHandler(BaseHandler):
     put = post
 
     @gen.coroutine
+    @tornado.web.authenticated
     def delete(self, id_=None, resource=None, resource_id=None, **kwargs):
         if resource:
             # Handle access to sub-resources.
@@ -448,6 +460,7 @@ class EbCSVImportPersonsHandler(BaseHandler):
             'company', 'job_title')
 
     @gen.coroutine
+    @tornado.web.authenticated
     def post(self, **kwargs):
         event_handler = EventsHandler(self.application, self.request)
         event_handler.db = self.db
@@ -489,6 +502,7 @@ class EbCSVImportPersonsHandler(BaseHandler):
 class SettingsHandler(BaseHandler):
     """Handle requests for Settings."""
     @gen.coroutine
+    @tornado.web.authenticated
     def get(self, **kwds):
         query = self._arguments_tobool()
         settings = self.db.query('settings', query)
@@ -537,7 +551,17 @@ class LoginHandler(RootHandler):
         password = self.get_body_argument('password')
         if username != 'admin' and password != 'eventman':
             self.redirect('/login?failed=1')
+        else:
+            self.set_secure_cookie("user", username)
         self.redirect('/')
+
+
+class LogoutHandler(RootHandler):
+    """Handle user logout requests."""
+    @gen.coroutine
+    def get(self, **kwds):
+        self.logout()
+        self.redirect('/login')
 
 
 def run():
@@ -577,6 +601,7 @@ def run():
             (r"/settings", SettingsHandler, init_params),
             _ws_handler,
             (r'/login', LoginHandler),
+            (r'/logout', LogoutHandler),
             (r'/(.*)', tornado.web.StaticFileHandler, {"path": "angular_app"})
         ],
         template_path=os.path.join(os.path.dirname(__file__), "templates"),
