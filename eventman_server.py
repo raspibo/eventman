@@ -524,6 +524,22 @@ class WebSocketEventUpdatesHandler(tornado.websocket.WebSocketHandler):
             logging.warn('WebSocketEventUpdatesHandler.on_close error closing websocket: %s', str(e))
 
 
+class LoginHandler(RootHandler):
+    """Handle user authentication requests."""
+    @gen.coroutine
+    def get(self, **kwds):
+        with open(self.angular_app_path + "/login.html", 'r') as fd:
+            self.write(fd.read())
+
+    @gen.coroutine
+    def post(self):
+        username = self.get_body_argument('username')
+        password = self.get_body_argument('password')
+        if username != 'admin' and password != 'eventman':
+            self.redirect('/login?failed=1')
+        self.redirect('/')
+
+
 def run():
     """Run the Tornado web application."""
     # command line arguments; can also be written in a configuration file,
@@ -560,10 +576,13 @@ def run():
             (r"/ebcsvpersons", EbCSVImportPersonsHandler, init_params),
             (r"/settings", SettingsHandler, init_params),
             _ws_handler,
+            (r'/login', LoginHandler),
             (r'/(.*)', tornado.web.StaticFileHandler, {"path": "angular_app"})
         ],
         template_path=os.path.join(os.path.dirname(__file__), "templates"),
         static_path=os.path.join(os.path.dirname(__file__), "static"),
+        cookie_secret='__COOKIE_SECRET__',
+        login_url='/login',
         debug=options.debug)
     ssl_options = {}
     if os.path.isfile(options.ssl_key) and os.path.isfile(options.ssl_cert):
