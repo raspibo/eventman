@@ -30,34 +30,27 @@
                     <label for="query-persons">{{'Search:' | translate}}</label>
                     <input eventman-focus type="text" id="query-persons" class="form-control" placeholder="{{'Name or email' | translate}}" ng-model="query">
                 </div>
-                <div class="form-group">
-                    <label for="persons-order">{{'Sort by:' | translate}}</label>
-                    <select id="persons-order" class="form-control" ng-model="personsOrderProp">
-                        <option value="name" ng-selected="selected">{{'Name' | translate}}</option>
-                        <option value="-name" ng-selected="selected">{{'Name (descending)' | translate}}</option>
-                        <option value="surname" ng-selected="selected">{{'Surname' | translate}}</option>
-                        <option value="-surname" ng-selected="selected">{{'Surname (descending)' | translate}}</option>
-                    </select>
-                </div>
             </form>
 
             <table class="table table-striped">
                 <thead>
                     <tr>
-                        <th><strong>{{'Name' | translate}}</strong></th>
-                        <th ng-repeat="col in customFields">
-                            <strong>{{col.label | translate}}</strong>
+                        <th class="text-right">#</th>
+                        <th>{{'Person' | translate}} <a ng-click="updateOrded('name')" href=""><i class="fa fa-caret-up"></i></a>{{'Name' | translate}}<a ng-click="updateOrded('-name')" href=""><i class="fa fa-caret-down"></i></a> <a ng-click="updateOrded('surname')" href=""><i class="fa fa-caret-up"></i></a>{{'Surname' | translate}}<a ng-click="updateOrded('-surname')" href=""><i class="fa fa-caret-down"></i></a></th>
+                        <th ng-repeat="col in customFields" class="text-center">
+                            <a ng-click="updateOrded(col.key)" href=""><i class="fa fa-caret-up"></i></a>{{col.label | translate}}<a ng-click="updateOrded('-' + col.key)" href=""><i class="fa fa-caret-down"></i></a>
                         </th>
-                        <th><strong>{{'Delete' | translate}}</strong></th>
+                        <th class="text-center"><strong>{{'Delete' | translate}}</strong></th>
                     </tr>
                 </thead>
                 <tbody>
-                <tr ng-repeat="person in persons | splittedFilter:query | orderBy:personsOrderProp">
+                <tr ng-repeat="person in persons | splittedFilter:query | orderBy:personsOrder">
+                    <td class="text-right">{{$index+1}}</td>
                     <td>
                         <span><strong><a ui-sref="person.info({id: person._id})"><span>{{person.name}}</span>&nbsp;<span>{{person.surname}}</span></a></strong></span><span ng-if="person.email">&nbsp;&lt;{{person.email}}&gt;</span>
                         <p ng-if="person.company || person.job_title"><i ng-if="person.job_title">{{person.job_title}}</i><span ng-if="person.company && person.job_title">&nbsp;@&nbsp;</span><i ng-if="person.company">{{person.company}}</i></p>
                     </td>
-                    <td ng-repeat="col in customFields">
+                    <td ng-repeat="col in customFields" class="text-center">
                         <span ng-if="col.type == 'boolean'">
                             <button class="btn btn-link" ng-click="setAttribute(person, col.key, !person[col.key])"><span class="glyphicon {{(person[col.key]) && 'glyphicon-ok-sign text-success' || 'glyphicon-remove-sign text-danger'}}"></span></button>
                         </span>
@@ -65,7 +58,7 @@
                             {{person[col.key]}}
                         </span>
                     </td>
-                    <td>
+                    <td class="text-center">
                         <button ng-click="remove(person._id)" type="button" class="btn btn-link glyphicon glyphicon-trash"></button>
                     </td>
                 </tr>
