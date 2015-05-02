@@ -38,6 +38,8 @@ import backend
 ENCODING = 'utf-8'
 PROCESS_TIMEOUT = 60
 
+API_VERSION = '1.0'
+
 re_env_key = re.compile('[^A-Z_]+')
 re_slashes = re.compile(r'//+')
 
@@ -62,6 +64,9 @@ class BaseHandler(tornado.web.RequestHandler):
         'yes': True,
         'true': True
     }
+
+    def is_api(self):
+        return self.request.path.startswith('/v%s' % API_VERSION)
 
     def tobool(self, obj):
         if isinstance(obj, (list, tuple)):
@@ -570,10 +575,17 @@ class LoginHandler(RootHandler):
         if self._authorize(username, password):
             logging.info('successful login for user %s' % username)
             self.set_secure_cookie("user", username)
-            self.redirect('/')
+            if self.is_api():
+                self.write({'error': None, 'message': 'successful login'})
+            else:
+                self.redirect('/')
             return
         logging.info('login failed for user %s' % username)
-        self.redirect('/login?failed=1')
+        if self.is_api():
+            self.set_status(403)
+            self.write({'error': None, 'message': 'successful login'})
+        else:
+            self.redirect('/login?failed=1')
 
 
 class LogoutHandler(RootHandler):
@@ -619,15 +631,21 @@ def run():
                 {'username': 'admin', 'password': utils.hash_password('eventman')})
 
     _ws_handler = (r"/ws/+event/+(?P<event_id>\w+)/+updates/?", WebSocketEventUpdatesHandler)
+    _persons_path = r"/persons/?(?P<id_>\w+)?/?(?P<resource>\w+)?/?(?P<resource_id>\w+)?"
+    _events_path = r"/events/?(?P<id_>\w+)?/?(?P<resource>\w+)?/?(?P<resource_id>\w+)?"
     application = tornado.web.Application([
-            (r"/persons/?(?P<id_>\w+)?/?(?P<resource>\w+)?/?(?P<resource_id>\w+)?", PersonsHandler, init_params),
-            (r"/events/?(?P<id_>\w+)?/?(?P<resource>\w+)?/?(?P<resource_id>\w+)?", EventsHandler, init_params),
+            (_persons_path, PersonsHandler, init_params),
+            (r'/v%s%s' % (API_VERSION, _persons_path), PersonsHandler, init_params),
+            (_events_path, EventsHandler, init_params),
+            (r'/v%s%s' % (API_VERSION, _events_path), EventsHandler, init_params),
             (r"/(?:index.html)?", RootHandler, init_params),
             (r"/ebcsvpersons", EbCSVImportPersonsHandler, init_params),
             (r"/settings", SettingsHandler, init_params),
             _ws_handler,
             (r'/login', LoginHandler, init_params),
+            (r'/v%s/login' % API_VERSION, LoginHandler, init_params),
             (r'/logout', LogoutHandler),
+            (r'/v%s/logout' % API_VERSION, LogoutHandler),
             (r'/(.*)', tornado.web.StaticFileHandler, {"path": "angular_app"})
         ],
         template_path=os.path.join(os.path.dirname(__file__), "templates"),
