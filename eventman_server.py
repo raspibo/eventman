@@ -540,20 +540,37 @@ class WebSocketEventUpdatesHandler(tornado.websocket.WebSocketHandler):
 
 class LoginHandler(RootHandler):
     """Handle user authentication requests."""
+    re_split_salt = re.compile(r'\$(?P<salt>.+)\$(?P<hash>.+)')
+
     @gen.coroutine
     def get(self, **kwds):
         with open(self.angular_app_path + "/login.html", 'r') as fd:
             self.write(fd.read())
 
+    def _authorize(self, username, password):
+        res = self.db.query('users', {'username': username})
+        if not res:
+            return False
+        user = res[0]
+        db_password = user.get('password') or ''
+        if not db_password:
+            return False
+        match = self.re_split_salt.match(db_password)
+        if not match:
+            return False
+        salt = match.group('salt')
+        if utils.hash_password(password, salt=salt) == db_password:
+            return True
+        return False
+
     @gen.coroutine
     def post(self):
         username = self.get_body_argument('username')
         password = self.get_body_argument('password')
-        if username != 'admin' and password != 'eventman':
-            self.redirect('/login?failed=1')
-        else:
+        if self._authorize(username, password):
             self.set_secure_cookie("user", username)
-        self.redirect('/')
+            self.redirect('/')
+        self.redirect('/login?failed=1')
 
 
 class LogoutHandler(RootHandler):
@@ -592,6 +609,11 @@ def run():
     db_connector = backend.EventManDB(url=options.mongodbURL, dbName=options.dbName)
     init_params = dict(db=db_connector, data_dir=options.data, listen_port=options.port)
 
+    # If not present, we store a user 'admin' with password 'eventman' into the database.
+    if not db_connector.query('users', {'username': 'admin'}):
+        db_connector.add('users',
+                {'username': 'admin', 'password': utils.hash_password('eventman')})
+
     _ws_handler = (r"/ws/+event/+(?P<event_id>\w+)/+updates/?", WebSocketEventUpdatesHandler)
     application = tornado.web.Application([
             (r"/persons/?(?P<id_>\w+)?/?(?P<resource>\w+)?/?(?P<resource_id>\w+)?", PersonsHandler, init_params),
@@ -600,7 +622,7 @@ def run():
             (r"/ebcsvpersons", EbCSVImportPersonsHandler, init_params),
             (r"/settings", SettingsHandler, init_params),
             _ws_handler,
-            (r'/login', LoginHandler),
+            (r'/login', LoginHandler, init_params),
             (r'/logout', LogoutHandler),
             (r'/(.*)', tornado.web.StaticFileHandler, {"path": "angular_app"})
         ],
