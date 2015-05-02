@@ -549,8 +549,12 @@ class LoginHandler(RootHandler):
 
     @gen.coroutine
     def get(self, **kwds):
-        with open(self.angular_app_path + "/login.html", 'r') as fd:
-            self.write(fd.read())
+        if self.is_api():
+            self.set_status(401)
+            self.write({'error': 'authentication required', 'message': 'please provide username and password'})
+        else:
+            with open(self.angular_app_path + "/login.html", 'r') as fd:
+                self.write(fd.read())
 
     def _authorize(self, username, password):
         res = self.db.query('users', {'username': username})
@@ -582,8 +586,8 @@ class LoginHandler(RootHandler):
             return
         logging.info('login failed for user %s' % username)
         if self.is_api():
-            self.set_status(403)
-            self.write({'error': None, 'message': 'successful login'})
+            self.set_status(401)
+            self.write({'error': 'authentication failed', 'message': 'wrong username and password'})
         else:
             self.redirect('/login?failed=1')
 
