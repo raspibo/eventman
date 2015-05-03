@@ -104,7 +104,6 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
                 }
             );
             $scope.personsOrder = new_order;
-            $log.debug(new_order);
         };
 
         // store a new Event or update an existing one
@@ -229,10 +228,27 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
 eventManControllers.controller('PersonsListCtrl', ['$scope', 'Person', 'Setting',
     function ($scope, Person, Setting) {
         $scope.persons = Person.all();
-        $scope.personsOrderProp = 'name';
-        $scope.eventsOrderProp = '-begin-date';
+        $scope.personsOrder = ["name", "surname"];
         $scope.customFields = Setting.query({setting: 'person_custom_field',
             in_persons_list: true});
+
+        $scope.updateOrded = function(key) {
+            var new_order = [key];
+            var inv_key;
+            if (key && key[0] === '-') {
+                inv_key = key.substring(1);
+            } else {
+                inv_key = '-' + key;
+            }
+            angular.forEach($scope.personsOrder,
+                function(value, idx) {
+                    if (value !== key && value !== inv_key) {
+                        new_order.push(value)
+                    }
+                }
+            );
+            $scope.personsOrder = new_order;
+        };
 
         $scope.setAttribute = function(person, key, value) {
             var data = {_id: person._id};

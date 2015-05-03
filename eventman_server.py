@@ -38,8 +38,26 @@ import backend
 ENCODING = 'utf-8'
 PROCESS_TIMEOUT = 60
 
+API_VERSION = '1.0'
+
 re_env_key = re.compile('[^A-Z_]+')
 re_slashes = re.compile(r'//+')
+
+
+def authenticated(method):
+    """Decorator to handle authentication."""
+    original_wrapper = tornado.web.authenticated(method)
+    @tornado.web.functools.wraps(method)
+    def my_wrapper(self, *args, **kwargs):
+        # If no authentication was required from the command line or config file.
+        if not self.authentication:
+            return method(self, *args, **kwargs)
+        # un authenticated API calls gets redirected to /v1.0/[...]
+        if self.is_api() and not self.current_user:
+            self.redirect('/v%s%s' % (API_VERSION, self.get_login_url()))
+            return
+        return original_wrapper(self, *args, **kwargs)
+    return my_wrapper
 
 
 class BaseHandler(tornado.web.RequestHandler):
@@ -63,14 +81,20 @@ class BaseHandler(tornado.web.RequestHandler):
         'true': True
     }
 
+    def is_api(self):
+        """Return True if the path is from an API call."""
+        return self.request.path.startswith('/v%s' % API_VERSION)
+
     def tobool(self, obj):
+        """Convert some textual values to boolean."""
         if isinstance(obj, (list, tuple)):
             obj = obj[0]
         if isinstance(obj, (str, unicode)):
             obj = obj.lower()
         return self._bool_convert.get(obj, obj)
 
-    def _arguments_tobool(self):
+    def arguments_tobool(self):
+        """Return a dictionary of arguments, converted to booleans where possible."""
         return dict([(k, self.tobool(v)) for k, v in self.arguments.iteritems()])
 
     def initialize(self, **kwargs):
@@ -78,12 +102,21 @@ class BaseHandler(tornado.web.RequestHandler):
         for key, value in kwargs.iteritems():
             setattr(self, key, value)
 
+    def get_current_user(self):
+        """Retrieve current user from the secure cookie."""
+        return self.get_secure_cookie("user")
+
+    def logout(self):
+        """Remove the secure cookie used fro authentication."""
+        self.clear_cookie("user")
+
 
 class RootHandler(BaseHandler):
     """Handler for the / path."""
     angular_app_path = os.path.join(os.path.dirname(__file__), "angular_app")
 
     @gen.coroutine
+    @authenticated
     def get(self, *args, **kwargs):
         # serve the ./angular_app/index.html file
         with open(self.angular_app_path + "/index.html", 'r') as fd:
@@ -159,6 +192,7 @@ class CollectionHandler(BaseHandler):
         return ret
 
     @gen.coroutine
+    @authenticated
     def get(self, id_=None, resource=None, resource_id=None, **kwargs):
         if resource:
             # Handle access to sub-resources.
@@ -177,6 +211,7 @@ class CollectionHandler(BaseHandler):
             self.write({self.collection: self.db.query(self.collection)})
 
     @gen.coroutine
+    @authenticated
     def post(self, id_=None, resource=None, resource_id=None, **kwargs):
         data = escape.json_decode(self.request.body or '{}')
         if resource:
@@ -195,6 +230,7 @@ class CollectionHandler(BaseHandler):
     put = post
 
     @gen.coroutine
+    @authenticated
     def delete(self, id_=None, resource=None, resource_id=None, **kwargs):
         if resource:
             # Handle access to sub-resources.
@@ -448,7 +484,9 @@ class EbCSVImportPersonsHandler(BaseHandler):
             'company', 'job_title')
 
     @gen.coroutine
+    @authenticated
     def post(self, **kwargs):
+        # import a CSV list of persons
         event_handler = EventsHandler(self.application, self.request)
         event_handler.db = self.db
         targetEvent = None
@@ -489,13 +527,15 @@ class EbCSVImportPersonsHandler(BaseHandler):
 class SettingsHandler(BaseHandler):
     """Handle requests for Settings."""
     @gen.coroutine
+    @authenticated
     def get(self, **kwds):
-        query = self._arguments_tobool()
+        query = self.arguments_tobool()
         settings = self.db.query('settings', query)
         self.write({'settings': settings})
 
 
 class WebSocketEventUpdatesHandler(tornado.websocket.WebSocketHandler):
+    """Manage websockets."""
     def _clean_url(self, url):
         return re_slashes.sub('/', url)
 
@@ -524,21 +564,88 @@ class WebSocketEventUpdatesHandler(tornado.websocket.WebSocketHandler):
             logging.warn('WebSocketEventUpdatesHandler.on_close error closing websocket: %s', str(e))
 
 
+class LoginHandler(RootHandler):
+    """Handle user authentication requests."""
+    re_split_salt = re.compile(r'\$(?P<salt>.+)\$(?P<hash>.+)')
+
+    @gen.coroutine
+    def get(self, **kwds):
+        # show the login page
+        if self.is_api():
+            self.set_status(401)
+            self.write({'error': 'authentication required',
+                'message': 'please provide username and password'})
+        else:
+            with open(self.angular_app_path + "/login.html", 'r') as fd:
+                self.write(fd.read())
+
+    def _authorize(self, username, password):
+        """Return True is this username/password is valid."""
+        res = self.db.query('users', {'username': username})
+        if not res:
+            return False
+        user = res[0]
+        db_password = user.get('password') or ''
+        if not db_password:
+            return False
+        match = self.re_split_salt.match(db_password)
+        if not match:
+            return False
+        salt = match.group('salt')
+        if utils.hash_password(password, salt=salt) == db_password:
+            return True
+        return False
+
+    @gen.coroutine
+    def post(self):
+        # authenticate a user
+        username = self.get_body_argument('username')
+        password = self.get_body_argument('password')
+        if self._authorize(username, password):
+            logging.info('successful login for user %s' % username)
+            self.set_secure_cookie("user", username)
+            if self.is_api():
+                self.write({'error': None, 'message': 'successful login'})
+            else:
+                self.redirect('/')
+            return
+        logging.info('login failed for user %s' % username)
+        if self.is_api():
+            self.set_status(401)
+            self.write({'error': 'authentication failed', 'message': 'wrong username and password'})
+        else:
+            self.redirect('/login?failed=1')
+
+
+class LogoutHandler(RootHandler):
+    """Handle user logout requests."""
+    @gen.coroutine
+    def get(self, **kwds):
+        # log the user out
+        logging.info('logout')
+        self.logout()
+        if self.is_api():
+            self.redirect('/v%s/login' % API_VERSION)
+        else:
+            self.redirect('/login')
+
+
 def run():
     """Run the Tornado web application."""
     # command line arguments; can also be written in a configuration file,
     # specified with the --config argument.
     define("port", default=5242, help="run on the given port", type=int)
-    define("data", default=os.path.join(os.path.dirname(__file__), "data"),
+    define("data_dir", default=os.path.join(os.path.dirname(__file__), "data"),
             help="specify the directory used to store the data")
     define("ssl_cert", default=os.path.join(os.path.dirname(__file__), 'ssl', 'eventman_cert.pem'),
             help="specify the SSL certificate to use for secure connections")
     define("ssl_key", default=os.path.join(os.path.dirname(__file__), 'ssl', 'eventman_key.pem'),
             help="specify the SSL private key to use for secure connections")
-    define("mongodbURL", default=None,
+    define("mongo_url", default=None,
             help="URL to MongoDB server", type=str)
-    define("dbName", default='eventman',
+    define("db_name", default='eventman',
             help="Name of the MongoDB database to use", type=str)
+    define("authentication", default=True, help="if set to false, no authentication is required")
     define("debug", default=False, help="run in debug mode")
     define("config", help="read configuration file",
             callback=lambda path: tornado.options.parse_config_file(path, final=False))
@@ -549,21 +656,37 @@ def run():
         logger.setLevel(logging.DEBUG)
 
     # database backend connector
-    db_connector = backend.EventManDB(url=options.mongodbURL, dbName=options.dbName)
-    init_params = dict(db=db_connector, data_dir=options.data, listen_port=options.port)
+    db_connector = backend.EventManDB(url=options.mongo_url, dbName=options.db_name)
+    init_params = dict(db=db_connector, data_dir=options.data_dir, listen_port=options.port,
+            authentication=options.authentication)
+
+    # If not present, we store a user 'admin' with password 'eventman' into the database.
+    if not db_connector.query('users', {'username': 'admin'}):
+        db_connector.add('users',
+                {'username': 'admin', 'password': utils.hash_password('eventman')})
 
     _ws_handler = (r"/ws/+event/+(?P<event_id>\w+)/+updates/?", WebSocketEventUpdatesHandler)
+    _persons_path = r"/persons/?(?P<id_>\w+)?/?(?P<resource>\w+)?/?(?P<resource_id>\w+)?"
+    _events_path = r"/events/?(?P<id_>\w+)?/?(?P<resource>\w+)?/?(?P<resource_id>\w+)?"
     application = tornado.web.Application([
-            (r"/persons/?(?P<id_>\w+)?/?(?P<resource>\w+)?/?(?P<resource_id>\w+)?", PersonsHandler, init_params),
-            (r"/events/?(?P<id_>\w+)?/?(?P<resource>\w+)?/?(?P<resource_id>\w+)?", EventsHandler, init_params),
+            (_persons_path, PersonsHandler, init_params),
+            (r'/v%s%s' % (API_VERSION, _persons_path), PersonsHandler, init_params),
+            (_events_path, EventsHandler, init_params),
+            (r'/v%s%s' % (API_VERSION, _events_path), EventsHandler, init_params),
             (r"/(?:index.html)?", RootHandler, init_params),
             (r"/ebcsvpersons", EbCSVImportPersonsHandler, init_params),
             (r"/settings", SettingsHandler, init_params),
             _ws_handler,
+            (r'/login', LoginHandler, init_params),
+            (r'/v%s/login' % API_VERSION, LoginHandler, init_params),
+            (r'/logout', LogoutHandler),
+            (r'/v%s/logout' % API_VERSION, LogoutHandler),
             (r'/(.*)', tornado.web.StaticFileHandler, {"path": "angular_app"})
         ],
         template_path=os.path.join(os.path.dirname(__file__), "templates"),
         static_path=os.path.join(os.path.dirname(__file__), "static"),
+        cookie_secret='__COOKIE_SECRET__',
+        login_url='/login',
         debug=options.debug)
     ssl_options = {}
     if os.path.isfile(options.ssl_key) and os.path.isfile(options.ssl_cert):

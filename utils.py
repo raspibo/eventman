@@ -18,6 +18,9 @@ limitations under the License.
 
 import csv
 import json
+import string
+import random
+import hashlib
 import datetime
 import StringIO
 from bson.objectid import ObjectId
@@ -71,6 +74,14 @@ def csvParse(csvStr, remap=None, merge=None):
         pass
     fd.close()
     return reply, results
+
+
+def hash_password(password, salt=None):
+    if salt is None:
+        salt_pool = string.ascii_letters + string.digits
+        salt = ''.join(random.choice(salt_pool) for x in xrange(32))
+    hash_ = hashlib.sha512('%s%s' % (salt, password))
+    return '$%s$%s' % (salt, hash_.hexdigest())
 
 
 class ImprovedEncoder(json.JSONEncoder):

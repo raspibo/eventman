@@ -23,7 +23,7 @@ FONT_TEXT_ENCODING = 'latin-1'
 FONT_BARCODE = 'free3of9.ttf'
 
 PRINTER_NAME = None
-#PRINTER_NAME = 'DYMO_LabelWriter_450'
+PRINTER_NAME = 'DYMO_LabelWriter_450'
 
 
 def _get_resource(filename):
