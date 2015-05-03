@@ -38,15 +38,44 @@ eventManControllers.controller('DatetimePickerCtrl', ['$scope',
 );
 
 
-eventManControllers.controller('EventsListCtrl', ['$scope', 'Event',
-    function ($scope, Event) {
+/* Controller for modals. */
+eventManControllers.controller('ModalConfirmInstanceCtrl', ['$scope', '$modalInstance', 'message',
+    function ($scope, $modalInstance, message) {
+        $scope.message = message;
+
+        $scope.ok = function () {
+            $modalInstance.close($scope);
+        };
+
+        $scope.cancel = function () {
+            $modalInstance.dismiss('cancel');
+        };
+    }]
+);
+
+
+eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$modal', '$log',
+    function ($scope, Event, $modal, $log) {
         $scope.events = Event.all();
         $scope.personsOrderProp = 'name';
         $scope.eventsOrderProp = "'-begin-date'";
 
         $scope.remove = function(_id) {
-            Event.remove({'id': _id}, function() {
-                $scope.events = Event.all();
+            var modalInstance = $modal.open({
+                scope: $scope,
+                templateUrl: 'modal-confirm-action.html',
+                controller: 'ModalConfirmInstanceCtrl',
+                resolve: {
+                    // XXX: must be converted in a i18n-able form.
+                    message: function() { return 'You really want to delete this event?'; }
+                }
+            });
+            modalInstance.result.then(function() {
+                console.debug('here');
+                Event.remove({'id': _id}, function() {
+                    $scope.events = Event.all();
+                    }
+                );
             });
         };
     }]
@@ -225,8 +254,8 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
 );
 
 
-eventManControllers.controller('PersonsListCtrl', ['$scope', 'Person', 'Setting',
-    function ($scope, Person, Setting) {
+eventManControllers.controller('PersonsListCtrl', ['$scope', 'Person', 'Setting', '$modal',
+    function ($scope, Person, Setting, $modal) {
         $scope.persons = Person.all();
         $scope.personsOrder = ["name", "surname"];
         $scope.customFields = Setting.query({setting: 'person_custom_field',
@@ -259,8 +288,21 @@ eventManControllers.controller('PersonsListCtrl', ['$scope', 'Person', 'Setting'
         };
 
         $scope.remove = function(_id) {
-            Person.remove({'id': _id}, function() {
-                $scope.persons = Person.all();
+            var modalInstance = $modal.open({
+                scope: $scope,
+                templateUrl: 'modal-confirm-action.html',
+                controller: 'ModalConfirmInstanceCtrl',
+                resolve: {
+                    // XXX: must be converted in a i18n-able form.
+                    message: function() { return 'You really want to delete this person?'; }
+                }
+            });
+            modalInstance.result.then(function() {
+                console.debug('here');
+                Person.remove({'id': _id}, function() {
+                    $scope.persons = Person.all();
+                    }
+                );
             });
         };
     }]
