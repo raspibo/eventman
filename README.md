@@ -55,7 +55,7 @@ If you store SSL key and certificate in the *ssl* directory (default names: even
 Authentication
 ==============
 
-By default, authentication is required; default username and password are *admin* and *eventman*.
+By default, authentication is required; default username and password are *admin* and *eventman*. If you want to completely disable authentication, run the daemon with --authentication=off
 
 
 License and copyright
