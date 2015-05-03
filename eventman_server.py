@@ -665,6 +665,16 @@ def run():
         db_connector.add('users',
                 {'username': 'admin', 'password': utils.hash_password('eventman')})
 
+    # If present, use the cookie_secret stored into the database.
+    cookie_secret = db_connector.query('settings', {'setting': 'server_cookie_secret'})
+    if cookie_secret:
+        cookie_secret = cookie_secret[0]['cookie_secret']
+    else:
+        # the salt guarantees its uniqueness
+        cookie_secret = utils.hash_password('__COOKIE_SECRET__')
+        db_connector.add('settings',
+                {'setting': 'server_cookie_secret', 'cookie_secret': cookie_secret})
+
     _ws_handler = (r"/ws/+event/+(?P<event_id>\w+)/+updates/?", WebSocketEventUpdatesHandler)
     _persons_path = r"/persons/?(?P<id_>\w+)?/?(?P<resource>\w+)?/?(?P<resource_id>\w+)?"
     _events_path = r"/events/?(?P<id_>\w+)?/?(?P<resource>\w+)?/?(?P<resource_id>\w+)?"

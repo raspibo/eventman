@@ -15,10 +15,12 @@ Technological stack
 
 - [AngularJS](https://angularjs.org/) (plus some third-party modules) for the webApp
 - [Bootstrap](http://getbootstrap.com/) (plus [Angular UI](https://angular-ui.github.io/bootstrap/)) for the eye-candy
+- [Font Awesome](https://fortawesome.github.io/Font-Awesome/) for even more cuteness
 - [Tornado web](http://www.tornadoweb.org/) as web server
 - [MongoDB](https://www.mongodb.org/) to store the data
 
 The web part is incuded; you need to install Tornado, MongoDB and the pymongo module on your system (no configuration needed).
+If you want to print labels using the _print\_label_ trigger, you may also need the pycups module.
 
 
 Coding style and conventions
@@ -49,6 +51,11 @@ Be sure to have a running MongoDB server, locally.
 Open browser and navigate to: http://localhost:5242/
 
 If you store SSL key and certificate in the *ssl* directory (default names: eventman\_key.pem and eventman\_cert.pem), HTTPS will be used: https://localhost:5242/
+
+Authentication
+==============
+
+By default, authentication is required; default username and password are *admin* and *eventman*.
 
 
 License and copyright
