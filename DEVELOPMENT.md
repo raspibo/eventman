@@ -33,6 +33,8 @@ These are the path you see in the browser (AngularJS does client-side routing: n
 - /#/person/:person_id - show information about an existing person (contains the list of events the person registered for)
 - /#/person/:person_id/edit - edit form to modify an existing person
 - /#/import/persons - form used to import persons in bulk
+- /login - login form
+- /logout - when visited, the user is logged out
 
 
 Web server
@@ -53,6 +55,11 @@ The paths used to communicate with the Tornado web server:
 - /events/:event_id/persons/:person_id PUT - update the information about a person related to a given event (e.g.: if the person attended)
 - /persons/:person_id/events GET - the list of events the person registered for
 - /ebcsvpersons POST - csv file upload to import persons
+- /login - login form
+- /logout - when visited, the user is logged out
+
+Notice that the above path are the ones used by the webapp. If you plan to use them from an external application (like the _eventman_ barcode/qrcode scanner) you better prepend all the path with /v1.0, where 1.0 is the current value of API\_VERSION.
+The main advantage in doing so is that, for every call, a useful status code and a JSON value is returned (also for /v10/login that usually would show you the login page).
 
 
 Triggers
@@ -76,6 +83,8 @@ update_person_in_event and attends will receive these information:
   - PERSON_ID
   - EVENT_ID
   - EVENT_TITLE
+  - SEQ
+  - SEQ_HEX
 - via stdin, a dictionary containing:
   - dictionary **old** with the old data of the person
   - dictionary **new** with the new data of the person
@@ -113,6 +122,8 @@ Main field:
   - persons.$.company
   - persons.$.job
   - persons.$.ebqrcode
+  - persons.$.seq
+  - persons.$.seq_hex
 
 
 persons collection
@@ -124,6 +135,16 @@ Basic information about a person:
 - persons.email
 - persons.company
 - persons.job
+
+
+users collection
+----------------
+
+Contains a list of username and associated values, like the password used for authentication.
+
+To generate the hash, use:
+    import utils
+    print utils.hash_password('MyVerySecretPassword')
 
 
 TODO
@@ -143,5 +164,6 @@ Nice to have
 - notifications for form editing and other actions
 - authentication for administrators
 - i18n
+- settings page
 - logging and debugging code
 
