@@ -19,6 +19,7 @@ LABEL_WIDTH = 13488
 LABEL_HEIGHT = 3744
 
 FONT_TEXT = 'Ubuntu-C.ttf'
+#FONT_TEXT = 'CONCIBB_.TTF'
 FONT_TEXT_ENCODING = 'latin-1'
 FONT_BARCODE = 'free3of9.ttf'
 
@@ -34,8 +35,8 @@ def build_label(w, h, barcode_text, line1, line2, font_text=FONT_TEXT, font_barc
     barcode_text = "*" + barcode_text + "*"
     line1 = unicode(line1, 'utf-8').encode(FONT_TEXT_ENCODING, 'ignore')
     line2 = unicode(line2, 'utf-8').encode(FONT_TEXT_ENCODING, 'ignore')
-    fontbar = ImageFont.truetype(_get_resource(font_barcode), 2200)
-    fontnorm = ImageFont.truetype(_get_resource(font_text), 780)
+    fontbar = ImageFont.truetype(_get_resource(font_barcode), 2000)
+    fontnorm = ImageFont.truetype(_get_resource(font_text), 840)
     image = Image.new('RGB', (w, h), (255, 255, 255))
     draw = ImageDraw.Draw(image)
     wbar, hbar = draw.textsize(barcode_text, font=fontbar)
