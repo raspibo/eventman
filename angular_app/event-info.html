@@ -83,23 +83,23 @@
                     <div class="panel-body">
                         <form>
                             <div class="input-group input-group-sm">
-                                <span class="input-group-addon">{{'Name' | translate}}</span>
+                                <span class="input-group-addon min70-compact">{{'Name' | translate}}</span>
                                 <input type="text" class="form-control" placeholder="{{'Name' | translate}}" ng-model="newPerson.name" ng-required="1">
                             </div>
                             <div class="input-group input-group-sm top5">
-                                <span class="input-group-addon">{{'Surname' | translate}}</span>
+                                <span class="input-group-addon min70-compact">{{'Surname' | translate}}</span>
                                 <input type="text" class="form-control" placeholder="{{'Surname' | translate}}" ng-model="newPerson.surname">
                             </div>
                             <div class="input-group top5">
-                                <span class="input-group-addon">{{'Email' | translate}}</span>
+                                <span class="input-group-addon min70-compact">{{'Email' | translate}}</span>
                                 <input type="email" name="email" class="form-control" placeholder="{{'name.surname@example.com' | translate}}"  ng-model="newPerson.email">
                             </div>
                             <div class="input-group top5">
-                                <span class="input-group-addon">{{'Company' | translate}}</span>
+                                <span class="input-group-addon min70-compact">{{'Company' | translate}}</span>
                                 <input name="company" class="form-control" placeholder="{{'Acme Corporation' | translate}}"  ng-model="newPerson.company">
                             </div>
                             <div class="input-group top5">
-                                <span class="input-group-addon">{{'Job' | translate}}</span>
+                                <span class="input-group-addon min70-compact">{{'Job' | translate}}</span>
                                 <input name="job_title" class="form-control" placeholder="{{'Evil Ruler' | translate}}"  ng-model="newPerson.job_title">
                             </div>
 
@@ -113,7 +113,7 @@
 
                 <div class="panel panel-info table-striped top5">
                     <div class="panel-heading">{{'Unregistered persons' | translate}}</div>
-                    <div class="panel-body" style="height:200px;overflow-x:hidden;overflow-y:scroll;">
+                    <div class="panel-body" class="small-table">
                         <table class="table table-striped table-condensed">
                             <thead>
                                 <tr>
