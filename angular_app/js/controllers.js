@@ -323,6 +323,7 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$stateParams', '
         } else {
             $scope.events = Event.all();
         }
+
         // store a new Person or update an existing one
         $scope.save = function() {
             if ($scope.person.id === undefined) {

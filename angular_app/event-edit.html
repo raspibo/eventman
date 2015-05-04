@@ -13,7 +13,7 @@
         </div>
 
         <div class="input-group input-group-lg">
-            <span class="input-group-addon">{{'Title' | translate}}</span>
+            <span class="input-group-addon min100">{{'Title' | translate}}</span>
             <input type="text" class="form-control" placeholder="{{'Title' | translate}}" ng-model="event.title" ng-required="1">
         </div>
 
@@ -49,6 +49,6 @@
             </div>
         </div>
 
-        <input type="submit" style="position: absolute; left: -9999px; width: 1px; height: 1px;"/>
+        <input type="submit" class="outside-screen" />
     </form>
 </div>

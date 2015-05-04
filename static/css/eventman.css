@@ -12,13 +12,24 @@ body { padding-top: 70px; }
 .top20 { margin-top: 20px; }
 .top30 { margin-top: 30px; }
 
+/* minimum widths for various input groups */
+.min50 { min-width: 50px; }
+.min70 { min-width: 70px; }
+.min70-compact { min-width: 70px; padding: 1px; }
+.min100 { min-width: 100px; }
+.min120 { min-width: 120px; }
+.min150 { min-width: 150px; }
+.min200 { min-width: 200px; }
+.min250 { min-width: 250px; }
+
+/* vertically center */
 .vcenter {
     vertical-align: middle;
-    /* display: table-cell !important; */
     display: inline-block !important;
     float: none;
 }
 
+/* pop-up message */
 .eventman-message {
     position: fixed;
     top: 2%;
@@ -29,4 +40,18 @@ body { padding-top: 70px; }
     z-index: 10000;
 }
 
-/* .row { display: table; } */
+/* things to be invisible */
+.outside-screen {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+}
+
+/* a small table with a fixed height */
+.small-table {
+    height:200px;
+    overflow-x:hidden;
+    overflow-y:scroll;
+}
+
