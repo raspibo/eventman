@@ -9,7 +9,10 @@
 
     <form name="personForm" ng-model="persondetails" ng-submit="save()">
         <div ng-class="{clearfix: true, alert: true, 'alert-success': !personForm.$dirty, 'alert-danger': personForm.$dirty}">
-            <button type="button" class="btn btn-default pull-right" ng-click="save($event)" ng-disabled="!personForm.$dirty">{{'save' | translate}}</button>
+            <button type="button" class="btn btn-default pull-right" ng-click="save($event)" ng-disabled="!personForm.$dirty">
+                <span class="fa fa-floppy-o vcenter"></span>
+                {{'save' | translate}}
+            </button>
         </div>
 
         <div class="input-group input-group-lg">

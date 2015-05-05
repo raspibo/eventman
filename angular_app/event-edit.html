@@ -2,14 +2,17 @@
 <div class="container">
     <h1><span ng-if="!event.title">{{'New event' | translate}}</span>{{event.title}}&nbsp;
         <button ng-if="event._id" ng-click="$state.go('event.info', {id: event._id})" class="btn btn-success">
-            <span class="glyphicon glyphicon-info-sign"></span>
+            <span class="fa fa-info-circle vcenter"></span>
             {{'Info' | translate}}
         </button>
     </h1>
 
     <form name="eventForm" ng-model="eventdetails" ng-submit="save()">
         <div ng-class="{clearfix: true, alert: true, 'alert-success': !eventForm.$dirty, 'alert-danger': eventForm.$dirty}">
-            <button type="button" class="btn btn-default pull-right" ng-click="save($event)" ng-disabled="!eventForm.$dirty">{{'save' | translate}}</button>
+            <button type="button" class="btn btn-default pull-right" ng-click="save($event)" ng-disabled="!eventForm.$dirty">
+                <span class="fa fa-floppy-o vcenter"></span>
+                {{'save' | translate}}
+            </button>
         </div>
 
         <div class="input-group input-group-lg">
@@ -23,7 +26,7 @@
                 <div id="begin-date" class="input-group col-sm-9">
                     <input type="text" class="form-control" datepicker-popup="dd-MMMM-yyyy" ng-model="event['begin-date']" is-open="opened" ng-required="true" />
                     <span class="input-group-btn">
-                        <button type="button" class="btn btn-default" ng-click="open($event)"><i class="glyphicon glyphicon-calendar"></i></button>
+                        <button type="button" class="btn btn-default" ng-click="open($event)"><i class="fa fa-calendar"></i></button>
                     </span>
                 </div>
             </div>
@@ -39,7 +42,7 @@
                 <div id="end-date" class="input-group col-sm-9">
                     <input type="text" class="form-control" datepicker-popup="dd-MMMM-yyyy" ng-model="event['end-date']" is-open="opened" ng-required="true" />
                     <span class="input-group-btn">
-                        <button type="button" class="btn btn-default" ng-click="open($event)"><i class="glyphicon glyphicon-calendar"></i></button>
+                        <button type="button" class="btn btn-default" ng-click="open($event)"><i class="fa fa-calendar"></i></button>
                     </span>
                 </div>
             </div>
