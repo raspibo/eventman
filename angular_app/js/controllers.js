@@ -147,7 +147,7 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
                 } else {
                     $scope.event = Event.update(this_event);
                 }
-                $scope.eventForm.$dirty = false;
+                $scope.eventForm.$setPristine(false);
         };
 
         $scope.calcAttendees = function() {
@@ -348,7 +348,7 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$stateParams', '
                     }
                 });
             }
-            $scope.personForm.$dirty = false;
+            $scope.personForm.$setPristine(false);
         };
 
         $scope.setPersonAttributeAtEvent = function(evnt, key, value) {
