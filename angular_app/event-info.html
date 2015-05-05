@@ -6,7 +6,7 @@
             <div class="col-md-7 col-xs-7 vcenter">
                 <h1>{{event.title}}
                     <button ng-if="event._id" ng-click="$state.go('event.edit', {id: event._id})" class="btn btn-success">
-                        <span class="glyphicon glyphicon-edit"></span>
+                        <span class="fa fa-pencil-square-o vcenter"></span>
                         {{'Edit' | translate}}
                     </button>
                 </h1>
@@ -56,18 +56,18 @@
                                         <p ng-if="person.company || person.job_title"><i ng-if="person.job_title">{{person.job_title}}</i><span ng-if="person.company && person.job_title">&nbsp;@&nbsp;</span><i ng-if="person.company">{{person.company}}</i></p>
                                     </td>
                                     <td class="text-center">
-                                        <button class="btn btn-link" reset-focus name="switch-attended" ng-click="setPersonAttributeAndRefocus(person, 'attended', !person.attended)"><span class="glyphicon {{(person.attended) && 'glyphicon-ok-sign text-success' || 'glyphicon-remove-sign text-danger'}}"></span></button>
+                                        <button class="btn btn-link" reset-focus name="switch-attended" ng-click="setPersonAttributeAndRefocus(person, 'attended', !person.attended)"><span class="fa fa-lg {{(person.attended) && 'fa-check-circle text-success' || 'fa-times-circle text-danger'}}"></span></button>
                                     </td>
                                     <td class="text-center" ng-repeat="col in customFields">
                                         <span ng-if="col.type == 'boolean'">
-                                            <button class="btn btn-link" ng-click="setPersonAttribute(person, col.key, !person[col.key])"><span class="glyphicon {{(person[col.key]) && 'glyphicon-ok-sign text-success' || 'glyphicon-remove-sign text-danger'}}"></span></button>
+                                            <button class="btn btn-link" ng-click="setPersonAttribute(person, col.key, !person[col.key])"><span class="fa fa-lg {{(person[col.key]) && 'fa-check-circle text-success' || 'da-times-circle text-danger'}}"></span></button>
                                         </span>
                                         <span ng-if="col.type != 'boolean'">
                                             {{person[col.key]}}
                                         </span>
                                     </td>
                                     <td class="text-center">
-                                        <button ng-click="removeAttendee(person)" type="button" class="btn btn-link glyphicon glyphicon-trash"></button>
+                                        <button ng-click="removeAttendee(person)" type="button" class="btn btn-link fa fa-lg fa-trash"></button>
                                     </td>
                                 </tr>
                             </tbody>
@@ -104,7 +104,7 @@
                             </div>
 
                             <button reset-focus ng-disabled="!(newPerson.name && newPerson.surname)" ng-click="fastAddPerson(newPerson, true)" class="btn btn-success top5">
-                                <span class="glyphicon glyphicon-plus-sign"></span>
+                                <span class="fa fa-plus-circle vcenter"></span>
                                 {{'Add' | translate}}
                             </button>
                         </form>
@@ -129,7 +129,7 @@
                                         {{person.email}}
                                     </td>
                                     <td class="text-left">
-                                        <button reset-focus ng-click="fastAddPerson(person)" type="button" class="btn btn-link glyphicon glyphicon-plus-sign"></button>
+                                        <button reset-focus ng-click="fastAddPerson(person)" type="button" class="btn btn-link fa fa-plus-circle vcenter"></button>
                                     </td>
                                 </tr>
                             </tbody>

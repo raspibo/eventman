@@ -5,11 +5,11 @@
             <div class="col-md-7 col-xs-7 vcenter">
                 <h1>{{'Persons' | translate}}
                     <button ng-click="$state.go('person.new')" class="btn btn-success">
-                        <span class="glyphicon glyphicon-plus-sign"></span>
+                        <span class="fa fa-plus-circle vcenter"></span>
                         {{'Add person' | translate}}
                     </button>
                     <button ng-click="$state.go('import.persons')" class="btn btn-success">
-                        <span class="glyphicon glyphicon-plus-sign"></span>
+                        <span class="fa fa-download vcenter"></span>
                         {{'Import persons' | translate}}
                     </button>
                 </h1>
@@ -53,14 +53,14 @@
                     </td>
                     <td ng-repeat="col in customFields" class="text-center">
                         <span ng-if="col.type == 'boolean'">
-                            <button class="btn btn-link" ng-click="setAttribute(person, col.key, !person[col.key])"><span class="glyphicon {{(person[col.key]) && 'glyphicon-ok-sign text-success' || 'glyphicon-remove-sign text-danger'}}"></span></button>
+                            <button class="btn btn-link" ng-click="setAttribute(person, col.key, !person[col.key])"><span class="fa fa-lg {{(person[col.key]) && 'fa-check-circle text-success' || 'fa-times-circle text-danger'}}"></span></button>
                         </span>
                         <span ng-if="col.type != 'boolean'">
                             {{person[col.key]}}
                         </span>
                     </td>
                     <td class="text-center">
-                        <button ng-click="remove(person._id)" type="button" class="btn btn-link glyphicon glyphicon-trash"></button>
+                        <button ng-click="remove(person._id)" type="button" class="btn btn-link fa fa-trash fa-lg"></button>
                     </td>
                 </tr>
                 </tbody>

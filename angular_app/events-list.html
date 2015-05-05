@@ -2,7 +2,7 @@
 <div class="container">
     <h1>{{'Events' | translate}}
         <button ng-click="$state.go('event.new')" class="btn btn-success">
-            <span class="glyphicon glyphicon-plus-sign"></span>
+            <span class="fa fa-plus-circle vcenter"></span>
             {{'Add event' | translate}}
         </button>
     </h1>
@@ -41,7 +41,7 @@
                         {{'Ends:' | translate}} {{event['end-date']}}</p>
                     </td>
                     <td>
-                        <button ng-click="remove(event._id)" type="button" class="btn btn-link glyphicon glyphicon-trash"></button>
+                        <button ng-click="remove(event._id)" type="button" class="btn btn-link fa fa-trash fa-lg"></button>
                     </td>
                 </tr>
                 </tbody>
