@@ -82,8 +82,8 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$modal', '
 );
 
 
-eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person', 'EventUpdates', '$stateParams', 'Setting', '$log',
-    function ($scope, Event, Person, EventUpdates, $stateParams, Setting, $log) {
+eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event', 'Person', 'EventUpdates', '$stateParams', 'Setting', '$log',
+    function ($scope, $state, Event, Person, EventUpdates, $stateParams, Setting, $log) {
         $scope.personsOrder = ["name", "surname"];
         $scope.countAttendees = 0;
         $scope.message = {};
@@ -101,20 +101,22 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', 'Event', 'Person',
                     }
                 );
             });
-
-            // Handle WebSocket connection used to update the list of persons.
-            $scope.EventUpdates = EventUpdates;
-            $scope.EventUpdates.open();
-            $scope.$watchCollection(function() {
-                    return $scope.EventUpdates.data;
-                }, function(prev, old) {
-                    if (!($scope.EventUpdates.data && $scope.EventUpdates.data.persons)) {
-                        return;
-                    }
-                    $scope.event.persons = $scope.EventUpdates.data.persons;
-                }
-            );
             $scope.allPersons = Person.all();
+
+            if ($state.is('event.info')) {
+                // Handle WebSocket connection used to update the list of persons.
+                $scope.EventUpdates = EventUpdates;
+                $scope.EventUpdates.open();
+                $scope.$watchCollection(function() {
+                        return $scope.EventUpdates.data;
+                    }, function(prev, old) {
+                        if (!($scope.EventUpdates.data && $scope.EventUpdates.data.persons)) {
+                            return;
+                        }
+                        $scope.event.persons = $scope.EventUpdates.data.persons;
+                    }
+                );
+            }
         }
 
         $scope.updateOrded = function(key) {
