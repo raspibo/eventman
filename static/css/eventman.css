@@ -12,6 +12,14 @@ body { padding-top: 70px; }
 /* fix styling for empty href */
 .nav, .pagination, .carousel, .panel-title a { cursor: pointer; }
 
+/* Footer links */
+.main-footer {
+    background-color: lightgray;
+    text-align: center;
+    padding: 4px;
+    font-size: x-small;
+}
+
 /* margins for lists */
 .top5 { margin-top: 5px; }
 .top10 { margin-top: 10px; }
