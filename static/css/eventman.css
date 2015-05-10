@@ -2,8 +2,23 @@
 /* nav-bar padding */
 body { padding-top: 70px; }
 
+/* logo padding */
+.navbar-brand {
+    padding-top: 0px;
+    padding-right: 0px;
+    padding-bottom: 0px;
+}
+
 /* fix styling for empty href */
 .nav, .pagination, .carousel, .panel-title a { cursor: pointer; }
+
+/* Footer links */
+.main-footer {
+    background-color: lightgray;
+    text-align: center;
+    padding: 4px;
+    font-size: x-small;
+}
 
 /* margins for lists */
 .top5 { margin-top: 5px; }
@@ -50,8 +65,8 @@ body { padding-top: 70px; }
 
 /* a small table with a fixed height */
 .small-table {
-    height:200px;
-    overflow-x:hidden;
-    overflow-y:scroll;
+    height: 200px !important;
+    overflow-x: hidden !important;
+    overflow-y: scroll !important;
 }
 
