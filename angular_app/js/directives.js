@@ -53,7 +53,7 @@ eventManApp.directive('eventmanMessage', ['$timeout',
                 scope.dControl.isError = cfg.isError;
                 $timeout(function () {
                     scope.dControl.isVisible = false;
-                }, cfg.timeout || 2000);
+                }, cfg.timeout || 4000);
             };
         };
 
