@@ -1,13 +1,16 @@
 /* i18n for Event(man) */
 
+
+
 eventManApp.config(['$translateProvider', function ($translateProvider) {
-    $translateProvider.translations('it_IT', {
-        'Events': 'Eventi',
-        'Add event': 'Nuovo evento',
-        'Persons': 'Persone',
-        'Add person': 'Nuova persona',
-        'Import persons': 'Importa persone',
+    console.log($translateProvider);
+    $translateProvider.useStaticFilesLoader({
+        prefix: '/static/i18n/',
+        suffix: '.json'
     });
- 
-    $translateProvider.preferredLanguage('it_IT');
+
+    $translateProvider.useSanitizeValueStrategy('escaped');
+    //$translateProvider.preferredLanguage('it_IT');
+    //$translateProvider.fallbackLanguage('en_US');
 }]);
+
