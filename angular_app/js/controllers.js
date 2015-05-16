@@ -62,11 +62,18 @@ eventManControllers.controller('ModalConfirmInstanceCtrl', ['$scope', '$modalIns
 );
 
 
-eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$modal', '$log',
-    function ($scope, Event, $modal, $log) {
+eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$modal', '$log', '$translate', '$rootScope',
+    function ($scope, Event, $modal, $log, $translate, $rootScope) {
         $scope.events = Event.all();
         $scope.personsOrderProp = 'name';
         $scope.eventsOrderProp = "'-begin-date'";
+
+        $scope.confirm_delete = 'You really want to delete this event?';
+        $rootScope.$on('$translateChangeSuccess', function () {
+            $translate('You really want to delete this event?').then(function (translation) {
+                $scope.confirm_delete = translation;
+            });
+        });
 
         $scope.remove = function(_id) {
             var modalInstance = $modal.open({
@@ -74,8 +81,7 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$modal', '
                 templateUrl: 'modal-confirm-action.html',
                 controller: 'ModalConfirmInstanceCtrl',
                 resolve: {
-                    // XXX: must be converted in a i18n-able form.
-                    message: function() { return 'You really want to delete this event?'; }
+                    message: function() { return $scope.confirm_delete; }
                 }
             });
             modalInstance.result.then(function() {
@@ -90,8 +96,8 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$modal', '
 );
 
 
-eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event', 'Person', 'EventUpdates', '$stateParams', 'Setting', '$log',
-    function ($scope, $state, Event, Person, EventUpdates, $stateParams, Setting, $log) {
+eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event', 'Person', 'EventUpdates', '$stateParams', 'Setting', '$log', '$translate',
+    function ($scope, $state, Event, Person, EventUpdates, $stateParams, Setting, $log, $translate) {
         $scope.personsOrder = ["name", "surname"];
         $scope.countAttendees = 0;
         $scope.message = {};
@@ -191,9 +197,12 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
                         $scope.allPersons = Person.all();
                     }
                     $scope.newPerson = {};
-                    // XXX: must be converted in a i18n-able form.
-                    var msg = '' + person_data.name + ' ' + person_data.surname + ' successfully added to event ' + $scope.event.title;
-                    $scope.showMessage({message: msg});
+                    $translate('{{person_name}} {{person_surname}} successfully added to event {{event_title}}',
+                        {person_name: person_data.name, person_surname: person_data.surname, event_title: $scope.event.title}).then(
+                            function (translation) {
+                                $scope.showMessage({message: translation});
+                            }
+                    );
                 });
             });
             $scope.query = '';
@@ -264,12 +273,19 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
 );
 
 
-eventManControllers.controller('PersonsListCtrl', ['$scope', 'Person', 'Setting', '$modal',
-    function ($scope, Person, Setting, $modal) {
+eventManControllers.controller('PersonsListCtrl', ['$scope', 'Person', 'Setting', '$modal', '$translate', '$rootScope',
+    function ($scope, Person, Setting, $modal, $translate, $rootScope) {
         $scope.persons = Person.all();
         $scope.personsOrder = ["name", "surname"];
         $scope.customFields = Setting.query({setting: 'person_custom_field',
             in_persons_list: true});
+
+        $scope.confirm_delete = 'You really want to delete this person?';
+        $rootScope.$on('$translateChangeSuccess', function () {
+            $translate('You really want to delete this person?').then(function (translation) {
+                $scope.confirm_delete = translation;
+            });
+        });
 
         $scope.updateOrded = function(key) {
             var new_order = [key];
@@ -303,8 +319,7 @@ eventManControllers.controller('PersonsListCtrl', ['$scope', 'Person', 'Setting'
                 templateUrl: 'modal-confirm-action.html',
                 controller: 'ModalConfirmInstanceCtrl',
                 resolve: {
-                    // XXX: must be converted in a i18n-able form.
-                    message: function() { return 'You really want to delete this person?'; }
+                    message: function() { return $scope.confirm_delete; }
                 }
             });
             modalInstance.result.then(function() {
