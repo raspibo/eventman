@@ -37,8 +37,8 @@
                 <tr ng-repeat="event in events | splittedFilter:query | orderBy:eventsOrderProp">
                     <td>
                         <span><strong><a ui-sref="event.info({id: event._id})">{{event.title}}</a></strong></span>
-                        <p>{{'Begins:' | translate}} {{event['begin-date']}}<br/>
-                        {{'Ends:' | translate}} {{event['end-date']}}</p>
+                        <p>{{'Begins:' | translate}} {{event['begin-date'] | date:'fullDate' }} {{event['begin-time'] | date:'hh:mm' }}<br/>
+                        {{'Ends:' | translate}} {{event['end-date'] | date:'fullDate' }} {{event['end-time'] | date:'hh:mm'}}</p>
                     </td>
                     <td>
                         <button ng-click="remove(event._id)" type="button" class="btn btn-link fa fa-trash fa-lg"></button>

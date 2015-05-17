@@ -16,6 +16,7 @@ eventManApp.directive('eventmanPressEnter', function () {
     };
 });
 
+
 eventManApp.directive('eventmanFocus', function () {
     function link(scope, element, attrs) {
         element[0].focus();
