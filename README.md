@@ -42,6 +42,7 @@ Be sure to have a running MongoDB server, locally.
     sudo python get-pip.py
     sudo pip install tornado
     sudo pip install pymongo
+    sudo pip install pycups # only needed if you want to print labels
     cd
     git clone https://github.com/raspibo/eventman
     cd eventman

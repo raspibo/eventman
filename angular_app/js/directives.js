@@ -16,6 +16,7 @@ eventManApp.directive('eventmanPressEnter', function () {
     };
 });
 
+
 eventManApp.directive('eventmanFocus', function () {
     function link(scope, element, attrs) {
         element[0].focus();
@@ -53,7 +54,7 @@ eventManApp.directive('eventmanMessage', ['$timeout',
                 scope.dControl.isError = cfg.isError;
                 $timeout(function () {
                     scope.dControl.isVisible = false;
-                }, cfg.timeout || 2000);
+                }, cfg.timeout || 4000);
             };
         };
 
