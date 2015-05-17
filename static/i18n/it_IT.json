@@ -52,7 +52,7 @@
     "Registered": "Registrato",
     "Add person": "Aggiungi persona",
     "Persons:": "Persone:",
-    "You really want to delete this event?": "Vuoi veramente cancellare questo evento?",
+    "Do you really want to delete this event?": "Vuoi veramente cancellare questo evento?",
     "{{person_name}} {{person_surname}} successfully added to event {{event_title}}": "{{person_name}} {{person_surname}} aggiunto con successo all'evento {{event_title}}",
-    "You really want to delete this person?": "Vuoi veramente cancellare questa persona?"
+    "Do you really want to delete this person?": "Vuoi veramente cancellare questa persona?"
 }

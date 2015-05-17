@@ -68,9 +68,9 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$modal', '
         $scope.personsOrderProp = 'name';
         $scope.eventsOrderProp = "'-begin-date'";
 
-        $scope.confirm_delete = 'You really want to delete this event?';
+        $scope.confirm_delete = 'Do you really want to delete this event?';
         $rootScope.$on('$translateChangeSuccess', function () {
-            $translate('You really want to delete this event?').then(function (translation) {
+            $translate('Do you really want to delete this event?').then(function (translation) {
                 $scope.confirm_delete = translation;
             });
         });
@@ -280,9 +280,9 @@ eventManControllers.controller('PersonsListCtrl', ['$scope', 'Person', 'Setting'
         $scope.customFields = Setting.query({setting: 'person_custom_field',
             in_persons_list: true});
 
-        $scope.confirm_delete = 'You really want to delete this person?';
+        $scope.confirm_delete = 'Do you really want to delete this person?';
         $rootScope.$on('$translateChangeSuccess', function () {
-            $translate('You really want to delete this person?').then(function (translation) {
+            $translate('Do you really want to delete this person?').then(function (translation) {
                 $scope.confirm_delete = translation;
             });
         });
