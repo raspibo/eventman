@@ -60,7 +60,7 @@
                                     </td>
                                     <td class="text-center" ng-repeat="col in customFields">
                                         <span ng-if="col.type == 'boolean'">
-                                            <button class="btn btn-link" ng-click="setPersonAttribute(person, col.key, !person[col.key])"><span class="fa fa-lg {{(person[col.key]) && 'fa-check-circle text-success' || 'da-times-circle text-danger'}}"></span></button>
+                                            <button class="btn btn-link" ng-click="setPersonAttribute(person, col.key, !person[col.key])"><span class="fa fa-lg {{(person[col.key]) && 'fa-check-circle text-success' || 'fa-times-circle text-danger'}}"></span></button>
                                         </span>
                                         <span ng-if="col.type != 'boolean'">
                                             {{person[col.key]}}
