@@ -41,7 +41,7 @@
                                 <tr>
                                     <th class="text-right">#</th>
                                     <th>{{'Person' | translate}} <a ng-click="updateOrded('name')" href=""><i class="fa fa-caret-up"></i></a>{{'Name' | translate}}<a ng-click="updateOrded('-name')" href=""><i class="fa fa-caret-down"></i></a> <a ng-click="updateOrded('surname')" href=""><i class="fa fa-caret-up"></i></a>{{'Surname' | translate}}<a ng-click="updateOrded('-surname')" href=""><i class="fa fa-caret-down"></i></a></th>
-                                    <th class="text-center min120"><a ng-click="updateOrded('-attended')" href=""><i class="fa fa-caret-up"></i></a>{{'Attended' | translate}}<a ng-click="updateOrded('attended')" href=""><i class="fa fa-caret-down"></i></a></th>
+                                    <th class="text-center"><a ng-click="updateOrded('-attended')" href=""><i class="fa fa-caret-up"></i></a>{{'Attended' | translate}}<a ng-click="updateOrded('attended')" href=""><i class="fa fa-caret-down"></i></a></th>
                                     <th class="text-center" ng-repeat="col in customFields">
                                         <a ng-click="updateOrded(col.key)" href=""><i class="fa fa-caret-up"></i></a>{{col.label | translate}}<a ng-click="updateOrded('-' + col.key)" href=""><i class="fa fa-caret-down"></i></a>
                                     </th>
@@ -60,7 +60,7 @@
                                     </td>
                                     <td class="text-center" ng-repeat="col in customFields">
                                         <span ng-if="col.type == 'boolean'">
-                                            <button class="btn btn-link" ng-click="setPersonAttribute(person, col.key, !person[col.key])"><span class="fa fa-lg {{(person[col.key]) && 'fa-check-circle text-success' || 'fa-times-circle text-danger'}}"></span></button>
+                                            <button class="btn btn-link" ng-click="setPersonAttribute(person, col.key, !person[col.key])"><span class="fa fa-lg {{(person[col.key]) && 'fa-check-circle text-success' || 'da-times-circle text-danger'}}"></span></button>
                                         </span>
                                         <span ng-if="col.type != 'boolean'">
                                             {{person[col.key]}}
