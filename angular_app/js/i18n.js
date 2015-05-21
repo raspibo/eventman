@@ -10,7 +10,7 @@ eventManApp.config(['$translateProvider', function ($translateProvider) {
     });
 
     $translateProvider.useSanitizeValueStrategy('escaped');
-    //$translateProvider.preferredLanguage('it_IT');
+    $translateProvider.preferredLanguage('it_IT');
     //$translateProvider.fallbackLanguage('en_US');
 }]);
 
