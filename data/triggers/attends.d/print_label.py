@@ -29,12 +29,12 @@ PRINTER_NAME = 'DYMO_LabelWriter_450'
 
 # Dictionary of remote systems used to print labels.
 # 'remote1' is the name used by that system to login on the web GUI.
-# '192.168.99.129' is the IP of the remote host.
+# '192.168.99.129' is the IP of the remote host. If not set, the origin of the request is used.
 # 'hackinbo' is the name of a local user allowed to print.
 # 'DYMO_LabelWriter_450' is the name of the printer on the remote system.
 REMOTES = {
         'remote1': {
-            'host': '192.168.99.129',
+            #'host': '192.168.99.129',
             'username': 'hackinbo',
             'printer': 'DYMO_LabelWriter_450'
         }
@@ -83,6 +83,8 @@ def print_label(label_file, name):
     printerName = PRINTER_NAME
     if os.environ.get('WEB_USER') in REMOTES:
         settings = REMOTES[os.environ['WEB_USER']]
+        if 'host' not in settings:
+            settings['host'] = os.environ.get('WEB_REMOTE_IP')
         if 'username' in settings: cups.setUser(settings['username'])
         cups.setServer(settings['host'])
         conn = cups.Connection(settings['host'])
