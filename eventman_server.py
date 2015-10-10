@@ -421,7 +421,8 @@ class EventsHandler(CollectionHandler):
         if person_id is None:
             person_id = str(new_person_data.get('person_id'))
         env.update({'PERSON_ID': person_id, 'EVENT_ID': id_,
-            'EVENT_TITLE': doc.get('title', ''), 'WEB_USER': self.get_current_user()})
+            'EVENT_TITLE': doc.get('title', ''), 'WEB_USER': self.get_current_user(),
+            'WEB_REMOTE_IP': self.request.remote_ip})
         stdin_data = {'old': old_person_data,
             'new': new_person_data,
             'event': doc,
