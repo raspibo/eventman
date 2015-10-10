@@ -27,6 +27,19 @@ FONT_BARCODE = 'free3of9.ttf'
 PRINTER_NAME = None
 PRINTER_NAME = 'DYMO_LabelWriter_450'
 
+# Dictionary of remote systems used to print labels.
+# 'remote1' is the name used by that system to login on the web GUI.
+# '192.168.99.129' is the IP of the remote host.
+# 'hackinbo' is the name of a local user allowed to print.
+# 'DYMO_LabelWriter_450' is the name of the printer on the remote system.
+REMOTES = {
+        'remote1': {
+            'host': '192.168.99.129',
+            'username': 'hackinbo',
+            'printer': 'DYMO_LabelWriter_450'
+        }
+}
+
 
 def debug(msg):
     print '%s: %s' % (time.time(), msg)
@@ -67,8 +80,17 @@ def build_label(w, h, barcode_text, line1, line2, font_text=FONT_TEXT, font_barc
 
 def print_label(label_file, name):
     debug('print_label start')
-    conn = cups.Connection()
-    printer = PRINTER_NAME or conn.getDefault()
+    printerName = PRINTER_NAME
+    if os.environ.get('WEB_USER') in REMOTES:
+        settings = REMOTES[os.environ['WEB_USER']]
+        if 'username' in settings: cups.setUser(settings['username'])
+        cups.setServer(settings['host'])
+        conn = cups.Connection(settings['host'])
+        if 'printer' in settings:
+            printerName = settings['printer']
+    else:
+        conn = cups.Connection()
+    printer = printerName or conn.getDefault()
     debug('print_label connection done')
     conn.printFile(printer, label_file.name, name, {})
     debug('print_label end')
