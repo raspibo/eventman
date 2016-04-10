@@ -131,12 +131,16 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
                         var person_idx = $scope.event.persons.findIndex(function(el, idx, array) {
                                 return data.person_id == el.person_id;
                         });
-                        if (person_idx == -1) {
-                                $log.warn('unable to find person_id ' + person_id);
-                                return;
-                        }
-                        if ($scope.event.persons[person_idx] != data.person) {
-                            $scope.event.persons[person_idx] = data.person;
+			if (person_idx != -1) {
+			    $log.debug('person_id ' + data.person_id + ' found');
+			} else {
+			    $log.debug('person_id ' + data.person_id + ' not found');
+			}
+
+                        if (data.action == 'update' && person_idx != -1 && $scope.event.persons[person_idx] != data.person) {
+			    $scope.event.persons[person_idx] = data.person;
+                        } else if (data.action == 'add' && person_idx == -1) {
+			    $scope.event.persons.push(data.person);
                         }
                     }
                 );
@@ -194,19 +198,14 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
             person_data.person_id = person_data._id;
             person_data._id = $stateParams.id;
             Event.addPerson(person_data, function() {
-                // This could be improved adding it only locally.
-                //$scope.event.persons.push(person_data);
+                $scope.event.persons.push(person_data);
                 $scope.setPersonAttribute(person_data, 'attended', true, function() {
-                    Event.get($stateParams, function(data) {
-                        $scope.event.persons = angular.fromJson(data).persons;
-                    });
                     var idx = $scope.allPersons.indexOf(original_data);
                     if (idx != -1) {
                         $scope.allPersons.splice(idx, 1);
                     } else {
                         $scope.allPersons = Person.all();
                     }
-                    $scope.newPerson = {};
                     $translate('{{person_name}} {{person_surname}} successfully added to event {{event_title}}',
                         {person_name: person_data.name, person_surname: person_data.surname, event_title: $scope.event.title}).then(
                             function (translation) {

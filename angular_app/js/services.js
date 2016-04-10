@@ -42,10 +42,10 @@ eventManServices.factory('Event', ['$resource',
 
             addPerson: {
                 method: 'POST',
-                isArray: true,
+                isArray: false,
                 url: 'events/:id/persons/:person_id',
                 transformResponse: function(data, headers) {
-                    return angular.fromJson(data).event.persons;
+                    return angular.fromJson(data);
                 }
             },
 

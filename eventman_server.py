@@ -3,8 +3,8 @@
 
 Your friendly manager of attendees at an event.
 
-Copyright 2015 Davide Alberani <da@erlug.linux.it>
-               RaspiBO <info@raspibo.org>
+Copyright 2015-2016 Davide Alberani <da@erlug.linux.it>
+                    RaspiBO <info@raspibo.org>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -391,13 +391,15 @@ class EventsHandler(CollectionHandler):
                 {'_id': id_, 'persons.person_id': person_id})
         if '_id' in data:
             del data['_id']
+        ret = {'action': 'add', 'person_id': person_id, 'person': data}
         if not doc:
             merged, doc = self.db.update('events',
                     {'_id': id_},
                     {'persons': data},
                     operation='appendUnique',
                     create=False)
-        return {'event': doc}
+            self.send_ws_message('event/%s/updates' % id_, json.dumps(ret))
+        return ret
 
     def handle_put_persons(self, id_, person_id, data):
         # Update an existing entry for a person registered at this event.
