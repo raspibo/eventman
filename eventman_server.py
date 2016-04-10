@@ -442,12 +442,17 @@ class EventsHandler(CollectionHandler):
 
     def handle_delete_persons(self, id_, person_id):
         # Remove a specific person from the list of persons registered at this event.
-        merged, doc = self.db.update('events',
-                {'_id': id_},
-                {'persons': {'person_id': person_id}},
-                operation='delete',
-                create=False)
-        return {'event': doc}
+        doc = self.db.query('events',
+                {'_id': id_, 'persons.person_id': person_id})
+        ret = {'action': 'delete', 'person_id': person_id}
+        if doc:
+            merged, doc = self.db.update('events',
+                    {'_id': id_},
+                    {'persons': {'person_id': person_id}},
+                    operation='delete',
+                    create=False)
+            self.send_ws_message('event/%s/updates' % id_, json.dumps(ret))
+        return ret
 
 
 class EbCSVImportPersonsHandler(BaseHandler):
@@ -720,4 +725,3 @@ def run():
 
 if __name__ == '__main__':
     run()
-

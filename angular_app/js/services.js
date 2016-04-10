@@ -51,10 +51,10 @@ eventManServices.factory('Event', ['$resource',
 
             deletePerson: {
                 method: 'DELETE',
-                isArray: true,
+                isArray: false,
                 url: 'events/:_id/persons/:person_id',
                 transformResponse: function(data, headers) {
-                    return angular.fromJson(data).event.persons;
+                    return angular.fromJson(data);
                 }
             }
         });
