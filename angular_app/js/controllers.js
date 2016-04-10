@@ -128,15 +128,24 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
                             return;
                         }
                         var data = $scope.EventUpdates.data.update;
+                        if (!$scope.event.persons) {
+                            $scope.event.persons = [];
+                        }
                         var person_idx = $scope.event.persons.findIndex(function(el, idx, array) {
                                 return data.person_id == el.person_id;
                         });
-                        if (person_idx == -1) {
-                                $log.warn('unable to find person_id ' + person_id);
-                                return;
+                        if (person_idx != -1) {
+                            $log.debug('person_id ' + data.person_id + ' found');
+                        } else {
+                            $log.debug('person_id ' + data.person_id + ' not found');
                         }
-                        if ($scope.event.persons[person_idx] != data.person) {
+
+                        if (data.action == 'update' && person_idx != -1 && $scope.event.persons[person_idx] != data.person) {
                             $scope.event.persons[person_idx] = data.person;
+                        } else if (data.action == 'add' && person_idx == -1) {
+                            $scope.event.persons.push(data.person);
+                        } else if (data.action == 'delete' && person_idx != -1) {
+                            $scope.event.persons.splice(person_idx, 1);
                         }
                     }
                 );
@@ -194,19 +203,17 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
             person_data.person_id = person_data._id;
             person_data._id = $stateParams.id;
             Event.addPerson(person_data, function() {
-                // This could be improved adding it only locally.
-                //$scope.event.persons.push(person_data);
+                if (!$scope.event.persons) {
+                    $scope.event.persons = [];
+                }
+                $scope.event.persons.push(person_data);
                 $scope.setPersonAttribute(person_data, 'attended', true, function() {
-                    Event.get($stateParams, function(data) {
-                        $scope.event.persons = angular.fromJson(data).persons;
+                    var all_person_idx = $scope.allPersons.findIndex(function(el, idx, array) {
+                        return person_data.person_id == el.person_id;
                     });
-                    var idx = $scope.allPersons.indexOf(original_data);
-                    if (idx != -1) {
-                        $scope.allPersons.splice(idx, 1);
-                    } else {
-                        $scope.allPersons = Person.all();
+                    if (all_person_idx != -1) {
+                        $scope.allPersons.splice(all_person_idx, 1);
                     }
-                    $scope.newPerson = {};
                     $translate('{{person_name}} {{person_surname}} successfully added to event {{event_title}}',
                         {person_name: person_data.name, person_surname: person_data.surname, event_title: $scope.event.title}).then(
                             function (translation) {
@@ -279,8 +286,18 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
                     person_id: person.person_id
                 },
                 function(data) {
-                    $scope.event.persons = data;
-                    $scope.allPersons = Person.all();
+                    if (!(data && data.person_id && $scope.event.persons)) {
+                        return;
+                    }
+                    var person_idx = $scope.event.persons.findIndex(function(el, idx, array) {
+                        return data.person_id == el.person_id;
+                    });
+                    if (person_idx == -1) {
+                        $log.warn('unable to find and delete person_id ' + data.person_id);
+                        return;
+                    }
+                    $scope.event.persons.splice(person_idx, 1);
+                    $scope.allPersons.push(person);
             });
         };
 
