@@ -128,7 +128,7 @@ _ws_clients = {}
 
 class CollectionHandler(BaseHandler):
     """Base class for handlers that need to interact with the database backend.
-    
+
     Introduce basic CRUD operations."""
     # set of documents we're managing (a collection in MongoDB or a table in a SQL database)
     collection = None
@@ -155,11 +155,11 @@ class CollectionHandler(BaseHandler):
 
     def _filter_results(self, results, params):
         """Filter a list using keys and values from a dictionary.
-        
+
         :param results: the list to be filtered
         :type results: list
         :param params: a dictionary of items that must all be present in an original list item to be included in the return
-        
+
         :return: list of items that have all the keys with the same values as params
         :rtype: list"""
         if not params:
@@ -433,10 +433,10 @@ class EventsHandler(CollectionHandler):
             if new_person_data.get('attended'):
                 self.run_triggers('attends', stdin_data=stdin_data, env=env)
 
+        ret = {'action': 'update', 'person_id': person_id, 'person': new_person_data}
         if old_person_data != new_person_data:
-            self.send_ws_message('event/%s/updates' % id_,
-                    json.dumps(doc.get('persons') or []))
-        return {'event': doc}
+            self.send_ws_message('event/%s/updates' % id_, json.dumps(ret))
+        return ret
 
     def handle_delete_persons(self, id_, person_id):
         # Remove a specific person from the list of persons registered at this event.
