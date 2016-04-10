@@ -124,10 +124,20 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
                 $scope.$watchCollection(function() {
                         return $scope.EventUpdates.data;
                     }, function(prev, old) {
-                        if (!($scope.EventUpdates.data && $scope.EventUpdates.data.persons)) {
+                        if (!($scope.EventUpdates.data && $scope.EventUpdates.data.update)) {
                             return;
                         }
-                        $scope.event.persons = $scope.EventUpdates.data.persons;
+                        var data = $scope.EventUpdates.data.update;
+                        var person_idx = $scope.event.persons.findIndex(function(el, idx, array) {
+                                return data.person_id == el.person_id;
+                        });
+                        if (person_idx == -1) {
+                                $log.warn('unable to find person_id ' + person_id);
+                                return;
+                        }
+                        if ($scope.event.persons[person_idx] != data.person) {
+                            $scope.event.persons[person_idx] = data.person;
+                        }
                     }
                 );
             }
@@ -229,7 +239,19 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
             data[key] = value;
             Event.updatePerson(data,
                 function(data) {
-                    $scope.event.persons = data;
+                    if (!(data && data.person_id && data.person)) {
+                        return;
+                    }
+                    var person_idx = $scope.event.persons.findIndex(function(el, idx, array) {
+                        return data.person_id == el.person_id;
+                    });
+                    if (person_idx == -1) {
+                        $log.warn('unable to find person_id ' + person_id);
+                        return;
+                    }
+                    if ($scope.event.persons[person_idx] != data.person) {
+                        $scope.event.persons[person_idx] = data.person;
+                    }
                     if (callback) {
                         callback(data);
                     }
