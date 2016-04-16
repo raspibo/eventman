@@ -63,8 +63,7 @@ eventManApp.directive('eventmanMessage', ['$timeout',
                 control: '='
             },
             link: link,
-            replace: true,
-            template: '<div ng-if="dControl.isVisible">{{dControl.message}}</div>'
+            template: '<div ng-if="dControl.isVisible" ng-class="{\'eventman-message\': true, clearfix: true, \'alert\': true, \'alert-success\': !dControl.isError, \'alert-danger\': dControl.isError}">{{dControl.message}}</div>'
         };
     }]
 );
