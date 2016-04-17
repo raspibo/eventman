@@ -294,7 +294,17 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
                 $log.warn('unable to find and delete person_id ' + person.person_id);
                 return;
             }
-            $scope.event.persons.splice(person_idx, 1);
+            var removed_person = $scope.event.persons.splice(person_idx, 1);
+            // to be used to populate allPersons, if needed.
+            if (removed_person.length) {
+                person = removed_person[0];
+            }
+            var all_person_idx = $scope.allPersons.findIndex(function(el, idx, array) {
+                return person.person_id == el._id;
+            });
+            if (all_person_idx == -1 && person.person_id) {
+                $scope.allPersons.push(person);
+            }
         };
 
         $scope.removeAttendee = function(person) {
