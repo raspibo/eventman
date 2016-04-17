@@ -175,8 +175,22 @@ class CollectionHandler(BaseHandler):
                 filtered.append(result)
         return filtered
 
+    def _clean_dict(self, data):
+        """Filter a dictionary (in place) to remove unwanted keywords.
+
+        :param data: dictionary to clean
+        :type data: dict"""
+        if isinstance(data, dict):
+            for key in data.keys():
+                if isinstance(key, (str, unicode)) and key.startswith('$'):
+                    del data[key]
+        return data
+
     def _dict2env(self, data):
-        """Convert a dictionary into a form suitable to be passed as environment variables."""
+        """Convert a dictionary into a form suitable to be passed as environment variables.
+
+        :param data: dictionary to convert
+        :type data: dict"""
         ret = {}
         for key, value in data.iteritems():
             if isinstance(value, (list, tuple, dict)):
@@ -214,6 +228,7 @@ class CollectionHandler(BaseHandler):
     @authenticated
     def post(self, id_=None, resource=None, resource_id=None, **kwargs):
         data = escape.json_decode(self.request.body or '{}')
+        self._clean_dict(data)
         if resource:
             # Handle access to sub-resources.
             method = getattr(self, 'handle_%s_%s' % (self.request.method.lower(), resource), None)
@@ -385,6 +400,7 @@ class EventsHandler(CollectionHandler):
 
     def handle_post_persons(self, id_, person_id, data):
         # Add a person to the list of persons registered at this event.
+        self._clean_dict(data)
         data['seq'] = self.get_next_seq('event_%s_persons' % id_)
         data['seq_hex'] = '%06X' % data['seq']
         doc = self.db.query('events',
@@ -403,6 +419,7 @@ class EventsHandler(CollectionHandler):
 
     def handle_put_persons(self, id_, person_id, data):
         # Update an existing entry for a person registered at this event.
+        self._clean_dict(data)
         query = dict([('persons.%s' % k, v) for k, v in self.arguments.iteritems()])
         query['_id'] = id_
         if person_id is not None:
