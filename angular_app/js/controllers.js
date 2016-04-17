@@ -231,6 +231,7 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
                 var personObj = new Person(person);
                 personObj.$save(function(p) {
                     $scope._addAttendee(angular.copy(p));
+                    $scope.newPerson = {};
                 });
             } else {
                 $scope._addAttendee(angular.copy(person));
