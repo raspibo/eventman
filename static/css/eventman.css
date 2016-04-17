@@ -70,3 +70,7 @@ body { padding-top: 70px; }
     overflow-y: scroll !important;
 }
 
+/* do not wrap elements inside this one */
+.nowrap {
+    white-space: nowrap;
+}
