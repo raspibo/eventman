@@ -661,6 +661,7 @@ def run():
     # command line arguments; can also be written in a configuration file,
     # specified with the --config argument.
     define("port", default=5242, help="run on the given port", type=int)
+    define("address", default='', help="bind the server at the given address", type=str)
     define("data_dir", default=os.path.join(os.path.dirname(__file__), "data"),
             help="specify the directory used to store the data")
     define("ssl_cert", default=os.path.join(os.path.dirname(__file__), 'ssl', 'eventman_cert.pem'),
@@ -728,15 +729,16 @@ def run():
     if os.path.isfile(options.ssl_key) and os.path.isfile(options.ssl_cert):
         ssl_options = dict(certfile=options.ssl_cert, keyfile=options.ssl_key)
     http_server = tornado.httpserver.HTTPServer(application, ssl_options=ssl_options or None)
-    http_server.listen(options.port)
+    logger.info('Start serving on %s://%s:%d', 'https' if ssl_options else 'http',
+                                                 options.address if options.address else '127.0.0.1',
+                                                 options.port)
+    http_server.listen(options.port, options.address)
 
     # Also listen on options.port+1 for our local ws connection.
-    ws_application = tornado.web.Application([
-            _ws_handler,
-        ],
-        debug=options.debug)
+    ws_application = tornado.web.Application([_ws_handler,], debug=options.debug)
     ws_http_server = tornado.httpserver.HTTPServer(ws_application)
     ws_http_server.listen(options.port+1, address='127.0.0.1')
+    logger.debug('Starting WebSocket on ws://127.0.0.1:%d', options.port+1)
     tornado.ioloop.IOLoop.instance().start()
 
 

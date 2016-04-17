@@ -25,6 +25,14 @@ eventManServices.factory('Event', ['$resource',
                     if (data && data['end-datetime']) {
                         data['end-date'] = data['end-date'].getTime();
                     }
+                    // strip empty keys.
+                    angular.forEach(data.persons || [], function(person, person_idx) {
+                        angular.forEach(person, function(value, key) {
+                            if (value === "") {
+                                delete person[key];
+                            }
+                        });
+                    });
                     return data;
                 }
             },
