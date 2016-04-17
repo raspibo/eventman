@@ -3,8 +3,8 @@
 
 Your friendly manager of attendees at an event.
 
-Copyright 2015 Davide Alberani <da@erlug.linux.it>
-               RaspiBO <info@raspibo.org>
+Copyright 2015-2016 Davide Alberani <da@erlug.linux.it>
+                    RaspiBO <info@raspibo.org>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -128,7 +128,7 @@ _ws_clients = {}
 
 class CollectionHandler(BaseHandler):
     """Base class for handlers that need to interact with the database backend.
-    
+
     Introduce basic CRUD operations."""
     # set of documents we're managing (a collection in MongoDB or a table in a SQL database)
     collection = None
@@ -155,11 +155,11 @@ class CollectionHandler(BaseHandler):
 
     def _filter_results(self, results, params):
         """Filter a list using keys and values from a dictionary.
-        
+
         :param results: the list to be filtered
         :type results: list
         :param params: a dictionary of items that must all be present in an original list item to be included in the return
-        
+
         :return: list of items that have all the keys with the same values as params
         :rtype: list"""
         if not params:
@@ -175,8 +175,22 @@ class CollectionHandler(BaseHandler):
                 filtered.append(result)
         return filtered
 
+    def _clean_dict(self, data):
+        """Filter a dictionary (in place) to remove unwanted keywords.
+
+        :param data: dictionary to clean
+        :type data: dict"""
+        if isinstance(data, dict):
+            for key in data.keys():
+                if isinstance(key, (str, unicode)) and key.startswith('$'):
+                    del data[key]
+        return data
+
     def _dict2env(self, data):
-        """Convert a dictionary into a form suitable to be passed as environment variables."""
+        """Convert a dictionary into a form suitable to be passed as environment variables.
+
+        :param data: dictionary to convert
+        :type data: dict"""
         ret = {}
         for key, value in data.iteritems():
             if isinstance(value, (list, tuple, dict)):
@@ -214,6 +228,7 @@ class CollectionHandler(BaseHandler):
     @authenticated
     def post(self, id_=None, resource=None, resource_id=None, **kwargs):
         data = escape.json_decode(self.request.body or '{}')
+        self._clean_dict(data)
         if resource:
             # Handle access to sub-resources.
             method = getattr(self, 'handle_%s_%s' % (self.request.method.lower(), resource), None)
@@ -385,22 +400,26 @@ class EventsHandler(CollectionHandler):
 
     def handle_post_persons(self, id_, person_id, data):
         # Add a person to the list of persons registered at this event.
+        self._clean_dict(data)
         data['seq'] = self.get_next_seq('event_%s_persons' % id_)
         data['seq_hex'] = '%06X' % data['seq']
         doc = self.db.query('events',
                 {'_id': id_, 'persons.person_id': person_id})
         if '_id' in data:
             del data['_id']
+        ret = {'action': 'add', 'person_id': person_id, 'person': data}
         if not doc:
             merged, doc = self.db.update('events',
                     {'_id': id_},
                     {'persons': data},
                     operation='appendUnique',
                     create=False)
-        return {'event': doc}
+            self.send_ws_message('event/%s/updates' % id_, json.dumps(ret))
+        return ret
 
     def handle_put_persons(self, id_, person_id, data):
         # Update an existing entry for a person registered at this event.
+        self._clean_dict(data)
         query = dict([('persons.%s' % k, v) for k, v in self.arguments.iteritems()])
         query['_id'] = id_
         if person_id is not None:
@@ -433,19 +452,24 @@ class EventsHandler(CollectionHandler):
             if new_person_data.get('attended'):
                 self.run_triggers('attends', stdin_data=stdin_data, env=env)
 
+        ret = {'action': 'update', 'person_id': person_id, 'person': new_person_data}
         if old_person_data != new_person_data:
-            self.send_ws_message('event/%s/updates' % id_,
-                    json.dumps(doc.get('persons') or []))
-        return {'event': doc}
+            self.send_ws_message('event/%s/updates' % id_, json.dumps(ret))
+        return ret
 
     def handle_delete_persons(self, id_, person_id):
         # Remove a specific person from the list of persons registered at this event.
-        merged, doc = self.db.update('events',
-                {'_id': id_},
-                {'persons': {'person_id': person_id}},
-                operation='delete',
-                create=False)
-        return {'event': doc}
+        doc = self.db.query('events',
+                {'_id': id_, 'persons.person_id': person_id})
+        ret = {'action': 'delete', 'person_id': person_id}
+        if doc:
+            merged, doc = self.db.update('events',
+                    {'_id': id_},
+                    {'persons': {'person_id': person_id}},
+                    operation='delete',
+                    create=False)
+            self.send_ws_message('event/%s/updates' % id_, json.dumps(ret))
+        return ret
 
 
 class EbCSVImportPersonsHandler(BaseHandler):
@@ -637,6 +661,7 @@ def run():
     # command line arguments; can also be written in a configuration file,
     # specified with the --config argument.
     define("port", default=5242, help="run on the given port", type=int)
+    define("address", default='', help="bind the server at the given address", type=str)
     define("data_dir", default=os.path.join(os.path.dirname(__file__), "data"),
             help="specify the directory used to store the data")
     define("ssl_cert", default=os.path.join(os.path.dirname(__file__), 'ssl', 'eventman_cert.pem'),
@@ -704,18 +729,18 @@ def run():
     if os.path.isfile(options.ssl_key) and os.path.isfile(options.ssl_cert):
         ssl_options = dict(certfile=options.ssl_cert, keyfile=options.ssl_key)
     http_server = tornado.httpserver.HTTPServer(application, ssl_options=ssl_options or None)
-    http_server.listen(options.port)
+    logger.info('Start serving on %s://%s:%d', 'https' if ssl_options else 'http',
+                                                 options.address if options.address else '127.0.0.1',
+                                                 options.port)
+    http_server.listen(options.port, options.address)
 
     # Also listen on options.port+1 for our local ws connection.
-    ws_application = tornado.web.Application([
-            _ws_handler,
-        ],
-        debug=options.debug)
+    ws_application = tornado.web.Application([_ws_handler,], debug=options.debug)
     ws_http_server = tornado.httpserver.HTTPServer(ws_application)
     ws_http_server.listen(options.port+1, address='127.0.0.1')
+    logger.debug('Starting WebSocket on ws://127.0.0.1:%d', options.port+1)
     tornado.ioloop.IOLoop.instance().start()
 
 
 if __name__ == '__main__':
     run()
-

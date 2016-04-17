@@ -28,7 +28,7 @@
             <form class="form-inline">
                 <div class="form-group">
                     <label for="query-persons">{{'Search:' | translate}}</label>
-                    <input eventman-focus type="text" id="query-persons" class="form-control" placeholder="{{'Name or email' | translate}}" ng-model="query">
+                    <input eventman-focus type="text" id="query-persons" class="form-control" placeholder="{{'Name or email' | translate}}" ng-model="query" ng-model-options="{debounce: 600}">
                 </div>
             </form>
 
@@ -36,12 +36,12 @@
             <table class="table table-striped">
                 <thead>
                     <tr>
-                        <th class="text-right">#</th>
-                        <th>{{'Person' | translate}} <a ng-click="updateOrded('name')" href=""><i class="fa fa-caret-up"></i></a>{{'Name' | translate}}<a ng-click="updateOrded('-name')" href=""><i class="fa fa-caret-down"></i></a> <a ng-click="updateOrded('surname')" href=""><i class="fa fa-caret-up"></i></a>{{'Surname' | translate}}<a ng-click="updateOrded('-surname')" href=""><i class="fa fa-caret-down"></i></a></th>
-                        <th ng-repeat="col in customFields" class="text-center">
+                        <th class="text-right nowrap">#</th>
+                        <th class="nowrap">{{'Person' | translate}} <a ng-click="updateOrded('name')" href=""><i class="fa fa-caret-up"></i></a>{{'Name' | translate}}<a ng-click="updateOrded('-name')" href=""><i class="fa fa-caret-down"></i></a> <a ng-click="updateOrded('surname')" href=""><i class="fa fa-caret-up"></i></a>{{'Surname' | translate}}<a ng-click="updateOrded('-surname')" href=""><i class="fa fa-caret-down"></i></a></th>
+                        <th ng-repeat="col in customFields" class="text-center nowrap">
                             <a ng-click="updateOrded(col.key)" href=""><i class="fa fa-caret-up"></i></a>{{col.label | translate}}<a ng-click="updateOrded('-' + col.key)" href=""><i class="fa fa-caret-down"></i></a>
                         </th>
-                        <th class="text-center"><strong>{{'Delete' | translate}}</strong></th>
+                        <th class="text-center nowrap"><strong>{{'Delete' | translate}}</strong></th>
                     </tr>
                 </thead>
                 <tbody>

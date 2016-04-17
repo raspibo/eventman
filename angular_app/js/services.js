@@ -25,6 +25,14 @@ eventManServices.factory('Event', ['$resource',
                     if (data && data['end-datetime']) {
                         data['end-date'] = data['end-date'].getTime();
                     }
+                    // strip empty keys.
+                    angular.forEach(data.persons || [], function(person, person_idx) {
+                        angular.forEach(person, function(value, key) {
+                            if (value === "") {
+                                delete person[key];
+                            }
+                        });
+                    });
                     return data;
                 }
             },
@@ -33,28 +41,28 @@ eventManServices.factory('Event', ['$resource',
 
             updatePerson: {
                 method: 'PUT',
-                isArray: true,
+                isArray: false,
                 url: 'events/:id/persons/:person_id',
                 transformResponse: function(data, headers) {
-                    return angular.fromJson(data).event.persons;
+                    return angular.fromJson(data);
                 }
             },
 
             addPerson: {
                 method: 'POST',
-                isArray: true,
+                isArray: false,
                 url: 'events/:id/persons/:person_id',
                 transformResponse: function(data, headers) {
-                    return angular.fromJson(data).event.persons;
+                    return angular.fromJson(data);
                 }
             },
 
             deletePerson: {
                 method: 'DELETE',
-                isArray: true,
+                isArray: false,
                 url: 'events/:_id/persons/:person_id',
                 transformResponse: function(data, headers) {
-                    return angular.fromJson(data).event.persons;
+                    return angular.fromJson(data);
                 }
             }
         });
@@ -156,9 +164,8 @@ eventManApp.factory('EventUpdates', ['$websocket', '$location', '$log',
                                     '/ws/' + $location.path() + '/updates');
                 dataStream.onMessage(function(message) {
                     $log.debug('EventUpdates message received');
-                    data.persons = angular.fromJson(message.data);
-        });
-
+                    data.update = angular.fromJson(message.data);
+                });
             }
         };
 
