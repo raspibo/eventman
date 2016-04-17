@@ -33,7 +33,7 @@
                         <form class="form-inline">
                             <div class="form-group">
                                 <label for="query-persons">{{'Search:' | translate}}</label>
-                                <input eventman-focus type="text" id="query-persons" class="form-control" placeholder="{{'Name or email' | translate}}" ng-model="query">
+                                <input eventman-focus type="text" id="query-persons" class="form-control" placeholder="{{'Name or email' | translate}}" ng-model="query" ng-model-options="{debounce: 600}">
                             </div>
                         </form>
                         <table class="table table-striped">
@@ -103,7 +103,7 @@
                                 <input name="job_title" class="form-control" placeholder="{{'Evil Ruler' | translate}}"  ng-model="newPerson.job_title">
                             </div>
 
-                            <button reset-focus ng-disabled="!(newPerson.name && newPerson.surname)" ng-click="fastAddPerson(newPerson, true)" class="btn btn-success top5">
+                            <button reset-focus ng-disabled="!(newPerson.name && newPerson.surname)" ng-click="fastAddAttendee(newPerson, true)" class="btn btn-success top5">
                                 <span class="fa fa-plus-circle vcenter"></span>
                                 {{'Add' | translate}}
                             </button>
@@ -129,7 +129,7 @@
                                         {{person.email}}
                                     </td>
                                     <td class="text-left">
-                                        <button reset-focus ng-click="fastAddPerson(person)" type="button" class="btn btn-link fa fa-plus-circle vcenter"></button>
+                                        <button reset-focus ng-click="fastAddAttendee(person)" type="button" class="btn btn-link fa fa-plus-circle vcenter"></button>
                                     </td>
                                 </tr>
                             </tbody>
