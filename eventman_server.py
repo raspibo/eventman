@@ -679,7 +679,9 @@ def run():
     tornado.options.parse_command_line()
 
     logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
+    if options.debug:
+        logger.setLevel(logging.DEBUG)
 
     # database backend connector
     db_connector = backend.EventManDB(url=options.mongo_url, dbName=options.db_name)
