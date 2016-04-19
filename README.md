@@ -36,14 +36,13 @@ Python code documented following the [Sphinx](http://sphinx-doc.org/) syntax.
 Install and run
 ===============
 
-Be sure to have a running MongoDB server, locally.
+Be sure to have a running MongoDB server, locally. If you want to install the dependencies only locally to the current user, you can append the *--user* argument to the *pip* calls. Please also install the *python-dev* package, before running the following commands.
 
     wget https://bootstrap.pypa.io/get-pip.py
     sudo python get-pip.py
-    sudo pip install tornado
-    sudo pip install pymongo
+    sudo pip install tornado # version 4.2 or later
+    sudo pip install pymongo # version 3.2.2 or later
     sudo pip install pycups # only needed if you want to print labels
-    cd
     git clone https://github.com/raspibo/eventman
     cd eventman
     ./eventman_server.py --debug
@@ -62,8 +61,7 @@ By default, authentication is required; default username and password are *admin
 License and copyright
 =====================
 
-Copyright 2015-2016 Davide Alberani <da@erlug.linux.it>  
-                    RaspiBO <info@raspibo.org>
+Copyright 2015-2016 Davide Alberani <da@erlug.linux.it>, RaspiBO <info@raspibo.org>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
