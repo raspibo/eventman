@@ -678,9 +678,8 @@ def run():
             callback=lambda path: tornado.options.parse_config_file(path, final=False))
     tornado.options.parse_command_line()
 
-    if options.debug:
-        logger = logging.getLogger()
-        logger.setLevel(logging.DEBUG)
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
 
     # database backend connector
     db_connector = backend.EventManDB(url=options.mongo_url, dbName=options.db_name)
