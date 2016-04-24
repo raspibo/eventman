@@ -167,7 +167,7 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
             angular.forEach($scope.personsOrder,
                 function(value, idx) {
                     if (value !== key && value !== inv_key) {
-                        new_order.push(value)
+                        new_order.push(value);
                     }
                 }
             );
@@ -363,7 +363,7 @@ eventManControllers.controller('PersonsListCtrl', ['$scope', 'Person', 'Setting'
             angular.forEach($scope.personsOrder,
                 function(value, idx) {
                     if (value !== key && value !== inv_key) {
-                        new_order.push(value)
+                        new_order.push(value);
                     }
                 }
             );
