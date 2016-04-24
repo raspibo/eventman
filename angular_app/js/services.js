@@ -139,7 +139,7 @@ eventManServices.factory('Setting', ['$resource',
                 }
             },
 
-            update: {method: 'PUT'},
+            update: {method: 'PUT'}
         });
     }]
 );

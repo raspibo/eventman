@@ -41,7 +41,7 @@ eventManApp.run(['$rootScope', '$state', '$stateParams', '$log',
 /* Configure the states. */
 eventManApp.config(['$stateProvider', '$urlRouterProvider',
     function($stateProvider, $urlRouterProvider) {
-        $urlRouterProvider.otherwise("/events");
+        $urlRouterProvider.otherwise('/events');
         $stateProvider
             .state('events', {
                 url: '/events',
@@ -50,7 +50,7 @@ eventManApp.config(['$stateProvider', '$urlRouterProvider',
             })
             .state('event', {
                 url: '/event',
-                templateUrl: 'event-main.html',
+                templateUrl: 'event-main.html'
             })
             .state('event.new', {
                 url: '/new',
@@ -74,7 +74,7 @@ eventManApp.config(['$stateProvider', '$urlRouterProvider',
             })
             .state('person', {
                 url: '/person',
-                templateUrl: 'person-main.html',
+                templateUrl: 'person-main.html'
             })
             .state('person.new', {
                 url: '/new',
@@ -93,7 +93,7 @@ eventManApp.config(['$stateProvider', '$urlRouterProvider',
             })
             .state('import', {
                 url: '/import',
-                templateUrl: 'import-main.html',
+                templateUrl: 'import-main.html'
             })
             .state('import.persons', {
                 url: '/persons',
