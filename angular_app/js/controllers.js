@@ -204,6 +204,13 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
             if (!$scope.event.persons) {
                 $scope.event.persons = [];
             }
+            var person_idx = $scope.event.persons.findIndex(function(el, idx, array) {
+                    return person.person_id == el.person_id;
+            });
+            if (person_idx != -1) {
+                $log.debug('person already present: not added');
+                return false;
+            }
             $scope.event.persons.push(person);
             $scope.setPersonAttribute(person, 'attended', true, function() {
                 var all_person_idx = $scope.allPersons.findIndex(function(el, idx, array) {
