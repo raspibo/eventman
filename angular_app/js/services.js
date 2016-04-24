@@ -4,8 +4,8 @@
 var eventManServices = angular.module('eventManServices', ['ngResource']);
 
 
-eventManServices.factory('Event', ['$resource',
-    function($resource) {
+eventManServices.factory('Event', ['$resource', '$rootScope',
+    function($resource, $rootScope) {
         return $resource('events/:id', {id: '@_id', person_id: '@person_id'}, {
 
             all: {
@@ -43,6 +43,7 @@ eventManServices.factory('Event', ['$resource',
                 method: 'PUT',
                 isArray: false,
                 url: 'events/:id/persons/:person_id',
+                params: {uuid: $rootScope.app_uuid},
                 transformResponse: function(data, headers) {
                     return angular.fromJson(data);
                 }
@@ -52,6 +53,7 @@ eventManServices.factory('Event', ['$resource',
                 method: 'POST',
                 isArray: false,
                 url: 'events/:id/persons/:person_id',
+                params: {uuid: $rootScope.app_uuid},
                 transformResponse: function(data, headers) {
                     return angular.fromJson(data);
                 }
@@ -61,6 +63,7 @@ eventManServices.factory('Event', ['$resource',
                 method: 'DELETE',
                 isArray: false,
                 url: 'events/:_id/persons/:person_id',
+                params: {uuid: $rootScope.app_uuid},
                 transformResponse: function(data, headers) {
                     return angular.fromJson(data);
                 }
@@ -136,7 +139,7 @@ eventManServices.factory('Setting', ['$resource',
                 }
             },
 
-            update: {method: 'PUT'},
+            update: {method: 'PUT'}
         });
     }]
 );

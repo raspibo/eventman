@@ -28,8 +28,10 @@ var eventManApp = angular.module('eventManApp', [
 
 
 /* Add some utilities to the global scope. */
-eventManApp.run(['$rootScope', '$state', '$stateParams',
-    function($rootScope, $state, $stateParams) {
+eventManApp.run(['$rootScope', '$state', '$stateParams', '$log',
+    function($rootScope, $state, $stateParams, $log) {
+        $rootScope.app_uuid = guid();
+        $log.debug('App UUID: ' + $rootScope.app_uuid);
         $rootScope.$state = $state;
         $rootScope.$stateParams = $stateParams;
     }]
@@ -39,7 +41,7 @@ eventManApp.run(['$rootScope', '$state', '$stateParams',
 /* Configure the states. */
 eventManApp.config(['$stateProvider', '$urlRouterProvider',
     function($stateProvider, $urlRouterProvider) {
-        $urlRouterProvider.otherwise("/events");
+        $urlRouterProvider.otherwise('/events');
         $stateProvider
             .state('events', {
                 url: '/events',
@@ -48,7 +50,7 @@ eventManApp.config(['$stateProvider', '$urlRouterProvider',
             })
             .state('event', {
                 url: '/event',
-                templateUrl: 'event-main.html',
+                templateUrl: 'event-main.html'
             })
             .state('event.new', {
                 url: '/new',
@@ -72,7 +74,7 @@ eventManApp.config(['$stateProvider', '$urlRouterProvider',
             })
             .state('person', {
                 url: '/person',
-                templateUrl: 'person-main.html',
+                templateUrl: 'person-main.html'
             })
             .state('person.new', {
                 url: '/new',
@@ -91,7 +93,7 @@ eventManApp.config(['$stateProvider', '$urlRouterProvider',
             })
             .state('import', {
                 url: '/import',
-                templateUrl: 'import-main.html',
+                templateUrl: 'import-main.html'
             })
             .state('import.persons', {
                 url: '/persons',
