@@ -66,6 +66,16 @@ class BaseHandler(tornado.web.RequestHandler):
     arguments = property(lambda self: dict([(k, v[0])
         for k, v in self.request.arguments.iteritems()]))
 
+    # A property to access both the UUID and the clean arguments.
+    @property
+    def uuid_arguments(self):
+        uuid = None
+        arguments = self.arguments
+        if 'uuid' in arguments:
+            uuid = arguments['uuid']
+            del arguments['uuid']
+        return uuid, arguments
+
     _bool_convert = {
         '0': False,
         'n': False,
@@ -400,6 +410,7 @@ class EventsHandler(CollectionHandler):
 
     def handle_post_persons(self, id_, person_id, data):
         # Add a person to the list of persons registered at this event.
+        uuid, arguments = self.uuid_arguments
         self._clean_dict(data)
         data['seq'] = self.get_next_seq('event_%s_persons' % id_)
         data['seq_hex'] = '%06X' % data['seq']
@@ -407,7 +418,7 @@ class EventsHandler(CollectionHandler):
                 {'_id': id_, 'persons.person_id': person_id})
         if '_id' in data:
             del data['_id']
-        ret = {'action': 'add', 'person_id': person_id, 'person': data}
+            ret = {'action': 'add', 'person_id': person_id, 'person': data, 'uuid': uuid}
         if not doc:
             merged, doc = self.db.update('events',
                     {'_id': id_},
@@ -420,7 +431,8 @@ class EventsHandler(CollectionHandler):
     def handle_put_persons(self, id_, person_id, data):
         # Update an existing entry for a person registered at this event.
         self._clean_dict(data)
-        query = dict([('persons.%s' % k, v) for k, v in self.arguments.iteritems()])
+        uuid, arguments = self.uuid_arguments
+        query = dict([('persons.%s' % k, v) for k, v in arguments.iteritems()])
         query['_id'] = id_
         if person_id is not None:
             query['persons.person_id'] = person_id
@@ -452,16 +464,17 @@ class EventsHandler(CollectionHandler):
             if new_person_data.get('attended'):
                 self.run_triggers('attends', stdin_data=stdin_data, env=env)
 
-        ret = {'action': 'update', 'person_id': person_id, 'person': new_person_data}
+        ret = {'action': 'update', 'person_id': person_id, 'person': new_person_data, 'uuid': uuid}
         if old_person_data != new_person_data:
             self.send_ws_message('event/%s/updates' % id_, json.dumps(ret))
         return ret
 
     def handle_delete_persons(self, id_, person_id):
         # Remove a specific person from the list of persons registered at this event.
+        uuid, arguments = self.uuid_arguments
         doc = self.db.query('events',
                 {'_id': id_, 'persons.person_id': person_id})
-        ret = {'action': 'delete', 'person_id': person_id}
+        ret = {'action': 'delete', 'person_id': person_id, 'uuid': uuid}
         if doc:
             merged, doc = self.db.update('events',
                     {'_id': id_},
@@ -686,7 +699,7 @@ def run():
     # database backend connector
     db_connector = backend.EventManDB(url=options.mongo_url, dbName=options.db_name)
     init_params = dict(db=db_connector, data_dir=options.data_dir, listen_port=options.port,
-            authentication=options.authentication)
+            authentication=options.authentication, logger=logger)
 
     # If not present, we store a user 'admin' with password 'eventman' into the database.
     if not db_connector.query('users', {'username': 'admin'}):

@@ -96,8 +96,8 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$modal', '
 );
 
 
-eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event', 'Person', 'EventUpdates', '$stateParams', 'Setting', '$log', '$translate',
-    function ($scope, $state, Event, Person, EventUpdates, $stateParams, Setting, $log, $translate) {
+eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event', 'Person', 'EventUpdates', '$stateParams', 'Setting', '$log', '$translate', '$rootScope',
+    function ($scope, $state, Event, Person, EventUpdates, $stateParams, Setting, $log, $translate, $rootScope) {
         $scope.personsOrder = ["name", "surname"];
         $scope.countAttendees = 0;
         $scope.message = {};
@@ -127,7 +127,11 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
                             return;
                         }
                         var data = $scope.EventUpdates.data.update;
-                        $log.debug('received ' + data.action + ' action from websocket');
+                        $log.debug('received ' + data.action + ' action from websocket source ' + data.uuid);
+                        if ($rootScope.app_uuid == data.uuid) {
+                            $log.debug('do not process our own message');
+                            return false;
+                        }
                         if (!$scope.event.persons) {
                             $scope.event.persons = [];
                         }
@@ -203,6 +207,13 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
         $scope._localAddAttendee = function(person, hideMessage) {
             if (!$scope.event.persons) {
                 $scope.event.persons = [];
+            }
+            var person_idx = $scope.event.persons.findIndex(function(el, idx, array) {
+                    return person.person_id == el.person_id;
+            });
+            if (person_idx != -1) {
+                $log.debug('person already present: not added');
+                return false;
             }
             $scope.event.persons.push(person);
             $scope.setPersonAttribute(person, 'attended', true, function() {
