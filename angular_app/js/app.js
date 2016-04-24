@@ -28,8 +28,10 @@ var eventManApp = angular.module('eventManApp', [
 
 
 /* Add some utilities to the global scope. */
-eventManApp.run(['$rootScope', '$state', '$stateParams',
-    function($rootScope, $state, $stateParams) {
+eventManApp.run(['$rootScope', '$state', '$stateParams', '$log',
+    function($rootScope, $state, $stateParams, $log) {
+        $rootScope.app_uuid = guid();
+        $log.debug('App UUID: ' + $rootScope.app_uuid);
         $rootScope.$state = $state;
         $rootScope.$stateParams = $stateParams;
     }]
