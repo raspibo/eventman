@@ -25,7 +25,7 @@ FONT_TEXT_ENCODING = 'latin-1'
 FONT_BARCODE = 'free3of9.ttf'
 
 PRINTER_NAME = None
-PRINTER_NAME = 'DYMO_LabelWriter_450'
+PRINTER_NAME = 'hackinbo_1'
 
 # Dictionary of remote systems used to print labels.
 # 'remote1' is the name used by that system to login on the web GUI.
@@ -33,10 +33,22 @@ PRINTER_NAME = 'DYMO_LabelWriter_450'
 # 'hackinbo' is the name of a local user allowed to print.
 # 'DYMO_LabelWriter_450' is the name of the printer on the remote system.
 REMOTES = {
-        'remote1': {
+        'workstation1': {
             #'host': '192.168.99.129',
             'username': 'hackinbo',
-            'printer': 'DYMO_LabelWriter_450'
+            'printer': 'hackinbo_1'
+        },
+        'workstation2': {
+            'username': 'hackinbo',
+            'printer': 'hackinbo_2'
+        },
+        'workstation3': {
+            'username': 'hackinbo',
+            'printer': 'hackinbo_3'
+        },
+        'workstation4': {
+            'username': 'hackinbo',
+            'printer': 'hackinbo_4'
         }
 }
 
