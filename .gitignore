@@ -1,5 +1,3 @@
-data/triggers/*.d
-ssl/*.pem
 
 angular_app/node_modules/
 
