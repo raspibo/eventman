@@ -66,7 +66,7 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$modal', '
     function ($scope, Event, $modal, $log, $translate, $rootScope) {
         $scope.events = Event.all();
         $scope.personsOrderProp = 'name';
-        $scope.eventsOrderProp = "'-begin-date'";
+        $scope.eventsOrderProp = "-begin_date";
 
         $scope.confirm_delete = 'Do you really want to delete this event?';
         $rootScope.$on('$translateChangeSuccess', function () {
@@ -402,7 +402,7 @@ eventManControllers.controller('PersonsListCtrl', ['$scope', 'Person', 'Setting'
 eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$stateParams', 'Person', 'Event', 'Setting', '$log',
     function ($scope, $stateParams, Person, Event, Setting, $log) {
         $scope.personsOrderProp = 'name';
-        $scope.eventsOrderProp = '-begin-date';
+        $scope.eventsOrderProp = '-begin_date';
         $scope.addToEvent = '';
         $scope.customFields = Setting.query({setting: 'person_custom_field',
             in_persons_list: true});
