@@ -4,6 +4,18 @@
 var eventManServices = angular.module('eventManServices', ['ngResource']);
 
 
+/* Modify, in place, an object to convert datetime. */
+function convert_dates(obj) {
+    if (obj['begin-date']) {
+        obj['begin-date'] = obj['begin_date'] = obj['begin-date'].getTime();
+    }
+    if (obj['end-date']) {
+        obj['end-date'] = obj['end_date'] = obj['end-date'].getTime();
+    }
+    return obj;
+}
+
+
 eventManServices.factory('Event', ['$resource', '$rootScope',
     function($resource, $rootScope) {
         return $resource('events/:id', {id: '@_id', person_id: '@person_id'}, {
@@ -12,19 +24,18 @@ eventManServices.factory('Event', ['$resource', '$rootScope',
                 method: 'GET',
                 isArray: true,
                 transformResponse: function(data, headers) {
-                    return angular.fromJson(data).events;
+                    data = angular.fromJson(data);
+                    angular.forEach(data.events || [], function(event_, event_idx) {
+                        convert_dates(event_);
+                    });
+                    return data.events;
                 }
             },
 
             get: {method: 'GET',
                 transformResponse: function(data, headers) {
                     data = angular.fromJson(data);
-                    if (data && data['begin-datetime']) {
-                        data['begin-date'] = data['begin-date'].getTime();
-                    }
-                    if (data && data['end-datetime']) {
-                        data['end-date'] = data['end-date'].getTime();
-                    }
+                    convert_dates(data);
                     // strip empty keys.
                     angular.forEach(data.persons || [], function(person, person_idx) {
                         angular.forEach(person, function(value, key) {
@@ -92,34 +103,11 @@ eventManServices.factory('Person', ['$resource',
                 url: 'persons/:_id/events',
                 isArray: true,
                 transformResponse: function(data, headers) {
-                    return angular.fromJson(data).events;
-                }
-            }
-        });
-    }]
-);
-
-
-eventManServices.factory('Person', ['$resource',
-    function($resource) {
-        return $resource('persons/:id', {id: '@_id'}, {
-
-            all: {
-                method: 'GET',
-                isArray: true,
-                transformResponse: function(data, headers) {
-                    return angular.fromJson(data).persons;
-                }
-            },
-
-            update: {method: 'PUT'},
-
-            getEvents: {
-                method: 'GET',
-                url: 'persons/:_id/events',
-                isArray: true,
-                transformResponse: function(data, headers) {
-                    return angular.fromJson(data).events;
+                    data = angular.fromJson(data);
+                    angular.forEach(data.events || [], function(event_, event_idx) {
+                        convert_dates(event_);
+                    });
+                    return data.events;
                 }
             }
         });
