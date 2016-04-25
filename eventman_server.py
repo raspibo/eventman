@@ -416,16 +416,16 @@ class EventsHandler(CollectionHandler):
         data['seq_hex'] = '%06X' % data['seq']
         doc = self.db.query('events',
                 {'_id': id_, 'persons.person_id': person_id})
+        ret = {'action': 'add', 'person_id': person_id, 'person': data, 'uuid': uuid}
         if '_id' in data:
             del data['_id']
-            ret = {'action': 'add', 'person_id': person_id, 'person': data, 'uuid': uuid}
+            self.send_ws_message('event/%s/updates' % id_, json.dumps(ret))
         if not doc:
             merged, doc = self.db.update('events',
                     {'_id': id_},
                     {'persons': data},
                     operation='appendUnique',
                     create=False)
-            self.send_ws_message('event/%s/updates' % id_, json.dumps(ret))
         return ret
 
     def handle_put_persons(self, id_, person_id, data):
