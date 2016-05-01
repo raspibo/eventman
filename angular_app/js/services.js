@@ -133,6 +133,20 @@ eventManServices.factory('Setting', ['$resource',
 );
 
 
+eventManServices.factory('Info', ['$resource',
+    function($resource) {
+        return $resource('info/', {}, {
+            get: {method: 'GET',
+                isArray: false,
+                transformResponse: function(data, headers) {
+                    return angular.fromJson(data).info || {};
+                }
+            }
+        });
+    }]
+);
+
+
 /* WebSocket collection used to update the list of persons of an Event. */
 eventManApp.factory('EventUpdates', ['$websocket', '$location', '$log',
     function($websocket, $location, $log) {
