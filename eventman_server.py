@@ -52,7 +52,7 @@ def authenticated(method):
         # If no authentication was required from the command line or config file.
         if not self.authentication:
             return method(self, *args, **kwargs)
-        # un authenticated API calls gets redirected to /v1.0/[...]
+        # authenticated API calls gets redirected to /v1.0/[...]
         if self.is_api() and not self.current_user:
             self.redirect('/v%s%s' % (API_VERSION, self.get_login_url()))
             return
@@ -573,6 +573,18 @@ class SettingsHandler(BaseHandler):
         self.write({'settings': settings})
 
 
+class InfoHandler(BaseHandler):
+    """Handle requests for Info."""
+    @gen.coroutine
+    @authenticated
+    def get(self, **kwds):
+        info = {}
+        current_user = self.get_current_user()
+        if current_user:
+            info['current_user'] = current_user
+        self.write({'info': info})
+
+
 class WebSocketEventUpdatesHandler(tornado.websocket.WebSocketHandler):
     """Manage websockets."""
     def _clean_url(self, url):
@@ -727,6 +739,7 @@ def run():
             (r"/(?:index.html)?", RootHandler, init_params),
             (r"/ebcsvpersons", EbCSVImportPersonsHandler, init_params),
             (r"/settings", SettingsHandler, init_params),
+            (r"/info", InfoHandler, init_params),
             _ws_handler,
             (r'/login', LoginHandler, init_params),
             (r'/v%s/login' % API_VERSION, LoginHandler, init_params),

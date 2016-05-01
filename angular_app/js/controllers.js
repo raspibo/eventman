@@ -7,8 +7,8 @@ var eventManControllers = angular.module('eventManControllers', []);
 
 
 /* A controller that can be used to navigate. */
-eventManControllers.controller('NavigationCtrl', ['$scope', '$location', 'Setting',
-    function ($scope, $location, Setting) {
+eventManControllers.controller('NavigationCtrl', ['$scope', '$location', 'Setting', 'Info',
+    function ($scope, $location, Setting, Info) {
         $scope.logo = {};
 
         $scope.go = function(url) {
@@ -19,6 +19,10 @@ eventManControllers.controller('NavigationCtrl', ['$scope', '$location', 'Settin
             if (data && data.length) {
                 $scope.logo = data[0];
             }
+        });
+
+        Info.get({}, function(data) {
+            $scope.current_user = data.current_user || '';
         });
 
         $scope.isActive = function(view) {
@@ -85,7 +89,6 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$modal', '
                 }
             });
             modalInstance.result.then(function() {
-                console.debug('here');
                 Event.remove({'id': _id}, function() {
                     $scope.events = Event.all();
                     }
@@ -388,7 +391,6 @@ eventManControllers.controller('PersonsListCtrl', ['$scope', 'Person', 'Setting'
                 }
             });
             modalInstance.result.then(function() {
-                console.debug('here');
                 Person.remove({'id': _id}, function() {
                     $scope.persons = Person.all();
                     }
