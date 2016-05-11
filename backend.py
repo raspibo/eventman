@@ -22,6 +22,58 @@ from bson.objectid import ObjectId
 
 re_objectid = re.compile(r'[0-9a-f]{24}')
 
+_force_conversion = {
+    'seq_hex': str,
+    'persons.seq_hex': str
+}
+
+
+def convert_obj(obj):
+    """Convert an object in a format suitable to be stored in MongoDB.
+
+    :param obj: object to convert
+
+    :return: object that can be stored in MongoDB.
+    """
+    if obj is None:
+        return None
+    if isinstance(obj, bool):
+        return obj
+    try:
+        return ObjectId(obj)
+    except:
+        pass
+    try:
+        i_obj = int(obj)
+        if i_obj > 2**64 - 1:
+            return obj
+        return i_obj
+    except:
+        pass
+    return obj
+
+
+def convert(seq):
+    """Convert an object to a format suitable to be stored in MongoDB,
+    descending lists, tuples and dictionaries (a copy is returned).
+
+    :param seq: sequence or object to convert
+
+    :return: object that can be stored in MongoDB.
+    """
+    if isinstance(seq, dict):
+        d = {}
+        for key, item in seq.iteritems():
+            if key in _force_conversion:
+                d[key] = _force_conversion[key](item)
+            else:
+                d[key] = convert(item)
+        return d
+    if isinstance(seq, (list, tuple)):
+        return [convert(x) for x in seq]
+    return convert_obj(seq)
+
+
 class EventManDB(object):
     """MongoDB connector."""
     db = None
@@ -34,11 +86,6 @@ class EventManDB(object):
             'appendUnique': '$addToSet',
             'delete': '$pull',
             'increment': '$inc'
-    }
-
-    _force_conversion = {
-            'seq_hex': str,
-            'persons.seq_hex': str
     }
 
     def __init__(self, url=None, dbName='eventman'):
@@ -70,50 +117,6 @@ class EventManDB(object):
         self.db = self.connection[self._dbName]
         return self.db
 
-    def convert_obj(self, obj):
-        """Convert an object in a format suitable to be stored in MongoDB.
-
-        :param obj: object to convert
-
-        :return: object that can be stored in MongoDB.
-        """
-        if obj is None:
-            return None
-        if isinstance(obj, bool):
-            return obj
-        try:
-            return ObjectId(obj)
-        except:
-            pass
-        try:
-            i_obj = int(obj)
-            if i_obj > 2**64 - 1:
-                return obj
-            return i_obj
-        except:
-            pass
-        return obj
-
-    def convert(self, seq):
-        """Convert an object in a format suitable to be stored in MongoDB,
-        descending lists, tuples and dictionaries (a copy is returned).
-
-        :param seq: sequence or object to convert
-
-        :return: object that can be stored in MongoDB.
-        """
-        if isinstance(seq, dict):
-            d = {}
-            for key, item in seq.iteritems():
-                if key in self._force_conversion:
-                    d[key] = self._force_conversion[key](item)
-                else:
-                    d[key] = self.convert(item)
-            return d
-        if isinstance(seq, (list, tuple)):
-            return [self.convert(x) for x in seq]
-        return self.convert_obj(seq)
-
     def get(self, collection, _id):
         """Get a single document with the specified `_id`.
 
@@ -125,7 +128,7 @@ class EventManDB(object):
         :return: the document with the given `_id`
         :rtype: dict
         """
-        results = self.query(collection, self.convert({'_id': _id}))
+        results = self.query(collection, convert({'_id': _id}))
         return results and results[0] or {}
 
     def query(self, collection, query=None):
@@ -140,7 +143,7 @@ class EventManDB(object):
         :rtype: list
         """
         db = self.connect()
-        query = self.convert(query or {})
+        query = convert(query or {})
         return list(db[collection].find(query))
 
     def add(self, collection, data):
@@ -155,7 +158,7 @@ class EventManDB(object):
         :rtype: dict
         """
         db = self.connect()
-        data = self.convert(data)
+        data = convert(data)
         _id = db[collection].insert(data)
         return self.get(collection, _id)
 
@@ -171,7 +174,7 @@ class EventManDB(object):
         :rtype: bool
         """
         db = self.connect()
-        data = self.convert(data)
+        data = convert(data)
         ret = db[collection].update(data, {'$set': data}, upsert=True)
         return ret['updatedExisting']
 
@@ -209,8 +212,8 @@ class EventManDB(object):
         :rtype: tuple of (bool, dict)
         """
         db = self.connect()
-        data = self.convert(data or {})
-        _id_or_query = self.convert(_id_or_query)
+        data = convert(data or {})
+        _id_or_query = convert(_id_or_query)
         if isinstance(_id_or_query, (list, tuple)):
             _id_or_query = {'$or': self._buildSearchPattern(data, _id_or_query)}
         elif not isinstance(_id_or_query, dict):
@@ -243,6 +246,6 @@ class EventManDB(object):
         db = self.connect()
         if not isinstance(_id_or_query, dict):
             _id_or_query = {'_id': _id_or_query}
-        _id_or_query = self.convert(_id_or_query)
+        _id_or_query = convert(_id_or_query)
         db[collection].remove(_id_or_query)
 

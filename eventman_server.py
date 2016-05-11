@@ -169,11 +169,13 @@ class CollectionHandler(BaseHandler):
         :param results: the list to be filtered
         :type results: list
         :param params: a dictionary of items that must all be present in an original list item to be included in the return
+        :type params: dict
 
         :return: list of items that have all the keys with the same values as params
         :rtype: list"""
         if not params:
             return results
+        params = backend.convert(params)
         filtered = []
         for result in results:
             add = True
