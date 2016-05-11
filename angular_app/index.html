@@ -59,10 +59,9 @@
                     <ul class="nav navbar-nav navbar-right">
                         <li>
                             <span ng-if="current_user" class="btn">{{current_user}}</span>
-                            <button  class="btn btn-link">
-                                <span class="fa fa-sign-out vcenter"></span>
-                                <a href="/logout">{{'logout' | translate}}</a>
-                            </button>
+                            <span  class="btn btn-link">
+                                <a href="/logout"><span class="fa fa-sign-out vcenter"></span>&nbsp;{{'logout' | translate}}</a>
+                            </span>
                         </li>
                     </ul>
                 </div>
