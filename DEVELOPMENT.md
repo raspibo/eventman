@@ -52,6 +52,8 @@ The paths used to communicate with the Tornado web server:
 - /persons/:person_id GET    - return information about an existing person
 - /persons/:person_id POST   - update an existing person
 - /persons/:person_id DELETE - delete an existing person
+- /events/:event_id/persons GET - return the complete list of persons registered for the event
+- /events/:event_id/persons/:person_id GET - return information about a person related to a given event (e.g.: name, surname, ticket ID, ...)
 - /events/:event_id/persons/:person_id PUT - update the information about a person related to a given event (e.g.: if the person attended)
 - /persons/:person_id/events GET - the list of events the person registered for
 - /ebcsvpersons POST - csv file upload to import persons
@@ -60,6 +62,8 @@ The paths used to communicate with the Tornado web server:
 
 Notice that the above path are the ones used by the webapp. If you plan to use them from an external application (like the _eventman_ barcode/qrcode scanner) you better prepend all the path with /v1.0, where 1.0 is the current value of API\_VERSION.
 The main advantage in doing so is that, for every call, a useful status code and a JSON value is returned (also for /v10/login that usually would show you the login page).
+
+Also, remember that most of the paths can take query parameters that will be used as a filter, like GET /events/:event_id/persons?name=Mario
 
 
 Triggers
