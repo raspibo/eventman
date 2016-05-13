@@ -3,11 +3,23 @@ Event Man(ager)
 
 Your friendly manager of attendees at an event.
 
+EventMan will help you handle your list of attendees at an event, managing the list of registered persons and marking persons as present.
+
+Main features:
+- quickly mark a registered person as an attendee.
+- easy way to add a new person, if it's already known from a previous event.
+- fast and simple way to add a completely new person.
+- it's easy to import EventBrite CSV files.
+- RESTful interface
+- ability to run triggers to respond to an event (e.g. when a person is marked as attending to an event)
+
+See the *screenshots* directory for some images.
+
 
 Development
 ===========
 
-See the DEVELOPMENT.md file for more information about how to contribute.
+See the *docs/DEVELOPMENT.md* file for more information about how to contribute.
 
 
 Technological stack
@@ -21,16 +33,6 @@ Technological stack
 
 The web part is incuded; you need to install Tornado, MongoDB and the pymongo module on your system (no configuration needed).
 If you want to print labels using the _print\_label_ trigger, you may also need the pycups module.
-
-
-Coding style and conventions
-============================
-
-It's enough to be consistent within the document you're editing.
-
-I suggest four spaces instead of tabs for all the code: Python (**mandatory**), JavaScript, HTML and CSS.
-
-Python code documented following the [Sphinx](http://sphinx-doc.org/) syntax.
 
 
 Install and run
