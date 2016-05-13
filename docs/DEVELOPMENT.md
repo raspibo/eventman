@@ -7,15 +7,6 @@ Definitions:
 - **attendee**: a person who actually *show up* (checked in) at the event
 
 
-Requirements:
-- create a new event (**DONE**)
-- create a new registered person manually (**DONE**)
-- associate to an event a list of registered persons, creating them if needed (manually and importing from external sources) (**DONE**)
-- mark registered persons as present (including them in the list of attendees) (**DONE**)
-- execute actions when an attendee shows up or enters/leaves the event (**DONE**)
-- show information and statistics about registered persons, attendees and events (**DONE**)
-
-
 Paths
 =====
 
@@ -149,6 +140,16 @@ Contains a list of username and associated values, like the password used for au
 To generate the hash, use:
     import utils
     print utils.hash_password('MyVerySecretPassword')
+
+
+Coding style and conventions
+============================
+
+It's enough to be consistent within the document you're editing.
+
+I suggest four spaces instead of tabs for all the code: Python (**mandatory**), JavaScript, HTML and CSS.
+
+Python code documented following the [Sphinx](http://sphinx-doc.org/) syntax.
 
 
 TODO
