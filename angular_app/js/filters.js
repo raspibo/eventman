@@ -64,3 +64,19 @@ eventManApp.filter('splittedFilter', ['$filter',
     }]
 );
 
+
+/* Filter that returns only the attendees at an event. */
+eventManApp.filter('attendeesFilter', ['$filter',
+    function($filter) {
+        return function(inputArray) {
+            var returnArray = [];
+            for (var x=0; x < inputArray.length; x++) {
+                if (inputArray[x]['attended']) {
+                    returnArray.push(inputArray[x]);
+                }
+            }
+            return returnArray;
+        };
+    }]
+);
+
