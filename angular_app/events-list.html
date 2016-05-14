@@ -42,7 +42,7 @@
                         {{'Ends:' | translate}} {{event['end-date'] | date:'fullDate' }} {{event['end-time'] | date:'HH:mm'}}</p>
                     </td>
                     <td class="hcenter">
-                        <p><span ng-init="attendeesNr = (event.persons | attendeesFilter).length">{{attendeesNr}}</span> / {{event.persons.length || 0}}</p>
+                        <p><span ng-init="attendeesNr = (event.persons | attendeesFilter).length">{{attendeesNr}}</span> / {{event.persons.length || 0}} ({{((attendeesNr / (event.persons.length || 0) * 100) || 0).toFixed()}}%)</p>
                     </td>
                     <td>
                         <button ng-click="remove(event._id)" type="button" class="btn btn-link fa fa-trash fa-lg"></button>
