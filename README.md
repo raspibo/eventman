@@ -6,10 +6,9 @@ Your friendly manager of attendees at an event.
 EventMan will help you handle your list of attendees at an event, managing the list of registered persons and marking persons as present.
 
 Main features:
-- quickly mark a registered person as an attendee.
-- easy way to add a new person, if it's already known from a previous event.
-- fast and simple way to add a completely new person.
-- it's easy to import EventBrite CSV files.
+- quickly mark a registered person as an attendee
+- easy way to add a new person, if it's already known from a previous event or if it's a completely new person
+- can import Eventbrite CSV export files
 - RESTful interface
 - ability to run triggers to respond to an event (e.g. when a person is marked as attending to an event)
 
@@ -58,6 +57,11 @@ Authentication
 ==============
 
 By default, authentication is required; default username and password are *admin* and *eventman*. If you want to completely disable authentication, run the daemon with --authentication=off
+
+Demo database
+=============
+
+In the *data/dumps/eventman\_test\_db.tar.gz* you can find a sample db with over 1000 fake persons and a couple of events to play with. Decompress it and use *mongorestore* to import it.
 
 
 License and copyright
