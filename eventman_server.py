@@ -377,6 +377,8 @@ class PersonsHandler(CollectionHandler):
                 if str(persons.get('person_id')) == id_:
                     person_data = persons
                     break
+            if 'persons' in event:
+                del event['persons']
             event['person_data'] = person_data
         if resource_id and events:
             return events[0]
