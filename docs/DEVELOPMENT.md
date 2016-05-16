@@ -1,9 +1,9 @@
 Definitions
 ===========
-:
+
 - **event**: a faire, convention, congress or any other kind of meeting
 - **registered person**: someone who said it will attend at the event
-- **attendee**: a person who actually *show up* (checked in) at the event
+- **attendee**: a person who actually *show up* (is checked in) at the event
 
 
 Paths
@@ -50,7 +50,7 @@ The paths used to communicate with the Tornado web server:
 - /login - login form
 - /logout - when visited, the user is logged out
 
-Notice that the above paths are the ones used by the webapp. If you plan to use them from an external application (like the _eventman_ barcode/qrcode scanner) you better prepend all the path with /v1.0, where 1.0 is the current value of API\_VERSION.
+Notice that the above paths are the ones used by the webapp. If you plan to use them from an external application (like the _event\_man_ barcode/qrcode scanner) you better prepend all the path with /v1.0, where 1.0 is the current value of API\_VERSION.
 The main advantage of doing so is that, for every call, a useful status code and a JSON value is returned (also for /v1.0/login that usually would show you the login page).
 
 Also, remember that most of the paths can take query parameters that will be used as a filter, like GET /events/:event_id/persons?name=Mario
