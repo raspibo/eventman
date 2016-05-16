@@ -9,7 +9,7 @@ Main features:
 - quickly mark a registered person as an attendee
 - easy way to add a new person, if it's already known from a previous event or if it's a completely new person
 - can import Eventbrite CSV export files
-- RESTful interface
+- RESTful interface that can be called by third-party applications (see the https://github.com/raspibo/event_man/ repository for a simple script that checks people in using a barcode/QR-code reader)
 - ability to run triggers to respond to an event (e.g. when a person is marked as attending to an event)
 
 See the *screenshots* directory for some images.
