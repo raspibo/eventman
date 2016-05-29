@@ -34,6 +34,24 @@ eventManApp.run(['$rootScope', '$state', '$stateParams', '$log',
         $log.debug('App UUID: ' + $rootScope.app_uuid);
         $rootScope.$state = $state;
         $rootScope.$stateParams = $stateParams;
+
+        $rootScope.error = {error: false};
+
+        $rootScope.errorHandler = function(response) {
+            $log.debug('Handling error message:');
+            $log.debug(response);
+            $rootScope.error.status = response.status;
+            $rootScope.error.statusText = response.statusText;
+            if (response.data && response.data.error) {
+                $rootScope.error.code = response.data.code;
+                $rootScope.error.message = response.data.message;
+                $rootScope.error.error = true;
+            } else {
+                $rootScope.error.code = null;
+                $rootScope.error.message = '';
+                $rootScope.error.error = false;
+            }
+        };
     }]
 );
 

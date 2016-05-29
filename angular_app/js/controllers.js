@@ -7,8 +7,8 @@ var eventManControllers = angular.module('eventManControllers', []);
 
 
 /* A controller that can be used to navigate. */
-eventManControllers.controller('NavigationCtrl', ['$scope', '$location', 'Setting', 'Info',
-    function ($scope, $location, Setting, Info) {
+eventManControllers.controller('NavigationCtrl', ['$scope', '$rootScope', '$location', 'Setting', 'Info',
+    function ($scope, $rootScope, $location, Setting, Info) {
         $scope.logo = {};
 
         $scope.go = function(url) {
@@ -22,7 +22,7 @@ eventManControllers.controller('NavigationCtrl', ['$scope', '$location', 'Settin
         });
 
         Info.get({}, function(data) {
-            $scope.current_user = data.current_user || '';
+            $rootScope.info = data || {};
         });
 
         $scope.isActive = function(view) {
