@@ -28,14 +28,18 @@ var eventManApp = angular.module('eventManApp', [
 
 
 /* Add some utilities to the global scope. */
-eventManApp.run(['$rootScope', '$state', '$stateParams', '$log',
-    function($rootScope, $state, $stateParams, $log) {
+eventManApp.run(['$rootScope', '$state', '$stateParams', '$log', 'Info',
+    function($rootScope, $state, $stateParams, $log, Info) {
         $rootScope.app_uuid = guid();
         $log.debug('App UUID: ' + $rootScope.app_uuid);
         $rootScope.$state = $state;
         $rootScope.$stateParams = $stateParams;
 
         $rootScope.error = {error: false};
+
+        Info.get({}, function(data) {
+            $rootScope.info = data || {};
+        });
 
         $rootScope.errorHandler = function(response) {
             $log.debug('Handling error message:');
@@ -51,6 +55,24 @@ eventManApp.run(['$rootScope', '$state', '$stateParams', '$log',
                 $rootScope.error.message = '';
                 $rootScope.error.error = false;
             }
+        };
+
+        /* Check GUI privileges. */
+        $rootScope.requires = function(permission) {
+            if (!($rootScope.info && $rootScope.info.user &&
+                        $rootScope.info.user.username && $rootScope.info.user.privileges)) {
+                return false;
+            }
+            var accepted = false;
+            angular.forEach($rootScope.info.user.privileges || [],
+                    function(value, idx) {
+                        if (value === permission) {
+                            accepted = true;
+                            return;
+                        }
+                    }
+            );
+            return accepted;
         };
     }]
 );

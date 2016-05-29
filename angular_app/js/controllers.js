@@ -21,10 +21,6 @@ eventManControllers.controller('NavigationCtrl', ['$scope', '$rootScope', '$loca
             }
         });
 
-        Info.get({}, function(data) {
-            $rootScope.info = data || {};
-        });
-
         $scope.isActive = function(view) {
             if (view === $location.path()) {
                 return true;
