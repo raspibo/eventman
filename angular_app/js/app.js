@@ -58,21 +58,25 @@ eventManApp.run(['$rootScope', '$state', '$stateParams', '$log', 'Info',
         };
 
         /* Check GUI privileges. */
-        $rootScope.requires = function(permission) {
+        $rootScope.hasPermission = function(permission) {
             if (!($rootScope.info && $rootScope.info.user &&
-                        $rootScope.info.user.username && $rootScope.info.user.privileges)) {
+                        $rootScope.info.user.username && $rootScope.info.user.permissions)) {
                 return false;
             }
-            var accepted = false;
-            angular.forEach($rootScope.info.user.privileges || [],
+            var granted = false;
+            var splitted_permission = permission.split(':');
+            var main_permission = splitted_permission + ':all';
+
+            angular.forEach($rootScope.info.user.permissions || [],
                     function(value, idx) {
-                        if (value === permission) {
-                            accepted = true;
+                        if (value === 'admin:all' || value === main_permission || value === permission) {
+                            granted = true;
                             return;
                         }
+                        
                     }
             );
-            return accepted;
+            return granted;
         };
     }]
 );

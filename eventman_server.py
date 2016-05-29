@@ -78,7 +78,6 @@ def requires(permissions):
     return requires_wrapper()
 
 
-
 class BaseHandler(tornado.web.RequestHandler):
     """Base class for request handlers."""
     # A property to access the first value of each argument.
@@ -134,6 +133,34 @@ class BaseHandler(tornado.web.RequestHandler):
     def get_current_user(self):
         """Retrieve current user from the secure cookie."""
         return self.get_secure_cookie("user")
+
+    def get_user_info(self):
+        current_user = self.get_current_user()
+        if current_user:
+            user_info = {}
+            user_info['username'] = current_user
+            res = self.db.query('users', {'username': current_user})
+            if res:
+                user = res[0]
+                user_info['permissions'] = user.get('permissions') or []
+            return user_info
+        return {}
+
+    def has_permission(self, permission):
+        """Check permissions of the current user.
+
+        :param permission: the permission to check
+        :type permission: str
+
+        :returns: True if the user is allowed to perform the action or False
+        :rtype: bool
+        """
+        user_info = self.get_user_info()
+        user_permissions = user_info.get('permissions') or []
+        if not user_info:
+            return False
+        main_permission = '%s:all' % permission.split(':')[0]
+        return 'admin:all' in user_permissions or main_permission in user_permissions or permission in user_permissions
 
     def logout(self):
         """Remove the secure cookie used fro authentication."""
@@ -605,14 +632,8 @@ class InfoHandler(BaseHandler):
     @authenticated
     def get(self, **kwds):
         info = {}
-        current_user = self.get_current_user()
-        if current_user:
-            user_info = {}
-            user_info['username'] = current_user
-            res = self.db.query('users', {'username': current_user})
-            if res:
-                user = res[0]
-                user_info['privileges'] = user.get('privileges') or []
+        user_info = self.get_user_info()
+        if user_info:
             info['user'] = user_info
         self.write({'info': info})
 
@@ -749,7 +770,7 @@ def run():
     if not db_connector.query('users', {'username': 'admin'}):
         db_connector.add('users',
                 {'username': 'admin', 'password': utils.hash_password('eventman'),
-                 'privileges': ['admin']})
+                 'permissions': ['admin:all']})
 
     # If present, use the cookie_secret stored into the database.
     cookie_secret = db_connector.query('settings', {'setting': 'server_cookie_secret'})
