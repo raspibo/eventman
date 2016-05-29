@@ -57,10 +57,15 @@
                 </div>
                 <div class="collapse navbar-collapse">
                     <ul class="nav navbar-nav navbar-right">
-                        <li ng-if="current_user">
-                            <span class="btn">{{current_user}}</span>
+                        <li ng-if="info.user.username">
+                            <span class="btn">{{info.user.username}}</span>
                             <span  class="btn btn-link">
                                 <a href="/logout"><span class="fa fa-sign-out vcenter"></span>&nbsp;{{'logout' | translate}}</a>
+                            </span>
+                        </li>
+                        <li ng-if="!info.user.username">
+                            <span  class="btn btn-link">
+                                <a href="/login"><span class="fa fa-sign-in vcenter"></span>&nbsp;{{'login' | translate}}</a>
                             </span>
                         </li>
                     </ul>
@@ -71,6 +76,12 @@
         <div class="main-header">
         </div>
 
+        <!-- main error handling -->
+        <div ng-if="error.error" ng-class="{clearfix: true, alert: true, 'alert-danger': true}">
+            <div class="container">
+                {{error.message}}
+            </div>
+        </div>
         <!-- all the magic takes place here: the content inside the next div changes accordingly to the location you're visiting -->
         <div ui-view></div>
 

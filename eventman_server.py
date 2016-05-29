@@ -52,12 +52,31 @@ def authenticated(method):
         # If no authentication was required from the command line or config file.
         if not self.authentication:
             return method(self, *args, **kwargs)
-        # authenticated API calls gets redirected to /v1.0/[...]
-        if self.is_api() and not self.current_user:
+        # unauthenticated API calls gets redirected to /v1.0/[...]
+        if self.is_api() and not self.get_.current_user():
             self.redirect('/v%s%s' % (API_VERSION, self.get_login_url()))
             return
         return original_wrapper(self, *args, **kwargs)
     return my_wrapper
+
+
+def requires(permissions):
+    if not isinstance(permissions, (list, tuple)):
+        permissions = [permissions]
+    def requires_wrapper(self, *args, **kwargs):
+        if 'none' in permissions:
+            return method(self, *args, **kwargs)
+        current_user = self.get_current_user()
+        res = self.db.query('users', {'username': current_user})
+        if not res:
+            return self.redirect('/v%s%s' % (API_VERSION, self.get_login_url()))
+        user = res[0]
+        if current_user == 'admin':
+            return method(self, *args, **kwargs)
+        if 'permissions' not in user:
+            return self.redirect('/v%s%s' % (API_VERSION, self.get_login_url()))
+    return requires_wrapper()
+
 
 
 class BaseHandler(tornado.web.RequestHandler):
@@ -354,6 +373,7 @@ class PersonsHandler(CollectionHandler):
     collection = 'persons'
     object_id = 'person_id'
 
+    #@requires('persons-list')
     def handle_get_events(self, id_, resource_id=None, **kwargs):
         # Get a list of events attended by this person.
         # Inside the data of each event, a 'person_data' dictionary is
@@ -363,6 +383,8 @@ class PersonsHandler(CollectionHandler):
         # If resource_id is given, only the specified event is considered.
         #
         # If the 'all' parameter is given, every event (also unattended ones) is returned.
+        self.set_status(401)
+        return {'error': True, 'message': 'insufficient privileges'}
         args = self.request.arguments
         query = {}
         if id_ and not self.tobool(args.get('all')):
@@ -585,7 +607,13 @@ class InfoHandler(BaseHandler):
         info = {}
         current_user = self.get_current_user()
         if current_user:
-            info['current_user'] = current_user
+            user_info = {}
+            user_info['username'] = current_user
+            res = self.db.query('users', {'username': current_user})
+            if res:
+                user = res[0]
+                user_info['privileges'] = user.get('privileges') or []
+            info['user'] = user_info
         self.write({'info': info})
 
 
@@ -628,8 +656,8 @@ class LoginHandler(RootHandler):
         # show the login page
         if self.is_api():
             self.set_status(401)
-            self.write({'error': 'authentication required',
-                'message': 'please provide username and password'})
+            self.write({'error': True,
+                'message': 'authentication required'})
         else:
             with open(self.angular_app_path + "/login.html", 'r') as fd:
                 self.write(fd.read())
@@ -660,14 +688,14 @@ class LoginHandler(RootHandler):
             logging.info('successful login for user %s' % username)
             self.set_secure_cookie("user", username)
             if self.is_api():
-                self.write({'error': None, 'message': 'successful login'})
+                self.write({'error': False, 'message': 'successful login'})
             else:
                 self.redirect('/')
             return
         logging.info('login failed for user %s' % username)
         if self.is_api():
             self.set_status(401)
-            self.write({'error': 'authentication failed', 'message': 'wrong username and password'})
+            self.write({'error': True, 'message': 'wrong username and password'})
         else:
             self.redirect('/login?failed=1')
 
@@ -701,7 +729,7 @@ def run():
             help="URL to MongoDB server", type=str)
     define("db_name", default='eventman',
             help="Name of the MongoDB database to use", type=str)
-    define("authentication", default=True, help="if set to false, no authentication is required")
+    define("authentication", default=False, help="if set to true, authentication is required")
     define("debug", default=False, help="run in debug mode")
     define("config", help="read configuration file",
             callback=lambda path: tornado.options.parse_config_file(path, final=False))
@@ -720,7 +748,8 @@ def run():
     # If not present, we store a user 'admin' with password 'eventman' into the database.
     if not db_connector.query('users', {'username': 'admin'}):
         db_connector.add('users',
-                {'username': 'admin', 'password': utils.hash_password('eventman')})
+                {'username': 'admin', 'password': utils.hash_password('eventman'),
+                 'privileges': ['admin']})
 
     # If present, use the cookie_secret stored into the database.
     cookie_secret = db_connector.query('settings', {'setting': 'server_cookie_secret'})
