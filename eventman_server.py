@@ -60,24 +60,6 @@ def authenticated(method):
     return my_wrapper
 
 
-def requires(permissions):
-    if not isinstance(permissions, (list, tuple)):
-        permissions = [permissions]
-    def requires_wrapper(self, *args, **kwargs):
-        if 'none' in permissions:
-            return method(self, *args, **kwargs)
-        current_user = self.get_current_user()
-        res = self.db.query('users', {'username': current_user})
-        if not res:
-            return self.redirect('/v%s%s' % (API_VERSION, self.get_login_url()))
-        user = res[0]
-        if current_user == 'admin':
-            return method(self, *args, **kwargs)
-        if 'permissions' not in user:
-            return self.redirect('/v%s%s' % (API_VERSION, self.get_login_url()))
-    return requires_wrapper()
-
-
 class BaseHandler(tornado.web.RequestHandler):
     """Base class for request handlers."""
     # A property to access the first value of each argument.
@@ -130,12 +112,14 @@ class BaseHandler(tornado.web.RequestHandler):
         for key, value in kwargs.iteritems():
             setattr(self, key, value)
 
-    def get_current_user(self):
+    @property
+    def current_user(self):
         """Retrieve current user from the secure cookie."""
         return self.get_secure_cookie("user")
 
-    def get_user_info(self):
-        current_user = self.get_current_user()
+    @property
+    def current_user_info(self):
+        current_user = self.current_user
         if current_user:
             user_info = {}
             user_info['username'] = current_user
@@ -155,12 +139,16 @@ class BaseHandler(tornado.web.RequestHandler):
         :returns: True if the user is allowed to perform the action or False
         :rtype: bool
         """
-        user_info = self.get_user_info()
+        user_info = self.current_user_info
         user_permissions = user_info.get('permissions') or []
         if not user_info:
             return False
         main_permission = '%s:all' % permission.split(':')[0]
         return 'admin:all' in user_permissions or main_permission in user_permissions or permission in user_permissions
+
+    def build_error(self, message='', status=400):
+        self.set_status(status)
+        self.write({'error': True, 'message': message})
 
     def logout(self):
         """Remove the secure cookie used fro authentication."""
@@ -187,6 +175,7 @@ class CollectionHandler(BaseHandler):
 
     Introduce basic CRUD operations."""
     # set of documents we're managing (a collection in MongoDB or a table in a SQL database)
+    document = None
     collection = None
 
     # set of documents used to store incremental sequences
@@ -268,18 +257,24 @@ class CollectionHandler(BaseHandler):
     def get(self, id_=None, resource=None, resource_id=None, **kwargs):
         if resource:
             # Handle access to sub-resources.
+            if not self.has_permission('%s:%s-read' % (self.document, resource)):
+                return self.build_error(status=401, message='insufficient permissions')
             method = getattr(self, 'handle_get_%s' % resource, None)
             if method and callable(method):
                 self.write(method(id_, resource_id, **kwargs))
                 return
         if id_ is not None:
             # read a single document
+            if not self.has_permission('%s:read' % self.document):
+                return self.build_error(status=401, message='insufficient permissions')
             self.write(self.db.get(self.collection, id_))
         else:
             # return an object containing the list of all objects in the collection;
             # e.g.: {'events': [{'_id': 'obj1-id, ...}, {'_id': 'obj2-id, ...}, ...]}
             # Please, never return JSON lists that are not encapsulated into an object,
             # to avoid XSS vulnerabilities.
+            if not self.has_permission('%s:read' % self.collection):
+                return self.build_error(status=401, message='insufficient permissions')
             self.write({self.collection: self.db.query(self.collection)})
 
     @gen.coroutine
@@ -287,15 +282,23 @@ class CollectionHandler(BaseHandler):
     def post(self, id_=None, resource=None, resource_id=None, **kwargs):
         data = escape.json_decode(self.request.body or '{}')
         self._clean_dict(data)
+        method = self.request.method.lower()
         if resource:
+            if not self.has_permission('%s:%s-%s' % (self.document, resource,
+                                                     'create' if method == 'post' else 'update')):
+                return self.build_error(status=401, message='insufficient permissions')
             # Handle access to sub-resources.
-            method = getattr(self, 'handle_%s_%s' % (self.request.method.lower(), resource), None)
-            if method and callable(method):
-                self.write(method(id_, resource_id, data, **kwargs))
+            handler = getattr(self, 'handle_%s_%s' % (method, resource), None)
+            if handler and callable(handler):
+                self.write(handler(id_, resource_id, data, **kwargs))
                 return
         if id_ is None:
+            if not self.has_permission('%s:%s' % (self.document, 'create' if method == 'post' else 'update')):
+                return self.build_error(status=401, message='insufficient permissions')
             newData = self.db.add(self.collection, data)
         else:
+            if not self.has_permission('%s:%s' % (self.collection, 'create' if method == 'post' else 'update')):
+                return self.build_error(status=401, message='insufficient permissions')
             merged, newData = self.db.update(self.collection, id_, data)
         self.write(newData)
 
@@ -397,10 +400,10 @@ class CollectionHandler(BaseHandler):
 
 class PersonsHandler(CollectionHandler):
     """Handle requests for Persons."""
+    document = 'person'
     collection = 'persons'
     object_id = 'person_id'
 
-    #@requires('persons-list')
     def handle_get_events(self, id_, resource_id=None, **kwargs):
         # Get a list of events attended by this person.
         # Inside the data of each event, a 'person_data' dictionary is
@@ -410,8 +413,6 @@ class PersonsHandler(CollectionHandler):
         # If resource_id is given, only the specified event is considered.
         #
         # If the 'all' parameter is given, every event (also unattended ones) is returned.
-        self.set_status(401)
-        return {'error': True, 'message': 'insufficient privileges'}
         args = self.request.arguments
         query = {}
         if id_ and not self.tobool(args.get('all')):
@@ -436,6 +437,7 @@ class PersonsHandler(CollectionHandler):
 
 class EventsHandler(CollectionHandler):
     """Handle requests for Events."""
+    document = 'event'
     collection = 'events'
     object_id = 'event_id'
 
@@ -505,7 +507,7 @@ class EventsHandler(CollectionHandler):
         if person_id is None:
             person_id = str(new_person_data.get('person_id'))
         env.update({'PERSON_ID': person_id, 'EVENT_ID': id_,
-            'EVENT_TITLE': doc.get('title', ''), 'WEB_USER': self.get_current_user(),
+            'EVENT_TITLE': doc.get('title', ''), 'WEB_USER': self.current_user,
             'WEB_REMOTE_IP': self.request.remote_ip})
         stdin_data = {'old': old_person_data,
             'new': new_person_data,
@@ -632,7 +634,7 @@ class InfoHandler(BaseHandler):
     @authenticated
     def get(self, **kwds):
         info = {}
-        user_info = self.get_user_info()
+        user_info = self.current_user_info
         if user_info:
             info['user'] = user_info
         self.write({'info': info})
