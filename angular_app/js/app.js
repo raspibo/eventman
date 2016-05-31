@@ -64,12 +64,12 @@ eventManApp.run(['$rootScope', '$state', '$stateParams', '$log', 'Info',
                 return false;
             }
             var granted = false;
-            var splitted_permission = permission.split(':');
-            var main_permission = splitted_permission + ':all';
+            var splitted_permission = permission.split('|');
+            var global_permission = splitted_permission + '|all';
 
             angular.forEach($rootScope.info.user.permissions || [],
                     function(value, idx) {
-                        if (value === 'admin:all' || value === main_permission || value === permission) {
+                        if (value === 'admin|all' || value === global_permission || value === permission) {
                             granted = true;
                             return;
                         }

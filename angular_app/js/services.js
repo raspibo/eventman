@@ -26,6 +26,9 @@ eventManServices.factory('Event', ['$resource', '$rootScope',
                 isArray: true,
                 transformResponse: function(data, headers) {
                     data = angular.fromJson(data);
+                    if (data.error) {
+                        return data;
+                    }
                     angular.forEach(data.events || [], function(event_, event_idx) {
                         convert_dates(event_);
                     });
@@ -102,7 +105,11 @@ eventManServices.factory('Person', ['$resource', '$rootScope',
                 interceptor : {responseError: $rootScope.errorHandler},
                 isArray: true,
                 transformResponse: function(data, headers) {
-                    return angular.fromJson(data).persons;
+                    data = angular.fromJson(data);
+                    if (data.error) {
+                        return data;
+                    }
+                    return data.persons;
                 }
             },
 
@@ -141,7 +148,11 @@ eventManServices.factory('Setting', ['$resource', '$rootScope',
                 interceptor : {responseError: $rootScope.errorHandler},
                 isArray: true,
                 transformResponse: function(data, headers) {
-                    return angular.fromJson(data).settings;
+                    data = angular.fromJson(data);
+                    if (data.error) {
+                        return data;
+                    }
+                    return data.settings;
                 }
             },
 
@@ -162,7 +173,11 @@ eventManServices.factory('Info', ['$resource', '$rootScope',
                 interceptor : {responseError: $rootScope.errorHandler},
                 isArray: false,
                 transformResponse: function(data, headers) {
-                    return angular.fromJson(data).info || {};
+                    data = angular.fromJson(data);
+                    if (data.error) {
+                        return data;
+                    }
+                    return data.info || {};
                 }
             }
         });
