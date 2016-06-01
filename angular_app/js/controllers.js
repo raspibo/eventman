@@ -184,7 +184,7 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
                 if (this_event.persons) {
                     delete this_event.persons;
                 }
-                if (this_event.id === undefined) {
+                if (this_event._id === undefined) {
                     $scope.event = Event.save(this_event);
                 } else {
                     $scope.event = Event.update(this_event);
@@ -418,7 +418,7 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$stateParams', '
 
         // store a new Person or update an existing one
         $scope.save = function() {
-            if ($scope.person.id === undefined) {
+            if ($scope.person._id === undefined) {
                 $scope.person = new Person($scope.person);
                 $scope.person.$save(function(person) {
                     if ($scope.addToEvent) {

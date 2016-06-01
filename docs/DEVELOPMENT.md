@@ -35,12 +35,12 @@ The paths used to communicate with the Tornado web server:
 - /events GET  - return the list of events
 - /events POST - store a new event
 - /events/:event_id GET    - return information about an existing event
-- /events/:event_id POST   - update an existing event
+- /events/:event_id PUT   - update an existing event
 - /events/:event_id DELETE - delete an existing event
 - /persons GET  - return the list of persons
 - /persons POST - store a new person
 - /persons/:person_id GET    - return information about an existing person
-- /persons/:person_id POST   - update an existing person
+- /persons/:person_id PUT   - update an existing person
 - /persons/:person_id DELETE - delete an existing person
 - /events/:event_id/persons GET - return the complete list of persons registered for the event
 - /events/:event_id/persons/:person_id GET - return information about a person related to a given event (e.g.: name, surname, ticket ID, ...)
