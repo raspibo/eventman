@@ -104,8 +104,13 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
         $scope.event.persons = [];
         $scope.customFields = Setting.query({setting: 'person_custom_field', in_event_details: true});
 
+        $scope.newTicket = $state.is('event.ticket.new');
+
         if ($stateParams.id) {
             $scope.event = Event.get($stateParams, function() {
+                if ($scope.newTicket) {
+                    return;
+                }
                 $scope.$watchCollection(function() {
                         return $scope.event.persons;
                     }, function(prev, old) {
@@ -113,9 +118,10 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
                     }
                 );
             });
-            $scope.allPersons = Person.all();
 
             if ($state.is('event.info')) {
+                $scope.allPersons = Person.all();
+
                 // Handle WebSocket connection used to update the list of persons.
                 $scope.EventUpdates = EventUpdates;
                 $scope.EventUpdates.open();
@@ -229,7 +235,9 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
             person.person_id = person._id;
             person._id = $stateParams.id;
             Event.addPerson(person, function() {
-                $scope._localAddAttendee(person);
+                if (!$scope.newTicket) {
+                    $scope._localAddAttendee(person);
+                }
             });
             $scope.query = '';
         };
