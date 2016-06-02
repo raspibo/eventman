@@ -45,7 +45,7 @@
                         <p><span ng-init="attendeesNr = (event.persons | attendeesFilter).length">{{attendeesNr}}</span> / {{event.persons.length || 0}} ({{((attendeesNr / (event.persons.length || 0) * 100) || 0).toFixed()}}%)</p>
                     </td>
                     <td ng-if="hasPermission('event|update')">
-                        <button ng-if="hasPermission('ticket|create')" ng-click="$state.go('ticket.new', {id: event._id})" class="btn btn-link fa fa-user-plus" type="button" title="{{'Register' | translate}}"></button>
+                        <button ng-if="hasPermission('ticket|create')" ng-click="$state.go('event.ticket.new', {id: event._id})" class="btn btn-link fa fa-user-plus" type="button" title="{{'Register' | translate}}"></button>
                         <button ng-if="hasPermission('persons|update')" ng-click="$state.go('event.info', {id: event._id})" class="btn btn-link fa fa-list" type="button" title="{{'Manage attendees' | translate}}"></button>
                         <button ng-if="hasPermission('event|delete')" ng-click="remove(event._id)" type="button" class="btn btn-link fa fa-trash fa-lg" title="{{'Delete' | translate}}"></button>
                     </td>

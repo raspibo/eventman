@@ -1,0 +1,50 @@
+<!-- show details of an Event -->
+<div class="container">
+    <div eventman-message="eventman-message" control="message"></div>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-7 col-xs-7 vcenter">
+                <h1>{{event.title}} - {{'new ticket' | translate}}</h1>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-info table-striped top5">
+                    <div class="panel-heading">{{'Register to this event' | translate}}</div>
+                    <div class="panel-body">
+                        <form>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-addon min70-compact">{{'Name' | translate}}</span>
+                                <input type="text" class="form-control" placeholder="{{'Name' | translate}}" ng-model="newPerson.name" ng-required="1">
+                            </div>
+                            <div class="input-group input-group-sm top5">
+                                <span class="input-group-addon min70-compact">{{'Surname' | translate}}</span>
+                                <input type="text" class="form-control" placeholder="{{'Surname' | translate}}" ng-model="newPerson.surname">
+                            </div>
+                            <div class="input-group top5">
+                                <span class="input-group-addon min70-compact">{{'Email' | translate}}</span>
+                                <input type="email" name="email" class="form-control" placeholder="{{'name.surname@example.com' | translate}}"  ng-model="newPerson.email">
+                            </div>
+                            <div class="input-group top5">
+                                <span class="input-group-addon min70-compact">{{'Company' | translate}}</span>
+                                <input name="company" class="form-control" placeholder="{{'Acme Corporation' | translate}}"  ng-model="newPerson.company">
+                            </div>
+                            <div class="input-group top5">
+                                <span class="input-group-addon min70-compact">{{'Job' | translate}}</span>
+                                <input name="job_title" class="form-control" placeholder="{{'Evil Ruler' | translate}}"  ng-model="newPerson.job_title">
+                            </div>
+
+                            <button reset-focus ng-disabled="!(newPerson.name && newPerson.surname)" ng-click="fastAddAttendee(newPerson, true)" class="btn btn-success top5">
+                                <span class="fa fa-plus-circle vcenter"></span>
+                                {{'Add' | translate}}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
