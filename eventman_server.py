@@ -141,9 +141,7 @@ class BaseHandler(tornado.web.RequestHandler):
         :returns: True if the user is allowed to perform the action or False
         :rtype: bool
         """
-        user_info = self.current_user_info
-        if not user_info:
-            return False
+        user_info = self.current_user_info or {}
         user_permissions = user_info.get('permissions') or []
         global_permission = '%s|all' % permission.split('|')[0]
         if 'admin|all' in user_permissions or global_permission in user_permissions or permission in user_permissions:
@@ -263,11 +261,11 @@ class CollectionHandler(BaseHandler):
 
     @gen.coroutine
     @authenticated
-    def get(self, id_=None, resource=None, resource_id=None, **kwargs):
+    def get(self, id_=None, resource=None, resource_id=None, acl=True, **kwargs):
         if resource:
             # Handle access to sub-resources.
             permission = '%s:%s|read' % (self.document, resource)
-            if not self.has_permission(permission):
+            if acl and not self.has_permission(permission):
                 return self.build_error(status=401, message='insufficient permissions: %s' % permission)
             method = getattr(self, 'handle_get_%s' % resource, None)
             if method and callable(method):
@@ -276,7 +274,7 @@ class CollectionHandler(BaseHandler):
         if id_ is not None:
             # read a single document
             permission = '%s|read' % self.document
-            if not self.has_permission(permission):
+            if acl and not self.has_permission(permission):
                 return self.build_error(status=401, message='insufficient permissions: %s' % permission)
             self.write(self.db.get(self.collection, id_))
         else:
@@ -285,9 +283,9 @@ class CollectionHandler(BaseHandler):
             # Please, never return JSON lists that are not encapsulated into an object,
             # to avoid XSS vulnerabilities.
             permission = '%s|read' % self.collection
-            if not self.has_permission(permission):
+            if acl and not self.has_permission(permission):
                 return self.build_error(status=401, message='insufficient permissions: %s' % permission)
-            self.write({self.collection: self.db.query(self.collection)})
+            self.write({self.collection: self.db.query(self.collection, self.arguments)})
 
     @gen.coroutine
     @authenticated
@@ -423,6 +421,7 @@ class PersonsHandler(CollectionHandler):
     document = 'person'
     collection = 'persons'
     object_id = 'person_id'
+    permissions = {}
 
     def handle_get_events(self, id_, resource_id=None, **kwargs):
         # Get a list of events attended by this person.
@@ -563,6 +562,16 @@ class EventsHandler(CollectionHandler):
         return ret
 
 
+class TicketsHandler(CollectionHandler):
+    """Handle requests for Tickets."""
+    document = 'ticket'
+    collection = 'tickets'
+    object_id = 'ticket_id'
+    permissions = {
+        'ticket|read': True
+    }
+
+
 class EbCSVImportPersonsHandler(BaseHandler):
     """Importer for CSV files exported from eventbrite."""
     csvRemap = {
@@ -689,7 +698,7 @@ class WebSocketEventUpdatesHandler(tornado.websocket.WebSocketHandler):
         try:
             if self in _ws_clients.get(self._clean_url(self.request.uri), []):
                 _ws_clients[self._clean_url(self.request.uri)].remove(self)
-        except Exception, e:
+        except Exception as e:
             logging.warn('WebSocketEventUpdatesHandler.on_close error closing websocket: %s', str(e))
 
 
@@ -810,11 +819,14 @@ def run():
     _ws_handler = (r"/ws/+event/+(?P<event_id>\w+)/+updates/?", WebSocketEventUpdatesHandler)
     _persons_path = r"/persons/?(?P<id_>\w+)?/?(?P<resource>\w+)?/?(?P<resource_id>\w+)?"
     _events_path = r"/events/?(?P<id_>\w+)?/?(?P<resource>\w+)?/?(?P<resource_id>\w+)?"
+    _tickets_path = r"/tickets/?(?P<id_>\w+)?/?(?P<resource>\w+)?/?(?P<resource_id>\w+)?"
     application = tornado.web.Application([
             (_persons_path, PersonsHandler, init_params),
             (r'/v%s%s' % (API_VERSION, _persons_path), PersonsHandler, init_params),
             (_events_path, EventsHandler, init_params),
             (r'/v%s%s' % (API_VERSION, _events_path), EventsHandler, init_params),
+            (_tickets_path, TicketsHandler, init_params),
+            (r'/v%s%s' % (API_VERSION, _tickets_path), TicketsHandler, init_params),
             (r"/(?:index.html)?", RootHandler, init_params),
             (r"/ebcsvpersons", EbCSVImportPersonsHandler, init_params),
             (r"/settings", SettingsHandler, init_params),
@@ -841,7 +853,7 @@ def run():
     http_server.listen(options.port, options.address)
 
     # Also listen on options.port+1 for our local ws connection.
-    ws_application = tornado.web.Application([_ws_handler,], debug=options.debug)
+    ws_application = tornado.web.Application([_ws_handler], debug=options.debug)
     ws_http_server = tornado.httpserver.HTTPServer(ws_application)
     ws_http_server.listen(options.port+1, address='127.0.0.1')
     logger.debug('Starting WebSocket on ws://127.0.0.1:%d', options.port+1)

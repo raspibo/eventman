@@ -73,7 +73,6 @@ eventManApp.run(['$rootScope', '$state', '$stateParams', '$log', 'Info',
                             granted = true;
                             return;
                         }
-                        
                     }
             );
             return granted;
