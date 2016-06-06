@@ -146,19 +146,23 @@ class EventManDB(object):
         query = convert(query or {})
         return list(db[collection].find(query))
 
-    def add(self, collection, data):
+    def add(self, collection, data, _id=None):
         """Insert a new document.
 
         :param collection: insert the document in this collection
         :type collection: str
         :param data: the document to store
         :type data: dict
+        :param _id: the _id of the document to store; if None, it's generated
+        :type _id: object
 
         :return: the document, as created in the database
         :rtype: dict
         """
         db = self.connect()
         data = convert(data)
+        if _id is not None:
+            data['_id'] = _id
         _id = db[collection].insert(data)
         return self.get(collection, _id)
 

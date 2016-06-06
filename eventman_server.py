@@ -21,6 +21,9 @@ import os
 import re
 import glob
 import json
+import time
+import string
+import random
 import logging
 import datetime
 
@@ -62,7 +65,13 @@ def authenticated(method):
 
 class BaseHandler(tornado.web.RequestHandler):
     """Base class for request handlers."""
-    permissions = {}
+    permissions = {
+        'event|read': True,
+        'events|read': True,
+        'event:ticket|all': True,
+        'event:persons|all': True,
+        'person|create': True
+    }
 
     # A property to access the first value of each argument.
     arguments = property(lambda self: dict([(k, v[0])
@@ -122,15 +131,15 @@ class BaseHandler(tornado.web.RequestHandler):
     @property
     def current_user_info(self):
         current_user = self.current_user
+        user_info = {'permissions': set([k for (k, v) in self.permissions.iteritems() if v is True])}
         if current_user:
-            user_info = {}
             user_info['username'] = current_user
             res = self.db.query('users', {'username': current_user})
             if res:
                 user = res[0]
-                user_info['permissions'] = user.get('permissions') or []
-            return user_info
-        return {}
+                user_info['permissions'].update(set(user.get('permissions') or []))
+        user_info['permissions'] = list(user_info['permissions'])
+        return user_info
 
     def has_permission(self, permission):
         """Check permissions of the current user.
@@ -188,6 +197,8 @@ class CollectionHandler(BaseHandler):
     # set of documents used to store incremental sequences
     counters_collection = 'counters'
 
+    _id_chars = string.ascii_lowercase + string.digits
+
     def get_next_seq(self, seq):
         """Increment and return the new value of a ever-incrementing counter.
 
@@ -204,6 +215,12 @@ class CollectionHandler(BaseHandler):
                 {'seq': 1},
                 operation='increment')
         return doc.get('seq', 0)
+
+    def gen_id(self, seq='ids'):
+        t = str(time.time())
+        seq = str(self.get_next_seq(seq)).replace('.', '_')
+        rand = ''.join([random.choice(self._id_chars) for x in xrange(32)])
+        return '-'.join((t, seq, rand))
 
     def _filter_results(self, results, params):
         """Filter a list using keys and values from a dictionary.
@@ -306,7 +323,7 @@ class CollectionHandler(BaseHandler):
             permission = '%s|%s' % (self.document, 'create' if method == 'post' else 'update')
             if not self.has_permission(permission):
                 return self.build_error(status=401, message='insufficient permissions: %s' % permission)
-            newData = self.db.add(self.collection, data)
+            newData = self.db.add(self.collection, data, _id=self.gen_id())
         else:
             permission = '%s|%s' % (self.collection, 'create' if method == 'post' else 'update')
             if not self.has_permission(permission):
@@ -421,7 +438,6 @@ class PersonsHandler(CollectionHandler):
     document = 'person'
     collection = 'persons'
     object_id = 'person_id'
-    permissions = {}
 
     def handle_get_events(self, id_, resource_id=None, **kwargs):
         # Get a list of events attended by this person.
@@ -459,9 +475,6 @@ class EventsHandler(CollectionHandler):
     document = 'event'
     collection = 'events'
     object_id = 'event_id'
-    permissions = {
-        'events|read': True
-    }
 
     def _get_person_data(self, person_id_or_query, persons):
         """Filter a list of persons returning the first item with a given person_id
@@ -498,6 +511,7 @@ class EventsHandler(CollectionHandler):
             del data['_id']
             self.send_ws_message('event/%s/updates' % id_, json.dumps(ret))
         if not doc:
+            data['_id'] = self.gen_id()
             merged, doc = self.db.update('events',
                     {'_id': id_},
                     {'persons': data},
@@ -560,16 +574,6 @@ class EventsHandler(CollectionHandler):
                     create=False)
             self.send_ws_message('event/%s/updates' % id_, json.dumps(ret))
         return ret
-
-
-class TicketsHandler(CollectionHandler):
-    """Handle requests for Tickets."""
-    document = 'ticket'
-    collection = 'tickets'
-    object_id = 'ticket_id'
-    permissions = {
-        'ticket|read': True
-    }
 
 
 class EbCSVImportPersonsHandler(BaseHandler):
@@ -816,17 +820,15 @@ def run():
         db_connector.add('settings',
                 {'setting': 'server_cookie_secret', 'cookie_secret': cookie_secret})
 
-    _ws_handler = (r"/ws/+event/+(?P<event_id>\w+)/+updates/?", WebSocketEventUpdatesHandler)
-    _persons_path = r"/persons/?(?P<id_>\w+)?/?(?P<resource>\w+)?/?(?P<resource_id>\w+)?"
-    _events_path = r"/events/?(?P<id_>\w+)?/?(?P<resource>\w+)?/?(?P<resource_id>\w+)?"
-    _tickets_path = r"/tickets/?(?P<id_>\w+)?/?(?P<resource>\w+)?/?(?P<resource_id>\w+)?"
+    _ws_handler = (r"/ws/+event/+(?P<event_id>[\w\d_-]+)/+updates/?", WebSocketEventUpdatesHandler)
+    _persons_path = r"/persons/?(?P<id_>[\w\d_-]+)?/?(?P<resource>[\w\d_-]+)?/?(?P<resource_id>[\w\d_-]+)?"
+    _events_path = r"/events/?(?P<id_>[\w\d_-]+)?/?(?P<resource>[\w\d_-]+)?/?(?P<resource_id>[\w\d_-]+)?"
+    _events_path = r"/events/?(?P<id_>[\w\d_-]+)?/?(?P<resource>[\w\d_-]+)?/?(?P<resource_id>[\w\d_-]+)?"
     application = tornado.web.Application([
             (_persons_path, PersonsHandler, init_params),
             (r'/v%s%s' % (API_VERSION, _persons_path), PersonsHandler, init_params),
             (_events_path, EventsHandler, init_params),
             (r'/v%s%s' % (API_VERSION, _events_path), EventsHandler, init_params),
-            (_tickets_path, TicketsHandler, init_params),
-            (r'/v%s%s' % (API_VERSION, _tickets_path), TicketsHandler, init_params),
             (r"/(?:index.html)?", RootHandler, init_params),
             (r"/ebcsvpersons", EbCSVImportPersonsHandler, init_params),
             (r"/settings", SettingsHandler, init_params),

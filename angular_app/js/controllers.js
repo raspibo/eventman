@@ -221,6 +221,21 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
                 return false;
             }
             $scope.event.persons.push(person);
+        };
+
+        $scope._addAttendee = function(person) {
+            person.person_id = person._id;
+            person._id = $stateParams.id; // that's the id of the event, not the person.
+            Event.addPerson(person, function() {
+                if (!$scope.newTicket) {
+                    $scope._localAddAttendee(person);
+                }
+            });
+            $scope.query = '';
+            return person;
+        };
+
+        $scope._setAttended = function(person) {
             $scope.setPersonAttribute(person, 'attended', true, function() {
                 var all_person_idx = $scope.allPersons.findIndex(function(el, idx, array) {
                     return person.person_id == el.person_id;
@@ -228,18 +243,7 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
                 if (all_person_idx != -1) {
                     $scope.allPersons.splice(all_person_idx, 1);
                 }
-            }, hideMessage);
-        };
-
-        $scope._addAttendee = function(person) {
-            person.person_id = person._id;
-            person._id = $stateParams.id;
-            Event.addPerson(person, function() {
-                if (!$scope.newTicket) {
-                    $scope._localAddAttendee(person);
-                }
-            });
-            $scope.query = '';
+            }, true);
         };
 
         $scope.fastAddAttendee = function(person, isNew) {
@@ -248,12 +252,22 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
             if (isNew) {
                 var personObj = new Person(person);
                 personObj.$save(function(p) {
-                    $scope._addAttendee(angular.copy(p));
+                    person = $scope._addAttendee(angular.copy(p));
+                    if (!$scope.newTicket) {
+                        $scope._setAttended(person);
+                    }
                     $scope.newPerson = {};
                 });
             } else {
-                $scope._addAttendee(angular.copy(person));
+                person = $scope._addAttendee(angular.copy(person));
+                if (!$scope.newTicket) {
+                    $scope._setAttended(person);
+                }
             }
+        };
+
+        $scope.addRegisteredPerson = function(person) {
+            $scope.fastAddAttendee(person, true);
         };
 
         $scope.setPersonAttribute = function(person, key, value, callback, hideMessage) {

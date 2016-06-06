@@ -32,6 +32,7 @@ eventManServices.factory('Event', ['$resource', '$rootScope',
                     angular.forEach(data.events || [], function(event_, event_idx) {
                         convert_dates(event_);
                     });
+
                     return data.events;
                 }
             },

@@ -59,13 +59,12 @@ eventManApp.run(['$rootScope', '$state', '$stateParams', '$log', 'Info',
 
         /* Check GUI privileges. */
         $rootScope.hasPermission = function(permission) {
-            if (!($rootScope.info && $rootScope.info.user &&
-                        $rootScope.info.user.username && $rootScope.info.user.permissions)) {
+            if (!($rootScope.info && $rootScope.info.user && $rootScope.info.user.permissions)) {
                 return false;
             }
             var granted = false;
             var splitted_permission = permission.split('|');
-            var global_permission = splitted_permission + '|all';
+            var global_permission = splitted_permission[0] + '|all';
 
             angular.forEach($rootScope.info.user.permissions || [],
                     function(value, idx) {
