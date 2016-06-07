@@ -139,12 +139,12 @@ eventManApp.config(['$stateProvider', '$urlRouterProvider',
             .state('event.ticket.new', {
                 url: '/:id/ticket/new',
                 templateUrl: 'ticket-edit.html',
-                controller: 'EventDetailsCtrl'
+                controller: 'EventTicketsCtrl'
             })
             .state('event.ticket.edit', {
                 url: '/:id/ticket/edit',
                 templateUrl: 'ticket-edit.html',
-                controller: 'EventDetailsCtrl'
+                controller: 'EventTicketsCtrl'
             })
             .state('import', {
                 url: '/import',

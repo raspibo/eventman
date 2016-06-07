@@ -95,8 +95,8 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$modal', '
 );
 
 
-eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event', 'Person', 'EventUpdates', '$stateParams', 'Setting', '$log', '$translate', '$rootScope',
-    function ($scope, $state, Event, Person, EventUpdates, $stateParams, Setting, $log, $translate, $rootScope) {
+eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event', 'EventTicket', 'Person', 'EventUpdates', '$stateParams', 'Setting', '$log', '$translate', '$rootScope',
+    function ($scope, $state, Event, EventTicket, Person, EventUpdates, $stateParams, Setting, $log, $translate, $rootScope) {
         $scope.personsOrder = ["name", "surname"];
         $scope.countAttendees = 0;
         $scope.message = {};
@@ -355,6 +355,33 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
         $scope.$on('$destroy', function() {
             $scope.EventUpdates && $scope.EventUpdates.close();
         });
+    }]
+);
+
+
+eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event', 'EventTicket', 'Person', 'EventUpdates', '$stateParams', 'Setting', '$log', '$translate', '$rootScope',
+    function ($scope, $state, Event, EventTicket, Person, EventUpdates, $stateParams, Setting, $log, $translate, $rootScope) {
+        $scope.message = {};
+        $scope.event = {};
+
+        $scope.newTicket = $state.is('event.ticket.new');
+
+        if ($stateParams.id) {
+            $scope.event = Event.get($stateParams, function() {
+            });
+        }
+
+        $scope.addTicket = function(person) {
+            var personObj = new Person(person);
+            personObj.$save(function(p) {
+                person.person_id = person._id;
+                person._id = $stateParams.id; // that's the id of the event, not the person.
+                EventTicket.addTicket(person, function(p) {
+                    $log.debug(p);
+                });
+                $scope.newPerson = {};
+            });
+        };
     }]
 );
 

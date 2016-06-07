@@ -97,6 +97,47 @@ eventManServices.factory('Event', ['$resource', '$rootScope',
 );
 
 
+eventManServices.factory('EventTicket', ['$resource', '$rootScope',
+    function($resource, $rootScope) {
+        return $resource('events/:id/tickets', {id: '@_id', person_id: '@person_id'}, {
+
+            updateTicket: {
+                method: 'PUT',
+                interceptor : {responseError: $rootScope.errorHandler},
+                isArray: false,
+                url: 'events/:id/ticketss/:person_id',
+                params: {uuid: $rootScope.app_uuid},
+                transformResponse: function(data, headers) {
+                    return angular.fromJson(data);
+                }
+            },
+
+            addTicket: {
+                method: 'POST',
+                interceptor : {responseError: $rootScope.errorHandler},
+                isArray: false,
+                url: 'events/:id/tickets/:person_id',
+                params: {uuid: $rootScope.app_uuid},
+                transformResponse: function(data, headers) {
+                    return angular.fromJson(data);
+                }
+            },
+
+            deleteTicket: {
+                method: 'DELETE',
+                interceptor : {responseError: $rootScope.errorHandler},
+                isArray: false,
+                url: 'events/:_id/tickets/:person_id',
+                params: {uuid: $rootScope.app_uuid},
+                transformResponse: function(data, headers) {
+                    return angular.fromJson(data);
+                }
+            }
+        });
+    }]
+);
+
+
 eventManServices.factory('Person', ['$resource', '$rootScope',
     function($resource, $rootScope) {
         return $resource('persons/:id', {id: '@_id'}, {

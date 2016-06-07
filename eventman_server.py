@@ -68,8 +68,9 @@ class BaseHandler(tornado.web.RequestHandler):
     permissions = {
         'event|read': True,
         'events|read': True,
-        'event:ticket|all': True,
-        'event:persons|all': True,
+        'event:tickets|create': True,
+        'event:tickets|update': True,
+        'event:tickets|read': True,
         'person|create': True
     }
 
@@ -286,8 +287,11 @@ class CollectionHandler(BaseHandler):
                 return self.build_error(status=401, message='insufficient permissions: %s' % permission)
             method = getattr(self, 'handle_get_%s' % resource, None)
             if method and callable(method):
-                self.write(method(id_, resource_id, **kwargs))
+                output = method(id_, resource_id, **kwargs)
+                if output is not None:
+                    self.write(output)
                 return
+            return self.build_error(status=404, message='unable to access resource: %s' % resource)
         if id_ is not None:
             # read a single document
             permission = '%s|read' % self.document
@@ -498,6 +502,11 @@ class EventsHandler(CollectionHandler):
         persons = self._filter_results(event.get('persons') or [], self.arguments)
         return {'persons': persons}
 
+    def handle_get_tickets(self, id_, resource_id=None):
+        if resource_id is None and not self.has_permission('event:tickets|all'):
+            return self.build_error(status=401, message='insufficient permissions: event:tickets|all')
+        return self.handle_get_persons(id_, resource_id)
+
     def handle_post_persons(self, id_, person_id, data):
         # Add a person to the list of persons registered at this event.
         uuid, arguments = self.uuid_arguments
@@ -518,6 +527,8 @@ class EventsHandler(CollectionHandler):
                     operation='appendUnique',
                     create=False)
         return ret
+
+    handle_post_tickets = handle_post_persons
 
     def handle_put_persons(self, id_, person_id, data):
         # Update an existing entry for a person registered at this event.
@@ -560,6 +571,8 @@ class EventsHandler(CollectionHandler):
             self.send_ws_message('event/%s/updates' % id_, json.dumps(ret))
         return ret
 
+    handle_put_tickets = handle_put_persons
+
     def handle_delete_persons(self, id_, person_id):
         # Remove a specific person from the list of persons registered at this event.
         uuid, arguments = self.uuid_arguments
@@ -574,6 +587,8 @@ class EventsHandler(CollectionHandler):
                     create=False)
             self.send_ws_message('event/%s/updates' % id_, json.dumps(ret))
         return ret
+
+    handle_delete_tickets = handle_delete_persons
 
 
 class EbCSVImportPersonsHandler(BaseHandler):
@@ -822,7 +837,6 @@ def run():
 
     _ws_handler = (r"/ws/+event/+(?P<event_id>[\w\d_-]+)/+updates/?", WebSocketEventUpdatesHandler)
     _persons_path = r"/persons/?(?P<id_>[\w\d_-]+)?/?(?P<resource>[\w\d_-]+)?/?(?P<resource_id>[\w\d_-]+)?"
-    _events_path = r"/events/?(?P<id_>[\w\d_-]+)?/?(?P<resource>[\w\d_-]+)?/?(?P<resource_id>[\w\d_-]+)?"
     _events_path = r"/events/?(?P<id_>[\w\d_-]+)?/?(?P<resource>[\w\d_-]+)?/?(?P<resource_id>[\w\d_-]+)?"
     application = tornado.web.Application([
             (_persons_path, PersonsHandler, init_params),
