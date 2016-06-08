@@ -366,15 +366,21 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
 
         $scope.newTicket = $state.is('event.ticket.new');
 
-        if ($stateParams.id) {
-            $scope.event = Event.get($stateParams, function() {
+        if ($state.params.id) {
+            $scope.event = Event.get({id: $state.params.id}, function() {
+            });
+        }
+
+        if ($state.params.ticket_id) {
+            EventTicket.get({id: $state.params.id, ticket_id: $state.params.ticket_id}, function(data) {
+                $scope.newPerson = data.person;
             });
         }
 
         $scope.addTicket = function(person) {
             var personObj = new Person(person);
             personObj.$save(function(p) {
-                person.person_id = person._id;
+                person.person_id = p._id;
                 person._id = $stateParams.id; // that's the id of the event, not the person.
                 EventTicket.addTicket(person, function(p) {
                     $log.debug(p);

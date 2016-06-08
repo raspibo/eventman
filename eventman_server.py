@@ -218,8 +218,8 @@ class CollectionHandler(BaseHandler):
         return doc.get('seq', 0)
 
     def gen_id(self, seq='ids'):
-        t = str(time.time())
-        seq = str(self.get_next_seq(seq)).replace('.', '_')
+        t = str(time.time()).replace('.', '_')
+        seq = str(self.get_next_seq(seq))
         rand = ''.join([random.choice(self._id_chars) for x in xrange(32)])
         return '-'.join((t, seq, rand))
 
@@ -492,20 +492,22 @@ class EventsHandler(CollectionHandler):
                     return person
         return {}
 
-    def handle_get_persons(self, id_, resource_id=None):
+    def handle_get_persons(self, id_, resource_id=None, match_query=None):
         # Return every person registered at this event, or the information
         # about a specific person.
         query = {'_id': id_}
         event = self.db.query('events', query)[0]
+        if match_query is None:
+            match_query = resource_id
         if resource_id:
-            return {'person': self._get_person_data(resource_id, event.get('persons') or [])}
+            return {'person': self._get_person_data(match_query, event.get('persons') or [])}
         persons = self._filter_results(event.get('persons') or [], self.arguments)
         return {'persons': persons}
 
     def handle_get_tickets(self, id_, resource_id=None):
         if resource_id is None and not self.has_permission('event:tickets|all'):
             return self.build_error(status=401, message='insufficient permissions: event:tickets|all')
-        return self.handle_get_persons(id_, resource_id)
+        return self.handle_get_persons(id_, resource_id, {'_id': resource_id})
 
     def handle_post_persons(self, id_, person_id, data):
         # Add a person to the list of persons registered at this event.

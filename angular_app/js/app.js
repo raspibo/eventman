@@ -109,6 +109,20 @@ eventManApp.config(['$stateProvider', '$urlRouterProvider',
                 templateUrl: 'event-info.html',
                 controller: 'EventDetailsCtrl'
             })
+            .state('event.ticket', {
+                url: '/:id/ticket',
+                templateUrl: 'ticket-main.html'
+            })
+            .state('event.ticket.new', {
+                url: '/new',
+                templateUrl: 'ticket-edit.html',
+                controller: 'EventTicketsCtrl'
+            })
+            .state('event.ticket.edit', {
+                url: '/:ticket_id/edit',
+                templateUrl: 'ticket-edit.html',
+                controller: 'EventTicketsCtrl'
+            })
             .state('persons', {
                 url: '/persons',
                 templateUrl: 'persons-list.html',
@@ -132,19 +146,6 @@ eventManApp.config(['$stateProvider', '$urlRouterProvider',
                 url: '/:id',
                 templateUrl: 'person-info.html',
                 controller: 'PersonDetailsCtrl'
-            })
-            .state('event.ticket', {
-                templateUrl: 'ticket-main.html'
-            })
-            .state('event.ticket.new', {
-                url: '/:id/ticket/new',
-                templateUrl: 'ticket-edit.html',
-                controller: 'EventTicketsCtrl'
-            })
-            .state('event.ticket.edit', {
-                url: '/:id/ticket/edit',
-                templateUrl: 'ticket-edit.html',
-                controller: 'EventTicketsCtrl'
             })
             .state('import', {
                 url: '/import',
