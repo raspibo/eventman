@@ -68,9 +68,7 @@ class BaseHandler(tornado.web.RequestHandler):
     permissions = {
         'event|read': True,
         'events|read': True,
-        'event:tickets|create': True,
-        'event:tickets|update': True,
-        'event:tickets|read': True,
+        'event:tickets|all': True,
         'person|create': True
     }
 
@@ -532,13 +530,15 @@ class EventsHandler(CollectionHandler):
 
     handle_post_tickets = handle_post_persons
 
-    def handle_put_persons(self, id_, person_id, data):
+    def handle_put_persons(self, id_, person_id, data, ticket=False):
         # Update an existing entry for a person registered at this event.
         self._clean_dict(data)
         uuid, arguments = self.uuid_arguments
         query = dict([('persons.%s' % k, v) for k, v in arguments.iteritems()])
         query['_id'] = id_
-        if person_id is not None:
+        if ticket:
+            query['persons._id'] = person_id
+        elif person_id is not None:
             query['persons.person_id'] = person_id
         old_person_data = {}
         current_event = self.db.query(self.collection, query)
@@ -573,7 +573,8 @@ class EventsHandler(CollectionHandler):
             self.send_ws_message('event/%s/updates' % id_, json.dumps(ret))
         return ret
 
-    handle_put_tickets = handle_put_persons
+    def handle_put_tickets(self, id_, person_id, data):
+        return self.handle_put_persons(id_, person_id, data, True)
 
     def handle_delete_persons(self, id_, person_id):
         # Remove a specific person from the list of persons registered at this event.

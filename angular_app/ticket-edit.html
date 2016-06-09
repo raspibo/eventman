@@ -18,28 +18,32 @@
                         <form>
                             <div class="input-group input-group-sm">
                                 <span class="input-group-addon min70-compact">{{'Name' | translate}}</span>
-                                <input type="text" class="form-control" placeholder="{{'Name' | translate}}" ng-model="newPerson.name" ng-required="1">
+                                <input type="text" class="form-control" placeholder="{{'Name' | translate}}" ng-model="ticket.name" ng-required="1">
                             </div>
                             <div class="input-group input-group-sm top5">
                                 <span class="input-group-addon min70-compact">{{'Surname' | translate}}</span>
-                                <input type="text" class="form-control" placeholder="{{'Surname' | translate}}" ng-model="newPerson.surname">
+                                <input type="text" class="form-control" placeholder="{{'Surname' | translate}}" ng-model="ticket.surname">
                             </div>
                             <div class="input-group top5">
                                 <span class="input-group-addon min70-compact">{{'Email' | translate}}</span>
-                                <input type="email" name="email" class="form-control" placeholder="{{'name.surname@example.com' | translate}}"  ng-model="newPerson.email">
+                                <input type="email" name="email" class="form-control" placeholder="{{'name.surname@example.com' | translate}}"  ng-model="ticket.email">
                             </div>
                             <div class="input-group top5">
                                 <span class="input-group-addon min70-compact">{{'Company' | translate}}</span>
-                                <input name="company" class="form-control" placeholder="{{'Acme Corporation' | translate}}"  ng-model="newPerson.company">
+                                <input name="company" class="form-control" placeholder="{{'Acme Corporation' | translate}}"  ng-model="ticket.company">
                             </div>
                             <div class="input-group top5">
                                 <span class="input-group-addon min70-compact">{{'Job' | translate}}</span>
-                                <input name="job_title" class="form-control" placeholder="{{'Evil Ruler' | translate}}"  ng-model="newPerson.job_title">
+                                <input name="job_title" class="form-control" placeholder="{{'Evil Ruler' | translate}}"  ng-model="ticket.job_title">
                             </div>
 
-                            <button reset-focus ng-disabled="!(newPerson.name && newPerson.surname)" ng-click="addTicket(newPerson)" class="btn btn-success top5">
+                            <button ng-if="!(ticket && ticket._id)" reset-focus ng-disabled="!(ticket.name && ticket.surname)" ng-click="addTicket(ticket)" class="btn btn-success top5">
                                 <span class="fa fa-plus-circle vcenter"></span>
                                 {{'Add' | translate}}
+                            </button>
+                            <button ng-if="ticket._id" reset-focus ng-disabled="!(ticket.name && ticket.surname)" ng-click="updateTicket(ticket)" class="btn btn-success top5">
+                                <span class="fa fa-save vcenter"></span>
+                                {{'Update' | translate}}
                             </button>
                         </form>
                     </div>

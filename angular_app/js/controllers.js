@@ -363,6 +363,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
     function ($scope, $state, Event, EventTicket, Person, EventUpdates, $stateParams, Setting, $log, $translate, $rootScope) {
         $scope.message = {};
         $scope.event = {};
+        $scope.ticket = {};
 
         $scope.newTicket = $state.is('event.ticket.new');
 
@@ -373,7 +374,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
 
         if ($state.params.ticket_id) {
             EventTicket.get({id: $state.params.id, ticket_id: $state.params.ticket_id}, function(data) {
-                $scope.newPerson = data.person;
+                $scope.ticket = data;
             });
         }
 
@@ -381,11 +382,19 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
             var personObj = new Person(person);
             personObj.$save(function(p) {
                 person.person_id = p._id;
-                person._id = $stateParams.id; // that's the id of the event, not the person.
-                EventTicket.addTicket(person, function(p) {
-                    $log.debug(p);
+                person._id = $state.params.id; // that's the id of the event, not the person.
+                EventTicket.add(person, function(ticket) {
+                    $log.debug(ticket);
+                    $state.go('event.ticket.edit', {ticket_id: ticket._id});
                 });
-                $scope.newPerson = {};
+            });
+        };
+
+        $scope.updateTicket = function(ticket) {
+            var data = angular.copy(ticket);
+            data.ticket_id = data._id;
+            data._id = $state.params.id;
+            EventTicket.update(data, function(t) {
             });
         };
     }]

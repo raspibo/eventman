@@ -107,31 +107,23 @@ eventManServices.factory('EventTicket', ['$resource', '$rootScope',
                 interceptor : {responseError: $rootScope.errorHandler},
                 transformResponse: function(data, headers) {
                     data = angular.fromJson(data);
-                    convert_dates(data);
-                    // strip empty keys.
-                    angular.forEach(data.persons || [], function(person, person_idx) {
-                        angular.forEach(person, function(value, key) {
-                            if (value === "") {
-                                delete person[key];
-                            }
-                        });
-                    });
-                    return data;
+                    return data.person;
                 }
             },
 
-            addTicket: {
+            add: {
                 method: 'POST',
                 interceptor : {responseError: $rootScope.errorHandler},
                 isArray: false,
                 url: 'events/:id/tickets/:ticket_id',
                 params: {uuid: $rootScope.app_uuid},
                 transformResponse: function(data, headers) {
-                    return angular.fromJson(data);
+                    data = angular.fromJson(data);
+                    return data.person;
                 }
             },
 
-            updateTicket: {
+            update: {
                 method: 'PUT',
                 interceptor : {responseError: $rootScope.errorHandler},
                 isArray: false,

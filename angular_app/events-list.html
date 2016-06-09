@@ -42,10 +42,10 @@
                             {{'Ends:' | translate}} {{event['end-date'] | date:'fullDate' }} {{event['end-time'] | date:'HH:mm'}}</p>
                         </td>
                         <td ng-if="hasPermission('persons|read')" class="hcenter">
-                            <p><span ng-init="attendeesNr = (event.persons | attendeesFilter).length">{{attendeesNr}}</span> / {{event.persons.length || 0}} ({{((attendeesNr / (event.persons.length || 0) * 100) || 0).toFixed()}}%)</p>
+                            <p><span ng-init="attendeesNr = ((event.persons || []) | attendeesFilter).length">{{attendeesNr}}</span> / {{event.persons.length || 0}} ({{((attendeesNr / (event.persons.length || 0) * 100) || 0).toFixed()}}%)</p>
                         </td>
                         <td>
-                            <button ng-if="hasPermission('event:ticket|create')" ng-click="$state.go('event.ticket.new', {id: event._id})" class="btn btn-link fa fa-user-plus" type="button" title="{{'Register' | translate}}"></button>
+                            <button ng-if="hasPermission('event:tickets|create')" ng-click="$state.go('event.ticket.new', {id: event._id})" class="btn btn-link fa fa-user-plus" type="button" title="{{'Register' | translate}}"></button>
                             <button ng-if="hasPermission('persons|update')" ng-click="$state.go('event.info', {id: event._id})" class="btn btn-link fa fa-list" type="button" title="{{'Manage attendees' | translate}}"></button>
                             <button ng-if="hasPermission('event|delete')" ng-click="remove(event._id)" type="button" class="btn btn-link fa fa-trash fa-lg" title="{{'Delete' | translate}}"></button>
                         </td>
