@@ -67,8 +67,8 @@ class BaseHandler(tornado.web.RequestHandler):
     """Base class for request handlers."""
     permissions = {
         'event|read': True,
-        'events-all|read': True,
         'event:tickets|all': True,
+        'events-all|read': True,
         'person|create': True
     }
 
@@ -215,10 +215,19 @@ class CollectionHandler(BaseHandler):
                 operation='increment')
         return doc.get('seq', 0)
 
-    def gen_id(self, seq='ids'):
+    def gen_id(self, seq='ids', random_alpha=32):
+        """Generate a unique, non-guessable ID.
+
+        :param seq: the scope of the ever-incrementing sequence
+        :type seq: str
+        :param random_alpha: number of random lowercase alphanumeric chars
+        :type random_alpha: int
+
+        :return: unique ID
+        :rtype: str"""
         t = str(time.time()).replace('.', '_')
         seq = str(self.get_next_seq(seq))
-        rand = ''.join([random.choice(self._id_chars) for x in xrange(32)])
+        rand = ''.join([random.choice(self._id_chars) for x in xrange(random_alpha)])
         return '-'.join((t, seq, rand))
 
     def _filter_results(self, results, params):
@@ -275,6 +284,12 @@ class CollectionHandler(BaseHandler):
                 continue
         return ret
 
+    def apply_filter(self, output, filter_name):
+        filter_method = getattr(self, filter_name, None)
+        if filter_method is not None:
+            output = filter_method(output)
+        return output
+
     @gen.coroutine
     @authenticated
     def get(self, id_=None, resource=None, resource_id=None, acl=True, **kwargs):
@@ -285,9 +300,8 @@ class CollectionHandler(BaseHandler):
                 return self.build_error(status=401, message='insufficient permissions: %s' % permission)
             method = getattr(self, 'handle_get_%s' % resource, None)
             if method and callable(method):
-                output = method(id_, resource_id, **kwargs)
-                if output is not None:
-                    self.write(output)
+                output = method(id_, resource_id, **kwargs) or {}
+                self.write(output)
                 return
             return self.build_error(status=404, message='unable to access resource: %s' % resource)
         if id_ is not None:
@@ -295,7 +309,9 @@ class CollectionHandler(BaseHandler):
             permission = '%s|read' % self.document
             if acl and not self.has_permission(permission):
                 return self.build_error(status=401, message='insufficient permissions: %s' % permission)
-            self.write(self.db.get(self.collection, id_))
+            output = self.db.get(self.collection, id_)
+            output = self.apply_filter(output, 'filter_get')
+            self.write(output)
         else:
             # return an object containing the list of all objects in the collection;
             # e.g.: {'events': [{'_id': 'obj1-id, ...}, {'_id': 'obj2-id, ...}, ...]}
@@ -304,7 +320,9 @@ class CollectionHandler(BaseHandler):
             permission = '%s-all|read' % self.collection
             if acl and not self.has_permission(permission):
                 return self.build_error(status=401, message='insufficient permissions: %s' % permission)
-            self.write({self.collection: self.db.query(self.collection, self.arguments)})
+            output = {self.collection: self.db.query(self.collection, self.arguments)}
+            output = self.apply_filter(output, 'filter_get_all')
+            self.write(output)
 
     @gen.coroutine
     @authenticated
@@ -322,12 +340,12 @@ class CollectionHandler(BaseHandler):
                 self.write(handler(id_, resource_id, data, **kwargs))
                 return
         if id_ is None:
-            permission = '%s|%s' % (self.document, 'create' if method == 'post' else 'update')
+            permission = '%s-all|%s' % (self.collection, 'create' if method == 'post' else 'update')
             if not self.has_permission(permission):
                 return self.build_error(status=401, message='insufficient permissions: %s' % permission)
             newData = self.db.add(self.collection, data, _id=self.gen_id())
         else:
-            permission = '%s|%s' % (self.collection, 'create' if method == 'post' else 'update')
+            permission = '%s|%s' % (self.document, 'create' if method == 'post' else 'update')
             if not self.has_permission(permission):
                 return self.build_error(status=401, message='insufficient permissions: %s' % permission)
             merged, newData = self.db.update(self.collection, id_, data)
@@ -477,6 +495,19 @@ class EventsHandler(CollectionHandler):
     document = 'event'
     collection = 'events'
     object_id = 'event_id'
+
+    def filter_get(self, output):
+        if not self.has_permission('persons-all|read'):
+            if 'persons' in output:
+                output['persons'] = []
+        return output
+
+    def filter_get_all(self, output):
+        if not self.has_permission('persons-all|read'):
+            for event in output.get('events') or []:
+                if 'persons' in event:
+                    event['persons'] = []
+        return output
 
     def _get_person_data(self, person_id_or_query, persons):
         """Filter a list of persons returning the first item with a given person_id
