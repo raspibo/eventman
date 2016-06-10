@@ -67,7 +67,7 @@ class BaseHandler(tornado.web.RequestHandler):
     """Base class for request handlers."""
     permissions = {
         'event|read': True,
-        'events|read': True,
+        'events-all|read': True,
         'event:tickets|all': True,
         'person|create': True
     }
@@ -280,7 +280,7 @@ class CollectionHandler(BaseHandler):
     def get(self, id_=None, resource=None, resource_id=None, acl=True, **kwargs):
         if resource:
             # Handle access to sub-resources.
-            permission = '%s:%s|read' % (self.document, resource)
+            permission = '%s:%s%s|read' % (self.document, resource, '-all' if resource_id is None else '')
             if acl and not self.has_permission(permission):
                 return self.build_error(status=401, message='insufficient permissions: %s' % permission)
             method = getattr(self, 'handle_get_%s' % resource, None)
@@ -301,7 +301,7 @@ class CollectionHandler(BaseHandler):
             # e.g.: {'events': [{'_id': 'obj1-id, ...}, {'_id': 'obj2-id, ...}, ...]}
             # Please, never return JSON lists that are not encapsulated into an object,
             # to avoid XSS vulnerabilities.
-            permission = '%s|read' % self.collection
+            permission = '%s-all|read' % self.collection
             if acl and not self.has_permission(permission):
                 return self.build_error(status=401, message='insufficient permissions: %s' % permission)
             self.write({self.collection: self.db.query(self.collection, self.arguments)})
@@ -538,23 +538,28 @@ class EventsHandler(CollectionHandler):
         query['_id'] = id_
         if ticket:
             query['persons._id'] = person_id
+            person_query = {'_id': person_id}
         elif person_id is not None:
             query['persons.person_id'] = person_id
+            person_query = person_id
+        else:
+            person_query = self.arguments
         old_person_data = {}
         current_event = self.db.query(self.collection, query)
         if current_event:
             current_event = current_event[0]
         else:
             current_event = {}
-        old_person_data = self._get_person_data(person_id or self.arguments,
+        old_person_data = self._get_person_data(person_query,
                 current_event.get('persons') or [])
         merged, doc = self.db.update('events', query,
                 data, updateList='persons', create=False)
-        new_person_data = self._get_person_data(person_id or self.arguments,
+        new_person_data = self._get_person_data(person_query,
                 doc.get('persons') or [])
         env = self._dict2env(new_person_data)
-        if person_id is None:
-            person_id = str(new_person_data.get('person_id'))
+        # always takes the person_id from the new person (it may have
+        # be a ticket_id).
+        person_id = str(new_person_data.get('person_id'))
         env.update({'PERSON_ID': person_id, 'EVENT_ID': id_,
             'EVENT_TITLE': doc.get('title', ''), 'WEB_USER': self.current_user,
             'WEB_REMOTE_IP': self.request.remote_ip})
