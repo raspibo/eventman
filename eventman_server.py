@@ -69,8 +69,8 @@ class BaseHandler(tornado.web.RequestHandler):
         'event|read': True,
         'event:tickets|all': True,
         'event:tickets-all|create': True,
-        'events-all|read': True,
-        'persons-all|create': True
+        'events|read': True,
+        'persons|create': True
     }
 
     # A property to access the first value of each argument.
@@ -125,7 +125,7 @@ class BaseHandler(tornado.web.RequestHandler):
 
     @property
     def current_user(self):
-        """Retrieve current user from the secure cookie."""
+        """Retrieve current user name from the secure cookie."""
         return self.get_secure_cookie("user")
 
     @property
@@ -326,7 +326,7 @@ class CollectionHandler(BaseHandler):
             # e.g.: {'events': [{'_id': 'obj1-id, ...}, {'_id': 'obj2-id, ...}, ...]}
             # Please, never return JSON lists that are not encapsulated into an object,
             # to avoid XSS vulnerabilities.
-            permission = '%s-all|read' % self.collection
+            permission = '%s|read' % self.collection
             if acl and not self.has_permission(permission):
                 return self.build_error(status=401, message='insufficient permissions: %s' % permission)
             output = {self.collection: self.db.query(self.collection, self.arguments)}
@@ -340,6 +340,13 @@ class CollectionHandler(BaseHandler):
         self._clean_dict(data)
         method = self.request.method.lower()
         crud_method = 'create' if method == 'post' else 'update'
+        now = datetime.datetime.now()
+        current_user = self.current_user
+        if crud_method == 'create':
+            data['created_by'] = current_user
+            data['created_at'] = now
+        data['updated_by'] = current_user
+        data['updated_at'] = now
         if resource:
             permission = '%s:%s%s|%s' % (self.document, resource, '-all' if resource_id is None else '', crud_method)
             if not self.has_permission(permission):
@@ -356,11 +363,11 @@ class CollectionHandler(BaseHandler):
             permission = '%s|%s' % (self.document, crud_method)
             if not self.has_permission(permission):
                 return self.build_error(status=401, message='insufficient permissions: %s' % permission)
-            data = self.apply_filter(data, 'input_%s' % _method)
+            data = self.apply_filter(data, 'input_%s' % method)
             merged, newData = self.db.update(self.collection, id_, data)
             newData = self.apply_filter(newData, method)
         else:
-            permission = '%s-all|%s' % (self.collection, crud_method)
+            permission = '%s|%s' % (self.collection, crud_method)
             if not self.has_permission(permission):
                 return self.build_error(status=401, message='insufficient permissions: %s' % permission)
             data = self.apply_filter(data, 'input_%s_all' % method)
