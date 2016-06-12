@@ -1,22 +1,44 @@
+<!-- Login and user registration page. -->
 <div class="container">
-    <div class="panel panel-primary table-striped top5">
-        <div class="panel-heading">{{'Login' | translate}}</div>
-        <div class="panel-body">
-            <div id="wronglogin" class="alert alert-danger alert-dismissible hidden" role="alert">
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <strong>{{'Error!' | translate}}</strong> {{'Wrong username and password.' | translate}}
+    <div class="row">
+        <div class="col-md-7 col-xs-7">
+            <div class="panel panel-primary table-striped">
+                <div class="panel-heading">{{'Login' | translate}}</div>
+                <div class="panel-body">
+                    <form method="POST">
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-addon min150">{{'Username' | translate}}</span>
+                            <input type="text" id="username" name="username" ng-model="loginData.username" class="form-control">
+                        </div>
+                        <div class="input-group input-group-lg top10">
+                            <span class="input-group-addon min150">{{'Password' | translate}}</span>
+                            <input type="password" id="password" name="password" ng-model="loginData.password" class="form-control">
+                        </div>
+                        <button type="submit" ng-click="login()" class="btn btn-success top10">{{'login' | translate}}</button>
+                    </form>
+                </div>
             </div>
-            <form method="POST">
-                <div class="input-group input-group-lg">
-                    <span class="input-group-addon min150">{{'Username' | translate}}</span>
-                    <input type="text" id="username" name="username" ng-model="loginData.username" class="form-control" placeholder="admin">
+        </div>
+        <div class="col-md-1 col-xs-1 hcenter" style="top:100px;">
+                <div class="vcenter">or</div>
+        </div>
+        <div class="col-md-4 col-xs-4">
+            <div class="panel panel-success table-striped">
+                <div class="panel-heading">{{'Register a new user' | translate}}</div>
+                <div class="panel-body">
+                    <form method="POST">
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-addon min150">{{'Username' | translate}}</span>
+                            <input type="text" id="username" name="username" ng-model="newUser.username" class="form-control">
+                        </div>
+                        <div class="input-group input-group-lg top10">
+                            <span class="input-group-addon min150">{{'Password' | translate}}</span>
+                            <input type="password" id="password" name="password" ng-model="newUser.password" class="form-control">
+                        </div>
+                        <button type="submit" ng-click="register()" class="btn btn-success top10">{{'register' | translate}}</button>
+                    </form>
                 </div>
-                <div class="input-group input-group-lg top10">
-                    <span class="input-group-addon min150">{{'Password' | translate}}</span>
-                    <input type="password" id="password" name="password" ng-model="loginData.password" class="form-control" placeholder="eventman">
-                </div>
-                <button type="submit" ng-click="login()" class="btn btn-success top10">{{'login' | translate}}</button>
-            </form>
+            </div>
         </div>
     </div>
 </div>

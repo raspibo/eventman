@@ -35,7 +35,7 @@ eventManApp.run(['$rootScope', '$state', '$stateParams', '$log', 'Info',
         $rootScope.$state = $state;
         $rootScope.$stateParams = $stateParams;
 
-        $rootScope.error = {error: false};
+        $rootScope.error = {error: false, message: '', code: 0};
 
         $rootScope.readInfo = function(callback) {
             Info.get({}, function(data) {
@@ -46,19 +46,27 @@ eventManApp.run(['$rootScope', '$state', '$stateParams', '$log', 'Info',
             });
         };
 
+        $rootScope.showError = function(error) {
+            $rootScope.error.code = error.code;
+            $rootScope.error.message = error.message;
+            $rootScope.error.error = true;
+        };
+
+        $rootScope.clearError = function() {
+            $rootScope.error.code = null;
+            $rootScope.error.message = '';
+            $rootScope.error.error = false;
+        };
+
         $rootScope.errorHandler = function(response) {
             $log.debug('Handling error message:');
             $log.debug(response);
             $rootScope.error.status = response.status;
             $rootScope.error.statusText = response.statusText;
             if (response.data && response.data.error) {
-                $rootScope.error.code = response.data.code;
-                $rootScope.error.message = response.data.message;
-                $rootScope.error.error = true;
+                $rootScope.showError(response.data);
             } else {
-                $rootScope.error.code = null;
-                $rootScope.error.message = '';
-                $rootScope.error.error = false;
+                $rootScope.clearError();
             }
         };
 

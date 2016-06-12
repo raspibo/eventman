@@ -542,10 +542,20 @@ eventManControllers.controller('LoginCtrl', ['$scope', '$rootScope', '$state', '
     function ($scope, $rootScope, $state, $log, User) {
         $scope.loginData = {};
 
-        $scope.login = function() {
-            User.login($scope.loginData, function(data) {
+        $scope.register = function() {
+            User.add($scope.newUser, function(data) {
+                $scope.login($scope.newUser);
+            });
+        };
+
+        $scope.login = function(loginData) {
+            if (!loginData) {
+                loginData = $scope.loginData;
+            }
+            User.login(loginData, function(data) {
                 if (!data.error) {
                     $rootScope.readInfo(function() {
+                        $rootScope.clearError();
                         $state.go('events');
                     });
                 }

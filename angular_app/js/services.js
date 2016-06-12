@@ -253,6 +253,11 @@ eventManServices.factory('User', ['$resource', '$rootScope',
                 }
             },
 
+            add: {
+                method: 'POST',
+                interceptor : {responseError: $rootScope.errorHandler}
+            },
+
             login: {
                 method: 'POST',
                 url: '/login',

@@ -63,6 +63,24 @@ def authenticated(method):
     return my_wrapper
 
 
+class BaseException(Exception):
+    """Base class for EventMan custom exceptions.
+
+    :param message: text message
+    :type message: str
+    :param status: numeric http status code
+    :type status: int"""
+    def __init__(self, message, status=400):
+        super(BaseException, self).__init__(message)
+        self.message = message
+        self.status = status
+
+
+class InputException(BaseException):
+    """Exception raised by errors in input handling."""
+    pass
+
+
 class BaseHandler(tornado.web.RequestHandler):
     """Base class for request handlers."""
     permissions = {
@@ -70,7 +88,8 @@ class BaseHandler(tornado.web.RequestHandler):
         'event:tickets|all': True,
         'event:tickets-all|create': True,
         'events|read': True,
-        'persons|create': True
+        'persons|create': True,
+        'users|create': True
     }
 
     # A property to access the first value of each argument.
@@ -101,6 +120,16 @@ class BaseHandler(tornado.web.RequestHandler):
         'yes': True,
         'true': True
     }
+
+    def write_error(self, status_code, **kwargs):
+        """Default error handler."""
+        if isinstance(kwargs.get('exc_info', (None, None))[1], BaseException):
+            exc = kwargs['exc_info'][1]
+            status_code = exc.status
+            message = exc.message
+        else:
+            message = 'internal error'
+        self.build_error(message, status=status_code)
 
     def is_api(self):
         """Return True if the path is from an API call."""
@@ -666,6 +695,16 @@ class UsersHandler(CollectionHandler):
     """Handle requests for Users."""
     document = 'user'
     collection = 'users'
+
+    def filter_input_post_all(self, data):
+        username = (data.get('username') or '').strip()
+        password = (data.get('password') or '').strip()
+        if not (username and password):
+            raise InputException('missing username or password')
+        res = self.db.query('users', {'username': username})
+        if res:
+            raise InputException('username already exists')
+        return {'username': username, 'password': utils.hash_password(password)}
 
 
 class EbCSVImportPersonsHandler(BaseHandler):
