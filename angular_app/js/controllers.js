@@ -538,26 +538,51 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$stateParams', '
     }]
 );
 
+eventManControllers.controller('LoginCtrl', ['$scope', '$rootScope', '$state', '$log', 'User',
+    function ($scope, $rootScope, $state, $log, User) {
+        $scope.loginData = {};
+
+        $scope.login = function() {
+            User.login($scope.loginData, function(data) {
+                if (!data.error) {
+                    $rootScope.readInfo(function() {
+                        $state.go('events');
+                    });
+                }
+            });
+        };
+
+        $scope.logout = function() {
+            User.logout({}, function(data) {
+                if (!data.error) {
+                    $rootScope.readInfo(function() {
+                        $state.go('events');
+                    });
+                }
+            });
+        };
+    }]
+);
 
 eventManControllers.controller('FileUploadCtrl', ['$scope', '$log', '$upload', 'Event',
     function ($scope, $log, $upload, Event) {
-            $scope.file = null;
-            $scope.reply = {};
-            $scope.events = Event.all();
-            $scope.upload = function(file, url) {
-                $log.debug("FileUploadCtrl.upload");
-                $upload.upload({
-                    url: url,
-                    file: file,
-                    fields: {targetEvent: $scope.targetEvent}
-                }).progress(function(evt) {
-                    var progressPercentage = parseInt(100.0 * evt.loaded / evt.total);
-                    $log.debug('progress: ' + progressPercentage + '%');
-                }).success(function(data, status, headers, config) {
-                    $scope.file = null;
-                    $scope.reply = angular.fromJson(data);
-                });
-            };
+        $scope.file = null;
+        $scope.reply = {};
+        $scope.events = Event.all();
+        $scope.upload = function(file, url) {
+            $log.debug("FileUploadCtrl.upload");
+            $upload.upload({
+                url: url,
+                file: file,
+                fields: {targetEvent: $scope.targetEvent}
+            }).progress(function(evt) {
+                var progressPercentage = parseInt(100.0 * evt.loaded / evt.total);
+                $log.debug('progress: ' + progressPercentage + '%');
+            }).success(function(data, status, headers, config) {
+                $scope.file = null;
+                $scope.reply = angular.fromJson(data);
+            });
+        };
     }]
 );
 

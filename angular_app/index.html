@@ -59,13 +59,13 @@
                     <ul class="nav navbar-nav navbar-right">
                         <li ng-if="info.user.username">
                             <span class="btn">{{info.user.username}}</span>
-                            <span  class="btn btn-link">
-                                <a href="/logout"><span class="fa fa-sign-out vcenter"></span>&nbsp;{{'logout' | translate}}</a>
+                            <span class="btn btn-link">
+                                <a ng-controller="LoginCtrl" ng-click="logout()"><span class="fa fa-sign-out vcenter"></span>&nbsp;{{'logout' | translate}}</a>
                             </span>
                         </li>
                         <li ng-if="!info.user.username">
-                            <span  class="btn btn-link">
-                                <a href="/login"><span class="fa fa-sign-in vcenter"></span>&nbsp;{{'login' | translate}}</a>
+                            <span class="btn btn-link">
+                                <a ui-sref="login"><span class="fa fa-sign-in vcenter"></span>&nbsp;{{'login' | translate}}</a>
                             </span>
                         </li>
                     </ul>

@@ -238,6 +238,37 @@ eventManServices.factory('Info', ['$resource', '$rootScope',
 );
 
 
+eventManServices.factory('User', ['$resource', '$rootScope',
+    function($resource, $rootScope) {
+        return $resource('users/:id', {id: '@_id'}, {
+            get: {
+                method: 'GET',
+                interceptor : {responseError: $rootScope.errorHandler},
+                transformResponse: function(data, headers) {
+                    data = angular.fromJson(data);
+                    if (data.error) {
+                        return data;
+                    }
+                    return data.user || {};
+                }
+            },
+
+            login: {
+                method: 'POST',
+                url: '/login',
+                interceptor : {responseError: $rootScope.errorHandler}
+            },
+
+            logout: {
+                method: 'GET',
+                url: '/logout',
+                interceptor : {responseError: $rootScope.errorHandler}
+            }
+        });
+    }]
+);
+
+
 /* WebSocket collection used to update the list of persons of an Event. */
 eventManApp.factory('EventUpdates', ['$websocket', '$location', '$log',
     function($websocket, $location, $log) {

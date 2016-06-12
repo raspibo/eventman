@@ -56,7 +56,7 @@ def authenticated(method):
         if not self.authentication:
             return method(self, *args, **kwargs)
         # unauthenticated API calls gets redirected to /v1.0/[...]
-        if self.is_api() and not self.get_.current_user():
+        if self.is_api() and not self.current_user:
             self.redirect('/v%s%s' % (API_VERSION, self.get_login_url()))
             return
         return original_wrapper(self, *args, **kwargs)
@@ -483,7 +483,6 @@ class PersonsHandler(CollectionHandler):
     """Handle requests for Persons."""
     document = 'person'
     collection = 'persons'
-    object_id = 'person_id'
 
     def handle_get_events(self, id_, resource_id=None, **kwargs):
         # Get a list of events attended by this person.
@@ -520,7 +519,6 @@ class EventsHandler(CollectionHandler):
     """Handle requests for Events."""
     document = 'event'
     collection = 'events'
-    object_id = 'event_id'
 
     def filter_get(self, output):
         if not self.has_permission('persons-all|read'):
@@ -664,6 +662,12 @@ class EventsHandler(CollectionHandler):
     handle_delete_tickets = handle_delete_persons
 
 
+class UsersHandler(CollectionHandler):
+    """Handle requests for Users."""
+    document = 'user'
+    collection = 'users'
+
+
 class EbCSVImportPersonsHandler(BaseHandler):
     """Importer for CSV files exported from eventbrite."""
     csvRemap = {
@@ -794,7 +798,7 @@ class WebSocketEventUpdatesHandler(tornado.websocket.WebSocketHandler):
             logging.warn('WebSocketEventUpdatesHandler.on_close error closing websocket: %s', str(e))
 
 
-class LoginHandler(RootHandler):
+class LoginHandler(BaseHandler):
     """Handle user authentication requests."""
     re_split_salt = re.compile(r'\$(?P<salt>.+)\$(?P<hash>.+)')
 
@@ -827,37 +831,37 @@ class LoginHandler(RootHandler):
         return False
 
     @gen.coroutine
-    def post(self):
+    def post(self, *args, **kwargs):
         # authenticate a user
-        username = self.get_body_argument('username')
-        password = self.get_body_argument('password')
+        try:
+            password = self.get_body_argument('password')
+            username = self.get_body_argument('username')
+        except tornado.web.MissingArgumentError:
+            data = escape.json_decode(self.request.body or '{}')
+            username = data.get('username')
+            password = data.get('password')
+        if not (username and password):
+            self.set_status(401)
+            self.write({'error': True, 'message': 'missing username or password'})
+            return
         if self._authorize(username, password):
             logging.info('successful login for user %s' % username)
             self.set_secure_cookie("user", username)
-            if self.is_api():
-                self.write({'error': False, 'message': 'successful login'})
-            else:
-                self.redirect('/')
+            self.write({'error': False, 'message': 'successful login'})
             return
         logging.info('login failed for user %s' % username)
-        if self.is_api():
-            self.set_status(401)
-            self.write({'error': True, 'message': 'wrong username and password'})
-        else:
-            self.redirect('/login?failed=1')
+        self.set_status(401)
+        self.write({'error': True, 'message': 'wrong username and password'})
 
 
-class LogoutHandler(RootHandler):
+class LogoutHandler(BaseHandler):
     """Handle user logout requests."""
     @gen.coroutine
     def get(self, **kwds):
         # log the user out
         logging.info('logout')
         self.logout()
-        if self.is_api():
-            self.redirect('/v%s/login' % API_VERSION)
-        else:
-            self.redirect('/login')
+        self.write({'error': False, 'message': 'logged out'})
 
 
 def run():
@@ -911,11 +915,14 @@ def run():
     _ws_handler = (r"/ws/+event/+(?P<event_id>[\w\d_-]+)/+updates/?", WebSocketEventUpdatesHandler)
     _persons_path = r"/persons/?(?P<id_>[\w\d_-]+)?/?(?P<resource>[\w\d_-]+)?/?(?P<resource_id>[\w\d_-]+)?"
     _events_path = r"/events/?(?P<id_>[\w\d_-]+)?/?(?P<resource>[\w\d_-]+)?/?(?P<resource_id>[\w\d_-]+)?"
+    _users_path = r"/users/?(?P<id_>[\w\d_-]+)?/?(?P<resource>[\w\d_-]+)?/?(?P<resource_id>[\w\d_-]+)?"
     application = tornado.web.Application([
             (_persons_path, PersonsHandler, init_params),
             (r'/v%s%s' % (API_VERSION, _persons_path), PersonsHandler, init_params),
             (_events_path, EventsHandler, init_params),
             (r'/v%s%s' % (API_VERSION, _events_path), EventsHandler, init_params),
+            (_users_path, UsersHandler, init_params),
+            (r'/v%s%s' % (API_VERSION, _users_path), UsersHandler, init_params),
             (r"/(?:index.html)?", RootHandler, init_params),
             (r"/ebcsvpersons", EbCSVImportPersonsHandler, init_params),
             (r"/settings", SettingsHandler, init_params),

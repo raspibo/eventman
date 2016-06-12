@@ -37,9 +37,14 @@ eventManApp.run(['$rootScope', '$state', '$stateParams', '$log', 'Info',
 
         $rootScope.error = {error: false};
 
-        Info.get({}, function(data) {
-            $rootScope.info = data || {};
-        });
+        $rootScope.readInfo = function(callback) {
+            Info.get({}, function(data) {
+                $rootScope.info = data || {};
+                if (callback) {
+                    callback();
+                }
+            });
+        };
 
         $rootScope.errorHandler = function(response) {
             $log.debug('Handling error message:');
@@ -76,6 +81,8 @@ eventManApp.run(['$rootScope', '$state', '$stateParams', '$log', 'Info',
             );
             return granted;
         };
+
+        $rootScope.readInfo();
     }]
 );
 
@@ -155,6 +162,11 @@ eventManApp.config(['$stateProvider', '$urlRouterProvider',
                 url: '/persons',
                 templateUrl: 'import-persons.html',
                 controller: 'FileUploadCtrl'
+            })
+            .state('login', {
+                url: '/login',
+                templateUrl: 'login.html',
+                controller: 'LoginCtrl'
             });
     }
 ]);
