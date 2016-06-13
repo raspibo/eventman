@@ -93,6 +93,8 @@ class ImprovedEncoder(json.JSONEncoder):
                 return str(o)
             except Exception, e:
                 pass
+        elif isinstance(o, set):
+            return list(o)
         return json.JSONEncoder.default(self, o)
 
 

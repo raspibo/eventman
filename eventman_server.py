@@ -165,14 +165,16 @@ class BaseHandler(tornado.web.RequestHandler):
         current_user = self.current_user
         if current_user in self._users_cache:
             return self._users_cache[current_user]
-        user_info = {'permissions': set([k for (k, v) in self.permissions.iteritems() if v is True])}
+        permissions = set([k for (k, v) in self.permissions.iteritems() if v is True])
+        user_info = {'permissions': permissions}
         if current_user:
             user_info['username'] = current_user
             res = self.db.query('users', {'username': current_user})
             if res:
                 user = res[0]
-                user_info['permissions'].update(set(user.get('permissions') or []))
-        user_info['permissions'] = list(user_info['permissions'])
+                user_info = user
+                permissions.update(set(user.get('permissions') or []))
+                user_info['permissions'] = permissions
         self._users_cache[current_user] = user_info
         return user_info
 
@@ -377,11 +379,12 @@ class CollectionHandler(BaseHandler):
         method = self.request.method.lower()
         crud_method = 'create' if method == 'post' else 'update'
         now = datetime.datetime.now()
-        current_user = self.current_user
+        user_info = self.current_user_info
+        user_id = user_info.get('_id')
         if crud_method == 'create':
-            data['created_by'] = current_user
+            data['created_by'] = user_id
             data['created_at'] = now
-        data['updated_by'] = current_user
+        data['updated_by'] = user_id
         data['updated_at'] = now
         if resource:
             permission = '%s:%s%s|%s' % (self.document, resource, '-all' if resource_id is None else '', crud_method)
