@@ -7,7 +7,7 @@
                 <div class="panel-body">
                     <form method="POST">
                         <div class="input-group input-group-lg">
-                            <span class="input-group-addon min150">{{'Username' | translate}}</span>
+                            <span class="input-group-addon min150">{{'Username or email' | translate}}</span>
                             <input type="text" id="username" name="username" ng-model="loginData.username" class="form-control">
                         </div>
                         <div class="input-group input-group-lg top10">
@@ -29,11 +29,15 @@
                     <form method="POST">
                         <div class="input-group input-group-lg">
                             <span class="input-group-addon min150">{{'Username' | translate}}</span>
-                            <input type="text" id="username" name="username" ng-model="newUser.username" class="form-control">
+                            <input type="text" id="new-username" name="new-username" ng-model="newUser.username" class="form-control" ng-required="1">
+                        </div>
+                        <div class="input-group input-group-lg top10">
+                            <span class="input-group-addon min150">{{'Email' | translate}}</span>
+                            <input type="email" id="new-email" name="new-email" ng-model="newUser.email" class="form-control">
                         </div>
                         <div class="input-group input-group-lg top10">
                             <span class="input-group-addon min150">{{'Password' | translate}}</span>
-                            <input type="password" id="password" name="password" ng-model="newUser.password" class="form-control">
+                            <input type="password" id="new-password" name="new-password" ng-model="newUser.password" class="form-control" ng-required="1">
                         </div>
                         <button type="submit" ng-click="register()" class="btn btn-success top10">{{'register' | translate}}</button>
                     </form>

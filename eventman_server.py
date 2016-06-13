@@ -92,6 +92,8 @@ class BaseHandler(tornado.web.RequestHandler):
         'users|create': True
     }
 
+    _users_cache = {}
+
     # A property to access the first value of each argument.
     arguments = property(lambda self: dict([(k, v[0])
         for k, v in self.request.arguments.iteritems()]))
@@ -161,6 +163,8 @@ class BaseHandler(tornado.web.RequestHandler):
     def current_user_info(self):
         """Information about the current user, including their permissions."""
         current_user = self.current_user
+        if current_user in self._users_cache:
+            return self._users_cache[current_user]
         user_info = {'permissions': set([k for (k, v) in self.permissions.iteritems() if v is True])}
         if current_user:
             user_info['username'] = current_user
@@ -169,6 +173,7 @@ class BaseHandler(tornado.web.RequestHandler):
                 user = res[0]
                 user_info['permissions'].update(set(user.get('permissions') or []))
         user_info['permissions'] = list(user_info['permissions'])
+        self._users_cache[current_user] = user_info
         return user_info
 
     def has_permission(self, permission):
@@ -199,6 +204,8 @@ class BaseHandler(tornado.web.RequestHandler):
 
     def logout(self):
         """Remove the secure cookie used fro authentication."""
+        if self.current_user in self._users_cache:
+            del self._users_cache[self.current_user]
         self.clear_cookie("user")
 
 
@@ -699,12 +706,14 @@ class UsersHandler(CollectionHandler):
     def filter_input_post_all(self, data):
         username = (data.get('username') or '').strip()
         password = (data.get('password') or '').strip()
+        email = (data.get('email') or '').strip()
         if not (username and password):
             raise InputException('missing username or password')
         res = self.db.query('users', {'username': username})
         if res:
             raise InputException('username already exists')
-        return {'username': username, 'password': utils.hash_password(password)}
+        return {'username': username, 'password': utils.hash_password(password),
+                'email': email, '_id': self.gen_id()}
 
 
 class EbCSVImportPersonsHandler(BaseHandler):
@@ -852,9 +861,12 @@ class LoginHandler(BaseHandler):
             with open(self.angular_app_path + "/login.html", 'r') as fd:
                 self.write(fd.read())
 
-    def _authorize(self, username, password):
+    def _authorize(self, username, password, email=None):
         """Return True is this username/password is valid."""
-        res = self.db.query('users', {'username': username})
+        query = [{'username': username}]
+        if email is not None:
+            query.append({'email': email})
+        res = self.db.query('users', query)
         if not res:
             return False
         user = res[0]

@@ -131,7 +131,7 @@ class EventManDB(object):
         results = self.query(collection, convert({'_id': _id}))
         return results and results[0] or {}
 
-    def query(self, collection, query=None):
+    def query(self, collection, query=None, condition='or'):
         """Get multiple documents matching a query.
 
         :param collection: search for documents in this collection
@@ -144,6 +144,8 @@ class EventManDB(object):
         """
         db = self.connect()
         query = convert(query or {})
+        if isinstance(query, (list, tuple)):
+            query = {'$%s' % condition: query}
         return list(db[collection].find(query))
 
     def add(self, collection, data, _id=None):
