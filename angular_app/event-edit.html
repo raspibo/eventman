@@ -23,6 +23,18 @@
                     <span class="input-group-addon min100">{{'Title' | translate}}</span>
                     <input type="text" class="form-control" placeholder="{{'Title' | translate}}" ng-model="event.title" ng-required="1">
                 </div>
+                <div class="input-group input-group-lg top5">
+                    <span class="input-group-addon min100">{{'Tagline' | translate}}</span>
+                    <input type="text" class="form-control" placeholder="{{'Tagline' | translate}}" ng-model="event.tagline">
+                </div>
+                <div class="input-group input-group-lg top5">
+                    <span class="input-group-addon min100">{{'Short summary' | translate}}</span>
+                    <input type="text" class="form-control" placeholder="{{'Short summary' | translate}}" ng-model="event.summary">
+                </div>
+                <div class="input-group top5">
+                    <span class="input-group-addon min100">{{'Long description' | translate}}</span>
+                    <textarea class="form-control" placeholder="{{'Long description' | translate}}" ng-model="event.description" rows="5"></textarea>
+                </div>
 
                 <div class="input-group top5 well form-horizontal" ng-controller="DatetimePickerCtrl">
                     <div class="form-group">
@@ -56,7 +68,28 @@
                     </div>
                 </div>
 
+                <div class="input-group input-group-lg top5">
+                    <span class="input-group-addon min100">{{'Where' | translate}}</span>
+                    <input type="text" class="form-control" placeholder="{{'Where' | translate}}" ng-model="event.where">
+                </div>
+
+                <div class="panel panel-info top10">
+                    <div class="panel-heading">
+                        <h1>{{'Registration form' | translate}}</h1>
+                    </div>
+                    <div class="panel-body">
+                        <eda-step-way-easy-form-gen eda-easy-form-generator-model="event.formSchema" eda-save-form-event="saveForm(edaEasyFormGeneratorModel)"></eda-step-way-easy-form-gen>
+                    </div>
+                </div>
+
+                <label></label>
                 <input type="submit" class="outside-screen" />
+                <div ng-class="{clearfix: true, alert: true, 'alert-success': !eventForm.$dirty, 'alert-danger': eventForm.$dirty}">
+                    <button type="button" class="btn btn-default pull-right" ng-click="save($event)" ng-disabled="!eventForm.$dirty">
+                        <span class="fa fa-floppy-o vcenter"></span>
+                        {{'save' | translate}}
+                    </button>
+                </div>
             </form>
         </div>
     </div>

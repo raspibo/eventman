@@ -95,8 +95,8 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$modal', '
 );
 
 
-eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event', 'EventTicket', 'Person', 'EventUpdates', '$stateParams', 'Setting', '$log', '$translate', '$rootScope',
-    function ($scope, $state, Event, EventTicket, Person, EventUpdates, $stateParams, Setting, $log, $translate, $rootScope) {
+eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event', 'EventTicket', 'Person', 'EventUpdates', '$stateParams', 'Setting', '$log', '$translate', '$rootScope', 'easyFormSteWayConfig',
+    function ($scope, $state, Event, EventTicket, Person, EventUpdates, $stateParams, Setting, $log, $translate, $rootScope, easyFormSteWayConfig) {
         $scope.personsOrder = ["name", "surname"];
         $scope.countAttendees = 0;
         $scope.message = {};
@@ -105,6 +105,8 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
         $scope.customFields = Setting.query({setting: 'person_custom_field', in_event_details: true});
 
         $scope.newTicket = $state.is('event.ticket.new');
+
+        $scope.event.formSchema = {};
 
         if ($stateParams.id) {
             $scope.event = Event.get($stateParams, function() {
@@ -346,6 +348,11 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
                 }, function() {
                     $scope._localRemoveAttendee(person);
             });
+        };
+
+        $scope.saveForm = function(easyFormGeneratorModel) {
+            $scope.event.formSchema = easyFormGeneratorModel;
+            $scope.save();
         };
 
         $scope.showMessage = function(cfg) {

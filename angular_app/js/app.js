@@ -23,7 +23,8 @@ var eventManApp = angular.module('eventManApp', [
     'ui.router',
     'pascalprecht.translate',
     'angularFileUpload',
-    'angular-websocket'
+    'angular-websocket',
+	'eda.easyformGen.stepway'
 ]);
 
 
