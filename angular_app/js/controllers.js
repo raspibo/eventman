@@ -11,6 +11,10 @@ eventManControllers.controller('NavigationCtrl', ['$scope', '$rootScope', '$loca
     function ($scope, $rootScope, $location, Setting, Info) {
         $scope.logo = {};
 
+        $scope.getLocation = function() {
+            return $location.absUrl();
+        };
+
         $scope.go = function(url) {
             $location.url(url);
         };
@@ -105,14 +109,8 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
         $scope.event.formSchema = {};
         $scope.customFields = Setting.query({setting: 'person_custom_field', in_event_details: true});
 
-        $scope.newTicket = $state.is('event.ticket.new');
-
-
         if ($stateParams.id) {
             $scope.event = Event.get($stateParams, function() {
-                if ($scope.newTicket) {
-                    return;
-                }
                 $scope.$watchCollection(function() {
                         return $scope.event.persons;
                     }, function(prev, old) {
@@ -229,9 +227,7 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
             person.person_id = person._id;
             person._id = $stateParams.id; // that's the id of the event, not the person.
             Event.addPerson(person, function() {
-                if (!$scope.newTicket) {
-                    $scope._localAddAttendee(person);
-                }
+                $scope._localAddAttendee(person);
             });
             $scope.query = '';
             return person;
@@ -255,16 +251,12 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
                 var personObj = new Person(person);
                 personObj.$save(function(p) {
                     person = $scope._addAttendee(angular.copy(p));
-                    if (!$scope.newTicket) {
-                        $scope._setAttended(person);
-                    }
+                    $scope._setAttended(person);
                     $scope.newPerson = {};
                 });
             } else {
                 person = $scope._addAttendee(angular.copy(person));
-                if (!$scope.newTicket) {
-                    $scope._setAttended(person);
-                }
+                $scope._setAttended(person);
             }
         };
 
@@ -366,8 +358,8 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
 );
 
 
-eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event', 'EventTicket', 'Person', 'EventUpdates', '$stateParams', 'Setting', '$log', '$translate', '$rootScope',
-    function ($scope, $state, Event, EventTicket, Person, EventUpdates, $stateParams, Setting, $log, $translate, $rootScope) {
+eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event', 'EventTicket', 'Person', '$location', 'Setting', '$log', '$translate', '$rootScope',
+    function ($scope, $state, Event, EventTicket, Person, $location, Setting, $log, $translate, $rootScope) {
         $scope.message = {};
         $scope.event = {};
         $scope.ticket = {};
@@ -376,8 +368,6 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
 
         $scope.formFieldsMap = {};
         $scope.formFieldsMapRev = {};
-
-        $scope.newTicket = $state.is('event.ticket.new');
 
         if ($state.params.id) {
             $scope.event = Event.get({id: $state.params.id}, function(data) {

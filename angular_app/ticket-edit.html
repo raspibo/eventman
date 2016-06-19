@@ -22,6 +22,11 @@
                             eda-easy-form-viewer-submit-form-event="submitForm(dataModelSubmitted)"
                             eda-easy-form-viewer-cancel-form-event="cancelForm()">
                         </eda-easy-form-viewer>
+                        <div ng-if="ticket._id">
+                            <div ng-controller="NavigationCtrl">
+                                <span><strong>{{'Save this URL if you want to modify your order later:'}} <a href="getLocation()">{{getLocation()}}</a></strong></span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
