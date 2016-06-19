@@ -121,7 +121,7 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
                 );
             });
 
-            if ($state.is('event.info')) {
+            if ($state.is('event.tickets')) {
                 $scope.allPersons = Person.all();
 
                 // Handle WebSocket connection used to update the list of persons.

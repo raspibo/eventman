@@ -121,9 +121,9 @@ eventManApp.config(['$stateProvider', '$urlRouterProvider',
                 templateUrl: 'event-edit.html',
                 controller: 'EventDetailsCtrl'
             })
-            .state('event.info', {
-                url: '/:id',
-                templateUrl: 'event-info.html',
+            .state('event.tickets', {
+                url: '/:id/tickets',
+                templateUrl: 'event-tickets.html',
                 controller: 'EventDetailsCtrl'
             })
             .state('event.ticket', {

@@ -677,7 +677,7 @@ class EventsHandler(CollectionHandler):
 
         ret = {'action': 'update', 'person_id': person_id, 'person': new_person_data, 'uuid': uuid}
         if old_person_data != new_person_data:
-            self.send_ws_message('event/%s/updates' % id_, json.dumps(ret))
+            self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(ret))
         return ret
 
     def handle_put_tickets(self, id_, person_id, data):
@@ -966,7 +966,7 @@ def run():
         db_connector.add('settings',
                 {'setting': 'server_cookie_secret', 'cookie_secret': cookie_secret})
 
-    _ws_handler = (r"/ws/+event/+(?P<event_id>[\w\d_-]+)/+updates/?", WebSocketEventUpdatesHandler)
+    _ws_handler = (r"/ws/+event/+(?P<event_id>[\w\d_-]+)/+tickets/+updates/?", WebSocketEventUpdatesHandler)
     _persons_path = r"/persons/?(?P<id_>[\w\d_-]+)?/?(?P<resource>[\w\d_-]+)?/?(?P<resource_id>[\w\d_-]+)?"
     _events_path = r"/events/?(?P<id_>[\w\d_-]+)?/?(?P<resource>[\w\d_-]+)?/?(?P<resource_id>[\w\d_-]+)?"
     _users_path = r"/users/?(?P<id_>[\w\d_-]+)?/?(?P<resource>[\w\d_-]+)?/?(?P<resource_id>[\w\d_-]+)?"

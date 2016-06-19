@@ -46,7 +46,8 @@
                         </td>
                         <td>
                             <button ng-if="hasPermission('event:tickets|create')" ng-click="$state.go('event.ticket.new', {id: event._id})" class="btn btn-link fa fa-user-plus" type="button" title="{{'Register' | translate}}"></button>
-                            <button ng-if="hasPermission('persons|update')" ng-click="$state.go('event.info', {id: event._id})" class="btn btn-link fa fa-list" type="button" title="{{'Manage attendees' | translate}}"></button>
+                            <button ng-if="hasPermission('persons|update')" ng-click="$state.go('event.tickets', {id: event._id})" class="btn btn-link fa fa-list" type="button" title="{{'Manage attendees' | translate}}"></button>
+                            <button ng-if="hasPermission('event|update')" ng-click="$state.go('event.edit', {id: event._id})" type="button" class="btn btn-link fa fa-cog fa-lg" title="{{'Edit' | translate}}"></button>
                             <button ng-if="hasPermission('event|delete')" ng-click="remove(event._id)" type="button" class="btn btn-link fa fa-trash fa-lg" title="{{'Delete' | translate}}"></button>
                         </td>
                     </tr>
