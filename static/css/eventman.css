@@ -8,6 +8,10 @@ body { padding-top: 70px; }
     padding-bottom: 0px;
 }
 
+a:hover {
+    color: #23527c;
+}
+
 /* fix styling for empty href */
 .nav, .pagination, .carousel, .panel-title a { cursor: pointer; }
 

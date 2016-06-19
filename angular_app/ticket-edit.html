@@ -1,0 +1,30 @@
+<!-- show details of an Event -->
+<div class="container">
+    <div eventman-message="eventman-message" control="message"></div>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-7 col-xs-7 vcenter">
+                <h1>{{event.title}} - {{'new ticket' | translate}}</h1>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-info table-striped top5">
+                    <div class="panel-heading">{{'Register to this event' | translate}}</div>
+                    <div class="panel-body">
+                        <eda-easy-form-viewer
+                            eda-easy-form-viewer-data-model="formData"
+                            eda-easy-form-viewer-easy-form-generator-fields-model="formSchema"
+
+                            eda-easy-form-viewer-submit-form-event="submitForm(dataModelSubmitted)"
+                            eda-easy-form-viewer-cancel-form-event="cancelForm()">
+                        </eda-easy-form-viewer>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

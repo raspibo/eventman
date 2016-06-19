@@ -33,7 +33,7 @@ def convert_obj(obj):
 
     :param obj: object to convert
 
-    :return: object that can be stored in MongoDB.
+    :returns: object that can be stored in MongoDB.
     """
     if obj is None:
         return None
@@ -59,7 +59,7 @@ def convert(seq):
 
     :param seq: sequence or object to convert
 
-    :return: object that can be stored in MongoDB.
+    :returns: object that can be stored in MongoDB.
     """
     if isinstance(seq, dict):
         d = {}
@@ -104,7 +104,7 @@ class EventManDB(object):
         :param url: URL of the database
         :type url: str (or None to connect to localhost)
 
-        :return: the database we're connected to
+        :returns: the database we're connected to
         :rtype: :class:`~pymongo.database.Database`
         """
         if self.db is not None:
@@ -125,13 +125,13 @@ class EventManDB(object):
         :param _id: unique ID of the document
         :type _id: str or :class:`~bson.objectid.ObjectId`
 
-        :return: the document with the given `_id`
+        :returns: the document with the given `_id`
         :rtype: dict
         """
         results = self.query(collection, convert({'_id': _id}))
         return results and results[0] or {}
 
-    def query(self, collection, query=None):
+    def query(self, collection, query=None, condition='or'):
         """Get multiple documents matching a query.
 
         :param collection: search for documents in this collection
@@ -139,26 +139,32 @@ class EventManDB(object):
         :param query: search for documents with those attributes
         :type query: dict or None
 
-        :return: list of matching documents
+        :returns: list of matching documents
         :rtype: list
         """
         db = self.connect()
         query = convert(query or {})
+        if isinstance(query, (list, tuple)):
+            query = {'$%s' % condition: query}
         return list(db[collection].find(query))
 
-    def add(self, collection, data):
+    def add(self, collection, data, _id=None):
         """Insert a new document.
 
         :param collection: insert the document in this collection
         :type collection: str
         :param data: the document to store
         :type data: dict
+        :param _id: the _id of the document to store; if None, it's generated
+        :type _id: object
 
-        :return: the document, as created in the database
+        :returns: the document, as created in the database
         :rtype: dict
         """
         db = self.connect()
         data = convert(data)
+        if _id is not None:
+            data['_id'] = _id
         _id = db[collection].insert(data)
         return self.get(collection, _id)
 
@@ -170,7 +176,7 @@ class EventManDB(object):
         :param data: the document information to store
         :type data: dict
 
-        :return: True if the document was already present
+        :returns: True if the document was already present
         :rtype: bool
         """
         db = self.connect()
@@ -208,7 +214,7 @@ class EventManDB(object):
         :param create: if True, the document is created if no document matches
         :type create: bool
 
-        :return: a boolean (True if an existing document was updated) and the document after the update
+        :returns: a boolean (True if an existing document was updated) and the document after the update
         :rtype: tuple of (bool, dict)
         """
         db = self.connect()

@@ -36,7 +36,7 @@ def csvParse(csvStr, remap=None, merge=None):
     :param merge: merge these information into each line
     :type merge: dict
 
-    :return: tuple with a dict of total and valid lines and the data
+    :returns: tuple with a dict of total and valid lines and the data
     :rtype: tuple
     """
     fd = StringIO.StringIO(csvStr)
@@ -93,6 +93,8 @@ class ImprovedEncoder(json.JSONEncoder):
                 return str(o)
             except Exception, e:
                 pass
+        elif isinstance(o, set):
+            return list(o)
         return json.JSONEncoder.default(self, o)
 
 

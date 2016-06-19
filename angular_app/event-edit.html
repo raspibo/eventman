@@ -3,9 +3,9 @@
     <div class="panel panel-primary table-striped top5">
         <div class="panel-heading">
             <h1>
-                <button ng-if="event._id" ng-click="$state.go('event.info', {id: event._id})" class="btn btn-success">
-                    <span class="fa fa-info-circle vcenter"></span>
-                    {{'Info' | translate}}
+                <button ng-if="event._id" ng-click="$state.go('event.tickets', {id: event._id})" class="btn btn-success">
+                    <span class="fa fa-ticket vcenter"></span>
+                    {{'Tickets' | translate}}
                 </button>
                 &nbsp;<span ng-if="!event.title">{{'New event' | translate}}</span>{{event.title}}
             </h1>
@@ -22,6 +22,18 @@
                 <div class="input-group input-group-lg">
                     <span class="input-group-addon min100">{{'Title' | translate}}</span>
                     <input type="text" class="form-control" placeholder="{{'Title' | translate}}" ng-model="event.title" ng-required="1">
+                </div>
+                <div class="input-group input-group-lg top5">
+                    <span class="input-group-addon min100">{{'Tagline' | translate}}</span>
+                    <input type="text" class="form-control" placeholder="{{'Tagline' | translate}}" ng-model="event.tagline">
+                </div>
+                <div class="input-group input-group-lg top5">
+                    <span class="input-group-addon min100">{{'Short summary' | translate}}</span>
+                    <input type="text" class="form-control" placeholder="{{'Short summary' | translate}}" ng-model="event.summary">
+                </div>
+                <div class="input-group top5">
+                    <span class="input-group-addon min100">{{'Long description' | translate}}</span>
+                    <textarea class="form-control" placeholder="{{'Long description' | translate}}" ng-model="event.description" rows="5"></textarea>
                 </div>
 
                 <div class="input-group top5 well form-horizontal" ng-controller="DatetimePickerCtrl">
@@ -56,8 +68,30 @@
                     </div>
                 </div>
 
+                <div class="input-group input-group-lg top5">
+                    <span class="input-group-addon min100">{{'Where' | translate}}</span>
+                    <input type="text" class="form-control" placeholder="{{'Where' | translate}}" ng-model="event.where">
+                </div>
+
+
+                <label></label>
                 <input type="submit" class="outside-screen" />
+                <div ng-class="{clearfix: true, alert: true, 'alert-success': !eventForm.$dirty, 'alert-danger': eventForm.$dirty}">
+                    <button type="button" class="btn btn-default pull-right" ng-click="save($event)" ng-disabled="!eventForm.$dirty">
+                        <span class="fa fa-floppy-o vcenter"></span>
+                        {{'save' | translate}}
+                    </button>
+                </div>
             </form>
+        </div>
+    </div>
+
+    <div class="panel panel-primary top10">
+        <div class="panel-heading">
+            <h1>{{'Registration form' | translate}}</h1>
+        </div>
+        <div class="panel-body">
+            <eda-step-way-easy-form-gen eda-easy-form-generator-model="event.formSchema" eda-save-form-event="saveForm(edaEasyFormGeneratorModel)"></eda-step-way-easy-form-gen>
         </div>
     </div>
 </div>

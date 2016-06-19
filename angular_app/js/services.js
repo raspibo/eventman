@@ -22,17 +22,24 @@ eventManServices.factory('Event', ['$resource', '$rootScope',
 
             all: {
                 method: 'GET',
+                interceptor : {responseError: $rootScope.errorHandler},
                 isArray: true,
                 transformResponse: function(data, headers) {
                     data = angular.fromJson(data);
+                    if (data.error) {
+                        return data;
+                    }
                     angular.forEach(data.events || [], function(event_, event_idx) {
                         convert_dates(event_);
                     });
+
                     return data.events;
                 }
             },
 
-            get: {method: 'GET',
+            get: {
+                method: 'GET',
+                interceptor : {responseError: $rootScope.errorHandler},
                 transformResponse: function(data, headers) {
                     data = angular.fromJson(data);
                     convert_dates(data);
@@ -48,10 +55,14 @@ eventManServices.factory('Event', ['$resource', '$rootScope',
                 }
             },
 
-            update: {method: 'PUT'},
+            update: {
+                method: 'PUT',
+                interceptor : {responseError: $rootScope.errorHandler}
+            },
 
             updatePerson: {
                 method: 'PUT',
+                interceptor : {responseError: $rootScope.errorHandler},
                 isArray: false,
                 url: 'events/:id/persons/:person_id',
                 params: {uuid: $rootScope.app_uuid},
@@ -62,6 +73,7 @@ eventManServices.factory('Event', ['$resource', '$rootScope',
 
             addPerson: {
                 method: 'POST',
+                interceptor : {responseError: $rootScope.errorHandler},
                 isArray: false,
                 url: 'events/:id/persons/:person_id',
                 params: {uuid: $rootScope.app_uuid},
@@ -72,6 +84,7 @@ eventManServices.factory('Event', ['$resource', '$rootScope',
 
             deletePerson: {
                 method: 'DELETE',
+                interceptor : {responseError: $rootScope.errorHandler},
                 isArray: false,
                 url: 'events/:_id/persons/:person_id',
                 params: {uuid: $rootScope.app_uuid},
@@ -84,26 +97,90 @@ eventManServices.factory('Event', ['$resource', '$rootScope',
 );
 
 
-eventManServices.factory('Person', ['$resource',
-    function($resource) {
+eventManServices.factory('EventTicket', ['$resource', '$rootScope',
+    function($resource, $rootScope) {
+        return $resource('events/:id/tickets', {id: '@_id', ticket_id: '@ticket_id'}, {
+
+            get: {
+                method: 'GET',
+                url: 'events/:id/tickets/:ticket_id',
+                interceptor : {responseError: $rootScope.errorHandler},
+                transformResponse: function(data, headers) {
+                    data = angular.fromJson(data);
+                    return data.person;
+                }
+            },
+
+            add: {
+                method: 'POST',
+                interceptor : {responseError: $rootScope.errorHandler},
+                isArray: false,
+                url: 'events/:id/tickets/:ticket_id',
+                params: {uuid: $rootScope.app_uuid},
+                transformResponse: function(data, headers) {
+                    data = angular.fromJson(data);
+                    return data.person;
+                }
+            },
+
+            update: {
+                method: 'PUT',
+                interceptor : {responseError: $rootScope.errorHandler},
+                isArray: false,
+                url: 'events/:id/tickets/:ticket_id',
+                params: {uuid: $rootScope.app_uuid},
+                transformResponse: function(data, headers) {
+                    return angular.fromJson(data);
+                }
+            },
+
+            deleteTicket: {
+                method: 'DELETE',
+                interceptor : {responseError: $rootScope.errorHandler},
+                isArray: false,
+                url: 'events/:_id/tickets/:ticket_id',
+                params: {uuid: $rootScope.app_uuid},
+                transformResponse: function(data, headers) {
+                    return angular.fromJson(data);
+                }
+            }
+        });
+    }]
+);
+
+
+eventManServices.factory('Person', ['$resource', '$rootScope',
+    function($resource, $rootScope) {
         return $resource('persons/:id', {id: '@_id'}, {
 
             all: {
                 method: 'GET',
+                interceptor : {responseError: $rootScope.errorHandler},
                 isArray: true,
                 transformResponse: function(data, headers) {
-                    return angular.fromJson(data).persons;
+                    data = angular.fromJson(data);
+                    if (data.error) {
+                        return data;
+                    }
+                    return data.persons;
                 }
             },
 
-            update: {method: 'PUT'},
+            update: {
+                method: 'PUT',
+                interceptor : {responseError: $rootScope.errorHandler}
+            },
 
             getEvents: {
                 method: 'GET',
+                interceptor : {responseError: $rootScope.errorHandler},
                 url: 'persons/:_id/events',
                 isArray: true,
                 transformResponse: function(data, headers) {
                     data = angular.fromJson(data);
+                    if (data.error) {
+                        return data;
+                    }
                     angular.forEach(data.events || [], function(event_, event_idx) {
                         convert_dates(event_);
                     });
@@ -115,32 +192,82 @@ eventManServices.factory('Person', ['$resource',
 );
 
 
-eventManServices.factory('Setting', ['$resource',
-    function($resource) {
+eventManServices.factory('Setting', ['$resource', '$rootScope',
+    function($resource, $rootScope) {
         return $resource('settings/', {}, {
 
             query: {
                 method: 'GET',
+                interceptor : {responseError: $rootScope.errorHandler},
                 isArray: true,
                 transformResponse: function(data, headers) {
-                    return angular.fromJson(data).settings;
+                    data = angular.fromJson(data);
+                    if (data.error) {
+                        return data;
+                    }
+                    return data.settings;
                 }
             },
 
-            update: {method: 'PUT'}
+            update: {
+                method: 'PUT',
+                interceptor : {responseError: $rootScope.errorHandler}
+            }
         });
     }]
 );
 
 
-eventManServices.factory('Info', ['$resource',
-    function($resource) {
+eventManServices.factory('Info', ['$resource', '$rootScope',
+    function($resource, $rootScope) {
         return $resource('info/', {}, {
-            get: {method: 'GET',
+            get: {
+                method: 'GET',
+                interceptor : {responseError: $rootScope.errorHandler},
                 isArray: false,
                 transformResponse: function(data, headers) {
-                    return angular.fromJson(data).info || {};
+                    data = angular.fromJson(data);
+                    if (data.error) {
+                        return data;
+                    }
+                    return data.info || {};
                 }
+            }
+        });
+    }]
+);
+
+
+eventManServices.factory('User', ['$resource', '$rootScope',
+    function($resource, $rootScope) {
+        return $resource('users/:id', {id: '@_id'}, {
+            get: {
+                method: 'GET',
+                interceptor : {responseError: $rootScope.errorHandler},
+                transformResponse: function(data, headers) {
+                    data = angular.fromJson(data);
+                    if (data.error) {
+                        return data;
+                    }
+                    return data.user || {};
+                }
+            },
+
+            add: {
+                method: 'POST',
+                interceptor : {responseError: $rootScope.errorHandler}
+            },
+
+            login: {
+                method: 'POST',
+                url: '/login',
+                interceptor : {responseError: $rootScope.errorHandler}
+            },
+
+            logout: {
+                method: 'GET',
+                url: '/logout',
+                interceptor : {responseError: $rootScope.errorHandler}
             }
         });
     }]

@@ -7,8 +7,8 @@ var eventManControllers = angular.module('eventManControllers', []);
 
 
 /* A controller that can be used to navigate. */
-eventManControllers.controller('NavigationCtrl', ['$scope', '$location', 'Setting', 'Info',
-    function ($scope, $location, Setting, Info) {
+eventManControllers.controller('NavigationCtrl', ['$scope', '$rootScope', '$location', 'Setting', 'Info',
+    function ($scope, $rootScope, $location, Setting, Info) {
         $scope.logo = {};
 
         $scope.go = function(url) {
@@ -19,10 +19,6 @@ eventManControllers.controller('NavigationCtrl', ['$scope', '$location', 'Settin
             if (data && data.length) {
                 $scope.logo = data[0];
             }
-        });
-
-        Info.get({}, function(data) {
-            $scope.current_user = data.current_user || '';
         });
 
         $scope.isActive = function(view) {
@@ -99,17 +95,24 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$modal', '
 );
 
 
-eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event', 'Person', 'EventUpdates', '$stateParams', 'Setting', '$log', '$translate', '$rootScope',
-    function ($scope, $state, Event, Person, EventUpdates, $stateParams, Setting, $log, $translate, $rootScope) {
+eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event', 'Person', 'EventUpdates', '$stateParams', 'Setting', '$log', '$translate', '$rootScope', 'easyFormSteWayConfig',
+    function ($scope, $state, Event, Person, EventUpdates, $stateParams, Setting, $log, $translate, $rootScope, easyFormSteWayConfig) {
         $scope.personsOrder = ["name", "surname"];
         $scope.countAttendees = 0;
         $scope.message = {};
         $scope.event = {};
         $scope.event.persons = [];
+        $scope.event.formSchema = {};
         $scope.customFields = Setting.query({setting: 'person_custom_field', in_event_details: true});
+
+        $scope.newTicket = $state.is('event.ticket.new');
+
 
         if ($stateParams.id) {
             $scope.event = Event.get($stateParams, function() {
+                if ($scope.newTicket) {
+                    return;
+                }
                 $scope.$watchCollection(function() {
                         return $scope.event.persons;
                     }, function(prev, old) {
@@ -117,9 +120,10 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
                     }
                 );
             });
-            $scope.allPersons = Person.all();
 
-            if ($state.is('event.info')) {
+            if ($state.is('event.tickets')) {
+                $scope.allPersons = Person.all();
+
                 // Handle WebSocket connection used to update the list of persons.
                 $scope.EventUpdates = EventUpdates;
                 $scope.EventUpdates.open();
@@ -184,7 +188,7 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
                 if (this_event.persons) {
                     delete this_event.persons;
                 }
-                if (this_event.id === undefined) {
+                if (this_event._id === undefined) {
                     $scope.event = Event.save(this_event);
                 } else {
                     $scope.event = Event.update(this_event);
@@ -219,6 +223,21 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
                 return false;
             }
             $scope.event.persons.push(person);
+        };
+
+        $scope._addAttendee = function(person) {
+            person.person_id = person._id;
+            person._id = $stateParams.id; // that's the id of the event, not the person.
+            Event.addPerson(person, function() {
+                if (!$scope.newTicket) {
+                    $scope._localAddAttendee(person);
+                }
+            });
+            $scope.query = '';
+            return person;
+        };
+
+        $scope._setAttended = function(person) {
             $scope.setPersonAttribute(person, 'attended', true, function() {
                 var all_person_idx = $scope.allPersons.findIndex(function(el, idx, array) {
                     return person.person_id == el.person_id;
@@ -226,16 +245,7 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
                 if (all_person_idx != -1) {
                     $scope.allPersons.splice(all_person_idx, 1);
                 }
-            }, hideMessage);
-        };
-
-        $scope._addAttendee = function(person) {
-            person.person_id = person._id;
-            person._id = $stateParams.id;
-            Event.addPerson(person, function() {
-                $scope._localAddAttendee(person);
-            });
-            $scope.query = '';
+            }, true);
         };
 
         $scope.fastAddAttendee = function(person, isNew) {
@@ -244,12 +254,22 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
             if (isNew) {
                 var personObj = new Person(person);
                 personObj.$save(function(p) {
-                    $scope._addAttendee(angular.copy(p));
+                    person = $scope._addAttendee(angular.copy(p));
+                    if (!$scope.newTicket) {
+                        $scope._setAttended(person);
+                    }
                     $scope.newPerson = {};
                 });
             } else {
-                $scope._addAttendee(angular.copy(person));
+                person = $scope._addAttendee(angular.copy(person));
+                if (!$scope.newTicket) {
+                    $scope._setAttended(person);
+                }
             }
+        };
+
+        $scope.addRegisteredPerson = function(person) {
+            $scope.fastAddAttendee(person, true);
         };
 
         $scope.setPersonAttribute = function(person, key, value, callback, hideMessage) {
@@ -330,6 +350,11 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
             });
         };
 
+        $scope.saveForm = function(easyFormGeneratorModel) {
+            $scope.event.formSchema = easyFormGeneratorModel;
+            $scope.save();
+        };
+
         $scope.showMessage = function(cfg) {
             $scope.message.show(cfg);
         };
@@ -337,6 +362,100 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
         $scope.$on('$destroy', function() {
             $scope.EventUpdates && $scope.EventUpdates.close();
         });
+    }]
+);
+
+
+eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event', 'EventTicket', 'Person', 'EventUpdates', '$stateParams', 'Setting', '$log', '$translate', '$rootScope',
+    function ($scope, $state, Event, EventTicket, Person, EventUpdates, $stateParams, Setting, $log, $translate, $rootScope) {
+        $scope.message = {};
+        $scope.event = {};
+        $scope.ticket = {};
+        $scope.formSchema = {};
+        $scope.formData = {};
+
+        $scope.formFieldsMap = {};
+        $scope.formFieldsMapRev = {};
+
+        $scope.newTicket = $state.is('event.ticket.new');
+
+        if ($state.params.id) {
+            $scope.event = Event.get({id: $state.params.id}, function(data) {
+                if (!(data && data.formSchema)) {
+                    return;
+                }
+                $scope.formSchema = data.formSchema.edaFieldsModel;
+                $scope.extractFormFields(data.formSchema.formlyFieldsModel);
+
+                if ($state.params.ticket_id) {
+                    EventTicket.get({id: $state.params.id, ticket_id: $state.params.ticket_id}, function(data) {
+                        $scope.ticket = data;
+                        angular.forEach(data, function(value, key) {
+                            if (!$scope.formFieldsMapRev[key]) {
+                                return;
+                            }
+                            $scope.formData[$scope.formFieldsMapRev[key]] = value;
+                        });
+                    });
+                }
+
+            });
+        }
+
+        $scope.extractFormFields = function(formlyFieldsModel) {
+            if (!formlyFieldsModel) {
+                return;
+            }
+            angular.forEach(formlyFieldsModel, function(row, idx) {
+                if (!row.className == 'row') {
+                    return;
+                }
+                angular.forEach(row.fieldGroup || [], function(item, idx) {
+                    if (!(item.key && item.templateOptions && item.templateOptions.label)) {
+                        return;
+                    }
+                    var value = item.templateOptions.label.toLowerCase();
+
+                    $scope.formFieldsMap[item.key] = value;
+                    $scope.formFieldsMapRev[value] = item.key;
+                });
+            });
+        };
+
+        $scope.addTicket = function(person) {
+            var personObj = new Person(person);
+            personObj.$save(function(p) {
+                person.person_id = p._id;
+                person._id = $state.params.id; // that's the id of the event, not the person.
+                EventTicket.add(person, function(ticket) {
+                    $log.debug(ticket);
+                    $state.go('event.ticket.edit', {ticket_id: ticket._id});
+                });
+            });
+        };
+
+        $scope.updateTicket = function(ticket) {
+            var data = angular.copy(ticket);
+            data.ticket_id = data._id;
+            data._id = $state.params.id;
+            EventTicket.update(data, function(t) {});
+        };
+
+        $scope.submitForm = function(dataModelSubmitted) {
+            angular.forEach(dataModelSubmitted, function(value, key) {
+                key = $scope.formFieldsMap[key] || key;
+                $scope.ticket[key] = value;
+            });
+            if (!$state.params.ticket_id) {
+                $scope.addTicket($scope.ticket);
+            } else {
+                $scope.updateTicket($scope.ticket);
+            }
+        };
+
+        $scope.cancelForm = function() {
+            $state.go('events');
+        };
     }]
 );
 
@@ -418,7 +537,7 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$stateParams', '
 
         // store a new Person or update an existing one
         $scope.save = function() {
-            if ($scope.person.id === undefined) {
+            if ($scope.person._id === undefined) {
                 $scope.person = new Person($scope.person);
                 $scope.person.$save(function(person) {
                     if ($scope.addToEvent) {
@@ -478,26 +597,61 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$stateParams', '
     }]
 );
 
+eventManControllers.controller('LoginCtrl', ['$scope', '$rootScope', '$state', '$log', 'User',
+    function ($scope, $rootScope, $state, $log, User) {
+        $scope.loginData = {};
+
+        $scope.register = function() {
+            User.add($scope.newUser, function(data) {
+                $scope.login($scope.newUser);
+            });
+        };
+
+        $scope.login = function(loginData) {
+            if (!loginData) {
+                loginData = $scope.loginData;
+            }
+            User.login(loginData, function(data) {
+                if (!data.error) {
+                    $rootScope.readInfo(function() {
+                        $rootScope.clearError();
+                        $state.go('events');
+                    });
+                }
+            });
+        };
+
+        $scope.logout = function() {
+            User.logout({}, function(data) {
+                if (!data.error) {
+                    $rootScope.readInfo(function() {
+                        $state.go('events');
+                    });
+                }
+            });
+        };
+    }]
+);
 
 eventManControllers.controller('FileUploadCtrl', ['$scope', '$log', '$upload', 'Event',
     function ($scope, $log, $upload, Event) {
-            $scope.file = null;
-            $scope.reply = {};
-            $scope.events = Event.all();
-            $scope.upload = function(file, url) {
-                $log.debug("FileUploadCtrl.upload");
-                $upload.upload({
-                    url: url,
-                    file: file,
-                    fields: {targetEvent: $scope.targetEvent}
-                }).progress(function(evt) {
-                    var progressPercentage = parseInt(100.0 * evt.loaded / evt.total);
-                    $log.debug('progress: ' + progressPercentage + '%');
-                }).success(function(data, status, headers, config) {
-                    $scope.file = null;
-                    $scope.reply = angular.fromJson(data);
-                });
-            };
+        $scope.file = null;
+        $scope.reply = {};
+        $scope.events = Event.all();
+        $scope.upload = function(file, url) {
+            $log.debug("FileUploadCtrl.upload");
+            $upload.upload({
+                url: url,
+                file: file,
+                fields: {targetEvent: $scope.targetEvent}
+            }).progress(function(evt) {
+                var progressPercentage = parseInt(100.0 * evt.loaded / evt.total);
+                $log.debug('progress: ' + progressPercentage + '%');
+            }).success(function(data, status, headers, config) {
+                $scope.file = null;
+                $scope.reply = angular.fromJson(data);
+            });
+        };
     }]
 );
 
