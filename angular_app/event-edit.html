@@ -73,14 +73,6 @@
                     <input type="text" class="form-control" placeholder="{{'Where' | translate}}" ng-model="event.where">
                 </div>
 
-                <div class="panel panel-info top10">
-                    <div class="panel-heading">
-                        <h1>{{'Registration form' | translate}}</h1>
-                    </div>
-                    <div class="panel-body">
-                        <eda-step-way-easy-form-gen eda-easy-form-generator-model="event.formSchema" eda-save-form-event="saveForm(edaEasyFormGeneratorModel)"></eda-step-way-easy-form-gen>
-                    </div>
-                </div>
 
                 <label></label>
                 <input type="submit" class="outside-screen" />
@@ -91,6 +83,15 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <div class="panel panel-primary top10">
+        <div class="panel-heading">
+            <h1>{{'Registration form' | translate}}</h1>
+        </div>
+        <div class="panel-body">
+            <eda-step-way-easy-form-gen eda-easy-form-generator-model="event.formSchema" eda-save-form-event="saveForm(edaEasyFormGeneratorModel)"></eda-step-way-easy-form-gen>
         </div>
     </div>
 </div>

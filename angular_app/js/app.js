@@ -1,7 +1,7 @@
 'use strict';
 /*
-    Copyright 2015 Davide Alberani <da@erlug.linux.it>
-                   RaspiBO <info@raspibo.org>
+    Copyright 2015-2016 Davide Alberani <da@erlug.linux.it>
+                        RaspiBO <info@raspibo.org>
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ var eventManApp = angular.module('eventManApp', [
     'pascalprecht.translate',
     'angularFileUpload',
     'angular-websocket',
+    'eda.easyFormViewer',
 	'eda.easyformGen.stepway'
 ]);
 

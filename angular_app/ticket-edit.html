@@ -15,37 +15,13 @@
                 <div class="panel panel-info table-striped top5">
                     <div class="panel-heading">{{'Register to this event' | translate}}</div>
                     <div class="panel-body">
-                        <form>
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-addon min70-compact">{{'Name' | translate}}</span>
-                                <input type="text" class="form-control" placeholder="{{'Name' | translate}}" ng-model="ticket.name" ng-required="1">
-                            </div>
-                            <div class="input-group input-group-sm top5">
-                                <span class="input-group-addon min70-compact">{{'Surname' | translate}}</span>
-                                <input type="text" class="form-control" placeholder="{{'Surname' | translate}}" ng-model="ticket.surname">
-                            </div>
-                            <div class="input-group top5">
-                                <span class="input-group-addon min70-compact">{{'Email' | translate}}</span>
-                                <input type="email" name="email" class="form-control" placeholder="{{'name.surname@example.com' | translate}}"  ng-model="ticket.email">
-                            </div>
-                            <div class="input-group top5">
-                                <span class="input-group-addon min70-compact">{{'Company' | translate}}</span>
-                                <input name="company" class="form-control" placeholder="{{'Acme Corporation' | translate}}"  ng-model="ticket.company">
-                            </div>
-                            <div class="input-group top5">
-                                <span class="input-group-addon min70-compact">{{'Job' | translate}}</span>
-                                <input name="job_title" class="form-control" placeholder="{{'Evil Ruler' | translate}}"  ng-model="ticket.job_title">
-                            </div>
+                        <eda-easy-form-viewer
+                            eda-easy-form-viewer-data-model="formData"
+                            eda-easy-form-viewer-easy-form-generator-fields-model="formSchema"
 
-                            <button ng-if="!(ticket && ticket._id)" reset-focus ng-disabled="!(ticket.name && ticket.surname)" ng-click="addTicket(ticket)" class="btn btn-success top5">
-                                <span class="fa fa-plus-circle vcenter"></span>
-                                {{'Add' | translate}}
-                            </button>
-                            <button ng-if="ticket._id" reset-focus ng-disabled="!(ticket.name && ticket.surname)" ng-click="updateTicket(ticket)" class="btn btn-success top5">
-                                <span class="fa fa-save vcenter"></span>
-                                {{'Update' | translate}}
-                            </button>
-                        </form>
+                            eda-easy-form-viewer-submit-form-event="submitForm(dataModelSubmitted)"
+                            eda-easy-form-viewer-cancel-form-event="cancelForm()">
+                        </eda-easy-form-viewer>
                     </div>
                 </div>
             </div>

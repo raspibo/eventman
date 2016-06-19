@@ -95,18 +95,18 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$modal', '
 );
 
 
-eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event', 'EventTicket', 'Person', 'EventUpdates', '$stateParams', 'Setting', '$log', '$translate', '$rootScope', 'easyFormSteWayConfig',
-    function ($scope, $state, Event, EventTicket, Person, EventUpdates, $stateParams, Setting, $log, $translate, $rootScope, easyFormSteWayConfig) {
+eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event', 'Person', 'EventUpdates', '$stateParams', 'Setting', '$log', '$translate', '$rootScope', 'easyFormSteWayConfig',
+    function ($scope, $state, Event, Person, EventUpdates, $stateParams, Setting, $log, $translate, $rootScope, easyFormSteWayConfig) {
         $scope.personsOrder = ["name", "surname"];
         $scope.countAttendees = 0;
         $scope.message = {};
         $scope.event = {};
         $scope.event.persons = [];
+        $scope.event.formSchema = {};
         $scope.customFields = Setting.query({setting: 'person_custom_field', in_event_details: true});
 
         $scope.newTicket = $state.is('event.ticket.new');
 
-        $scope.event.formSchema = {};
 
         if ($stateParams.id) {
             $scope.event = Event.get($stateParams, function() {
@@ -371,19 +371,56 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
         $scope.message = {};
         $scope.event = {};
         $scope.ticket = {};
+        $scope.formSchema = {};
+        $scope.formData = {};
+
+        $scope.formFieldsMap = {};
+        $scope.formFieldsMapRev = {};
 
         $scope.newTicket = $state.is('event.ticket.new');
 
         if ($state.params.id) {
-            $scope.event = Event.get({id: $state.params.id}, function() {
+            $scope.event = Event.get({id: $state.params.id}, function(data) {
+                if (!(data && data.formSchema)) {
+                    return;
+                }
+                $scope.formSchema = data.formSchema.edaFieldsModel;
+                $scope.extractFormFields(data.formSchema.formlyFieldsModel);
+
+                if ($state.params.ticket_id) {
+                    EventTicket.get({id: $state.params.id, ticket_id: $state.params.ticket_id}, function(data) {
+                        $scope.ticket = data;
+                        angular.forEach(data, function(value, key) {
+                            if (!$scope.formFieldsMapRev[key]) {
+                                return;
+                            }
+                            $scope.formData[$scope.formFieldsMapRev[key]] = value;
+                        });
+                    });
+                }
+
             });
         }
 
-        if ($state.params.ticket_id) {
-            EventTicket.get({id: $state.params.id, ticket_id: $state.params.ticket_id}, function(data) {
-                $scope.ticket = data;
+        $scope.extractFormFields = function(formlyFieldsModel) {
+            if (!formlyFieldsModel) {
+                return;
+            }
+            angular.forEach(formlyFieldsModel, function(row, idx) {
+                if (!row.className == 'row') {
+                    return;
+                }
+                angular.forEach(row.fieldGroup || [], function(item, idx) {
+                    if (!(item.key && item.templateOptions && item.templateOptions.label)) {
+                        return;
+                    }
+                    var value = item.templateOptions.label.toLowerCase();
+
+                    $scope.formFieldsMap[item.key] = value;
+                    $scope.formFieldsMapRev[value] = item.key;
+                });
             });
-        }
+        };
 
         $scope.addTicket = function(person) {
             var personObj = new Person(person);
@@ -401,8 +438,23 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
             var data = angular.copy(ticket);
             data.ticket_id = data._id;
             data._id = $state.params.id;
-            EventTicket.update(data, function(t) {
+            EventTicket.update(data, function(t) {});
+        };
+
+        $scope.submitForm = function(dataModelSubmitted) {
+            angular.forEach(dataModelSubmitted, function(value, key) {
+                key = $scope.formFieldsMap[key] || key;
+                $scope.ticket[key] = value;
             });
+            if (!$state.params.ticket_id) {
+                $scope.addTicket($scope.ticket);
+            } else {
+                $scope.updateTicket($scope.ticket);
+            }
+        };
+
+        $scope.cancelForm = function() {
+            $state.go('events');
         };
     }]
 );
