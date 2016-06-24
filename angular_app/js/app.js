@@ -116,6 +116,11 @@ eventManApp.config(['$stateProvider', '$urlRouterProvider',
                 templateUrl: 'event-edit.html',
                 controller: 'EventDetailsCtrl'
             })
+            .state('event.view', {
+                url: '/:id/view',
+                templateUrl: 'event-edit.html',
+                controller: 'EventDetailsCtrl'
+            })
             .state('event.edit', {
                 url: '/:id/edit',
                 templateUrl: 'event-edit.html',

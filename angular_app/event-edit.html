@@ -12,71 +12,73 @@
         </div>
         <div class="panel-body">
             <form name="eventForm" ng-model="eventdetails" ng-submit="save()">
-                <div ng-class="{clearfix: true, alert: true, 'alert-success': !eventForm.$dirty, 'alert-danger': eventForm.$dirty}">
-                    <button type="button" class="btn btn-default pull-right" ng-click="save($event)" ng-disabled="!eventForm.$dirty">
-                        <span class="fa fa-floppy-o vcenter"></span>
-                        {{'save' | translate}}
-                    </button>
-                </div>
+                <fieldset ng-disabled="eventFormDisabled">
+                    <div ng-if="!eventFormDisabled" ng-class="{clearfix: true, alert: true, 'alert-success': !eventForm.$dirty, 'alert-danger': eventForm.$dirty}">
+                        <button type="button" class="btn btn-default pull-right" ng-click="save($event)" ng-disabled="!eventForm.$dirty">
+                            <span class="fa fa-floppy-o vcenter"></span>
+                            {{'save' | translate}}
+                        </button>
+                    </div>
 
-                <div class="input-group input-group-lg">
-                    <span class="input-group-addon min100">{{'Title' | translate}}</span>
-                    <input type="text" class="form-control" placeholder="{{'Title' | translate}}" ng-model="event.title" ng-required="1">
-                </div>
-                <div class="input-group input-group-lg top5">
-                    <span class="input-group-addon min100">{{'Tagline' | translate}}</span>
-                    <input type="text" class="form-control" placeholder="{{'Tagline' | translate}}" ng-model="event.tagline">
-                </div>
-                <div class="input-group input-group-lg top5">
-                    <span class="input-group-addon min100">{{'Short summary' | translate}}</span>
-                    <input type="text" class="form-control" placeholder="{{'Short summary' | translate}}" ng-model="event.summary">
-                </div>
-                <div class="input-group top5">
-                    <span class="input-group-addon min100">{{'Long description' | translate}}</span>
-                    <textarea class="form-control" placeholder="{{'Long description' | translate}}" ng-model="event.description" rows="5"></textarea>
-                </div>
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-addon min100">{{'Title' | translate}}</span>
+                        <input type="text" class="form-control" placeholder="{{'Title' | translate}}" ng-model="event.title" ng-required="1">
+                    </div>
+                    <div class="input-group input-group-lg top5">
+                        <span class="input-group-addon min100">{{'Tagline' | translate}}</span>
+                        <input type="text" class="form-control" placeholder="{{'Tagline' | translate}}" ng-model="event.tagline">
+                    </div>
+                    <div class="input-group input-group-lg top5">
+                        <span class="input-group-addon min100">{{'Short summary' | translate}}</span>
+                        <input type="text" class="form-control" placeholder="{{'Short summary' | translate}}" ng-model="event.summary">
+                    </div>
+                    <div class="input-group top5">
+                        <span class="input-group-addon min100">{{'Long description' | translate}}</span>
+                        <textarea class="form-control" placeholder="{{'Long description' | translate}}" ng-model="event.description" rows="5"></textarea>
+                    </div>
 
-                <div class="input-group top5 well form-horizontal" ng-controller="DatetimePickerCtrl">
-                    <div class="form-group">
-                        <label for="begin-date" class="col-sm-3 control-label">{{'begin date:' | translate}}</label>
-                        <div id="begin-date" class="input-group col-sm-9">
-                            <input type="text" class="form-control" datepicker-popup="dd-MMMM-yyyy" ng-model="event['begin-date']" is-open="opened" ng-required="true" />
-                            <span class="input-group-btn">
-                                <button type="button" class="btn btn-default" ng-click="open($event)"><i class="fa fa-calendar"></i></button>
-                            </span>
+                    <div class="input-group top5 well form-horizontal" ng-controller="DatetimePickerCtrl">
+                        <div class="form-group">
+                            <label for="begin-date" class="col-sm-3 control-label">{{'begin date:' | translate}}</label>
+                            <div id="begin-date" class="input-group col-sm-9">
+                                <input type="text" class="form-control" datepicker-popup="dd-MMMM-yyyy" ng-model="event['begin-date']" is-open="opened" ng-required="true" />
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-default" ng-click="open($event)"><i class="fa fa-calendar"></i></button>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="begin-time" class="col-sm-3 control-label">{{'begin time:' | translate}}</label>
+                            <timepicker id="begin-time" class="input-group" ng-model="event['begin-time']" show-meridian="false"></timepicker>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="begin-time" class="col-sm-3 control-label">{{'begin time:' | translate}}</label>
-                        <timepicker id="begin-time" class="input-group" ng-model="event['begin-time']" show-meridian="false"></timepicker>
-                    </div>
-                </div>
 
-                <div class="input-group top5 well form-horizontal" ng-controller="DatetimePickerCtrl">
-                    <div class="form-group">
-                        <label for="end-date" class="col-sm-3 control-label">{{'End date:' | translate}}</label>
-                        <div id="end-date" class="input-group col-sm-9">
-                            <input type="text" class="form-control" datepicker-popup="dd-MMMM-yyyy" ng-model="event['end-date']" is-open="opened" ng-required="true" />
-                            <span class="input-group-btn">
-                                <button type="button" class="btn btn-default" ng-click="open($event)"><i class="fa fa-calendar"></i></button>
-                            </span>
+                    <div class="input-group top5 well form-horizontal" ng-controller="DatetimePickerCtrl">
+                        <div class="form-group">
+                            <label for="end-date" class="col-sm-3 control-label">{{'End date:' | translate}}</label>
+                            <div id="end-date" class="input-group col-sm-9">
+                                <input type="text" class="form-control" datepicker-popup="dd-MMMM-yyyy" ng-model="event['end-date']" is-open="opened" ng-required="true" />
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-default" ng-click="open($event)"><i class="fa fa-calendar"></i></button>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="end-time" class="col-sm-3 control-label">{{'End time:' | translate}}</label>
+                            <timepicker id="end-time" class="input-group" ng-model="event['end-time']" show-meridian="false"></timepicker>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="end-time" class="col-sm-3 control-label">{{'End time:' | translate}}</label>
-                        <timepicker id="end-time" class="input-group" ng-model="event['end-time']" show-meridian="false"></timepicker>
-                    </div>
-                </div>
 
-                <div class="input-group input-group-lg top5">
-                    <span class="input-group-addon min100">{{'Where' | translate}}</span>
-                    <input type="text" class="form-control" placeholder="{{'Where' | translate}}" ng-model="event.where">
-                </div>
+                    <div class="input-group input-group-lg top5">
+                        <span class="input-group-addon min100">{{'Where' | translate}}</span>
+                        <input type="text" class="form-control" placeholder="{{'Where' | translate}}" ng-model="event.where">
+                    </div>
+                </fieldset>
 
 
                 <label></label>
                 <input type="submit" class="outside-screen" />
-                <div ng-class="{clearfix: true, alert: true, 'alert-success': !eventForm.$dirty, 'alert-danger': eventForm.$dirty}">
+                <div ng-if="!eventFormDisabled" ng-class="{clearfix: true, alert: true, 'alert-success': !eventForm.$dirty, 'alert-danger': eventForm.$dirty}">
                     <button type="button" class="btn btn-default pull-right" ng-click="save($event)" ng-disabled="!eventForm.$dirty">
                         <span class="fa fa-floppy-o vcenter"></span>
                         {{'save' | translate}}
@@ -86,7 +88,7 @@
         </div>
     </div>
 
-    <div class="panel panel-primary top10">
+    <div class="panel panel-primary top10" ng-if="!eventFormDisabled">
         <div class="panel-heading">
             <h1>{{'Registration form' | translate}}</h1>
         </div>

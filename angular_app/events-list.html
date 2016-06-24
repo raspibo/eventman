@@ -37,7 +37,12 @@
                 <tbody>
                     <tr ng-repeat="event in events | splittedFilter:query | orderBy:eventsOrderProp">
                         <td>
-                            <span><strong>{{event.title}}</strong></span>
+                            <span>
+                                <strong>
+                                    <a ui-sref="event.edit({id: event._id})" ng-if="hasPermission('event|update')">{{event.title}}</a>
+                                    <a ui-sref="event.view({id: event._id})" ng-if="!hasPermission('event|update')">{{event.title}}</a>
+                                </strong>
+                            </span>
                             <p>{{'Begins:' | translate}} {{event['begin-date'] | date:'fullDate'}} {{event['begin-time'] | date:'HH:mm'}}<br/>
                             {{'Ends:' | translate}} {{event['end-date'] | date:'fullDate' }} {{event['end-time'] | date:'HH:mm'}}</p>
                         </td>

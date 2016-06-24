@@ -107,6 +107,7 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
         $scope.event = {};
         $scope.event.persons = [];
         $scope.event.formSchema = {};
+        $scope.eventFormDisabled = false;
         $scope.customFields = Setting.query({setting: 'person_custom_field', in_event_details: true});
 
         if ($stateParams.id) {
@@ -118,6 +119,10 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
                     }
                 );
             });
+
+            if ($state.is('event.view') || !$rootScope.hasPermission('event|update')) {
+                $scope.eventFormDisabled = true;
+            }
 
             if ($state.is('event.tickets')) {
                 $scope.allPersons = Person.all();
@@ -358,8 +363,8 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
 );
 
 
-eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event', 'EventTicket', 'Person', '$location', 'Setting', '$log', '$translate', '$rootScope',
-    function ($scope, $state, Event, EventTicket, Person, $location, Setting, $log, $translate, $rootScope) {
+eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event', 'EventTicket', 'Person', 'Setting', '$log', '$translate', '$rootScope',
+    function ($scope, $state, Event, EventTicket, Person, Setting, $log, $translate, $rootScope) {
         $scope.message = {};
         $scope.event = {};
         $scope.ticket = {};
