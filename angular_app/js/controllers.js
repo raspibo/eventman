@@ -425,7 +425,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                 person._id = $state.params.id; // that's the id of the event, not the person.
                 EventTicket.add(person, function(ticket) {
                     $log.debug(ticket);
-                    $state.go('event.ticket.edit', {ticket_id: ticket._id});
+                    $state.go('event.ticket.edit', {id: $scope.event._id, ticket_id: ticket._id});
                 });
             });
         };

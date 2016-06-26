@@ -4,12 +4,12 @@
     <div class="container">
         <div class="row">
             <div class="col-md-7 col-xs-7 vcenter">
-                <h1><a ui-sref="event.view({id: event._id})" ng-if="event._id">{{event.title}}</a> - {{'new ticket' | translate}}</h1>
+                <h1><a ui-sref="event.view({id: event._id})" ng-if="event._id">{{event.title}}</a><span ng-if="!ticket._id"> - {{'join this event' | translate}}</span><span ng-if="ticket._id"> - {{'your ticket' | translate}}</span></h1>
             </div>
         </div>
     </div>
 
-    <div class="container" ng-if="ticket._id && !ticket.cancelled">
+    <div class="container" ng-if="!ticket.cancelled">
         <div class="row">
             <div class="col-md-12">
                 <div class="panel panel-info table-striped top5">

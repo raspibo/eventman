@@ -89,6 +89,7 @@ class BaseHandler(tornado.web.RequestHandler):
         'event:tickets-all|create': True,
         'events|read': True,
         'persons|create': True,
+        'person|create': True,
         'users|create': True
     }
 
@@ -513,9 +514,12 @@ class CollectionHandler(BaseHandler):
         :param message: message to send
         :type message: str
         """
-        ws = yield tornado.websocket.websocket_connect(self.build_ws_url(path))
-        ws.write_message(message)
-        ws.close()
+        try:
+            ws = yield tornado.websocket.websocket_connect(self.build_ws_url(path))
+            ws.write_message(message)
+            ws.close()
+        except Exception, e:
+            self.logger.error('Error yielding WebSocket message: %s', e)
 
 
 class PersonsHandler(CollectionHandler):
@@ -615,8 +619,10 @@ class EventsHandler(CollectionHandler):
         self._clean_dict(data)
         data['seq'] = self.get_next_seq('event_%s_persons' % id_)
         data['seq_hex'] = '%06X' % data['seq']
-        doc = self.db.query('events',
-                {'_id': id_, 'persons.person_id': person_id})
+        if person_id is None:
+            doc = {}
+        else:
+            doc = self.db.query('events', {'_id': id_, 'persons.person_id': person_id})
         ret = {'action': 'add', 'person_id': person_id, 'person': data, 'uuid': uuid}
         if '_id' in data:
             del data['_id']
