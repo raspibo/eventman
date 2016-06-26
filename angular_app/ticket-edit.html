@@ -9,12 +9,18 @@
         </div>
     </div>
 
-    <div class="container" ng-if="!ticket.cancelled">
+    <!-- FIXME: ideally, here we would have put a ng-if="!ticket.cancelled" directive, but for some
+         odd reason, any kind ng-if directive will prevent the form being populated with the formData model.
+    -->
+    <div class="container">
         <div class="row">
             <div class="col-md-12">
                 <div class="panel panel-info table-striped top5">
                     <div class="panel-heading">{{'Join this event' | translate}}</div>
                     <div class="panel-body">
+                        <div ng-if="ticket.cancelled" class="clearfix alert alert-danger">
+                            {{'Your ticket has been cancelled; you can join again this event using the commands below' | translate}}
+                        </div>
                         <eda-easy-form-viewer
                             eda-easy-form-viewer-data-model="formData"
                             eda-easy-form-viewer-easy-form-generator-fields-model="formSchema"
