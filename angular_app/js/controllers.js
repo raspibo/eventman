@@ -206,7 +206,7 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
             }
             var attendees = 0;
             angular.forEach($scope.event.persons, function(value, key) {
-                if (value.attended) {
+                if (value.attended && !value.cancelled) {
                     attendees += 1;
                 }
             });
@@ -370,6 +370,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
         $scope.ticket = {};
         $scope.formSchema = {};
         $scope.formData = {};
+        $scope.dangerousActionsEnabled = false;
 
         $scope.formFieldsMap = {};
         $scope.formFieldsMapRev = {};
@@ -429,11 +430,15 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
             });
         };
 
-        $scope.updateTicket = function(ticket) {
+        $scope.updateTicket = function(ticket, cb) {
             var data = angular.copy(ticket);
             data.ticket_id = data._id;
             data._id = $state.params.id;
-            EventTicket.update(data, function(t) {});
+            EventTicket.update(data, function(t) {
+                if (cb) {
+                    cb(t);
+                }
+            });
         };
 
         $scope.submitForm = function(dataModelSubmitted) {
@@ -446,6 +451,16 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
             } else {
                 $scope.updateTicket($scope.ticket);
             }
+        };
+
+        $scope.toggleTicket = function() {
+            if (!$scope.ticket._id) {
+                return;
+            }
+            $scope.ticket.cancelled = !$scope.ticket.cancelled;
+            $scope.updateTicket($scope.ticket, function() {
+                $scope.dangerousActionsEnabled = false;
+            });
         };
 
         $scope.cancelForm = function() {

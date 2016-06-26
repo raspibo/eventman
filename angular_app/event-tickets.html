@@ -14,7 +14,7 @@
          --><div class="col-md-5 col-xs-5 vcenter">
                 <div class="row">
                     <div class="col-md-6">
-                        <h2><div class="label label-warning vcenter">{{'Registered:' | translate}} {{event.persons.length || 0}}</div></h2>
+                        <h2><div class="label label-warning vcenter">{{'Registered:' | translate}} {{((event.persons || []) | registeredFilter).length}}</div></h2>
                     </div>
                     <div class="col-md-6">
                         <h2><div class="label label-info vcenter">{{'Attendees:' | translate}} {{countAttendees}}</div></h2>
@@ -49,7 +49,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr ng-repeat="person in event.persons | splittedFilter:query | orderBy:personsOrder">
+                                <tr ng-repeat="person in event.persons | splittedFilter:query | registeredFilter | orderBy:personsOrder">
                                     <td class="text-right">{{$index+1}}</td>
                                     <td>
                                         <span><strong><a ui-sref="person.info({id: person.person_id})"><span class="fa fa-lg fa-user"></span></a>&nbsp;<a ui-sref="event.ticket.edit({id: event._id, ticket_id: person._id})" ng-if="person._id"><span>{{person.name}}</span>&nbsp;<span>{{person.surname}}</span></a></strong></span><span ng-if="!person._id"><span>{{person.name}}</span>&nbsp;<span>{{person.surname}}</span></a></strong></span></span><span ng-if="person.email">&nbsp;&lt;{{person.email}}&gt;</span>

@@ -25,7 +25,7 @@ var eventManApp = angular.module('eventManApp', [
     'angularFileUpload',
     'angular-websocket',
     'eda.easyFormViewer',
-	'eda.easyformGen.stepway'
+    'eda.easyformGen.stepway'
 ]);
 
 

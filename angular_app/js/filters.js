@@ -37,6 +37,9 @@ eventManApp.filter('personRegistered', ['$filter',
                 return inputArray;
             }
             for (var x=0; x < data.event.persons.length; x++) {
+                if (!data.includeCancelled && data.event.persons[x].cancelled) {
+                    continue;
+                }
                 registeredIDs.push(data.event.persons[x].person_id);
             }
             for (var x=0; x < inputArray.length; x++) {
@@ -65,13 +68,34 @@ eventManApp.filter('splittedFilter', ['$filter',
 );
 
 
+/* Filter that returns only the (not) registered persons at an event. */
+eventManApp.filter('registeredFilter', ['$filter',
+    function($filter) {
+        return function(inputArray, data) {
+            if (!data) {
+                data = {};
+            }
+            var returnArray = [];
+            for (var x=0; x < inputArray.length; x++) {
+                if ((!data.onlyCancelled && !inputArray[x]['cancelled']) ||
+                        (data.onlyCancelled && inputArray[x]['cancelled']) ||
+                        data.all) {
+                    returnArray.push(inputArray[x]);
+                }
+            }
+            return returnArray;
+        };
+    }]
+);
+
+
 /* Filter that returns only the attendees at an event. */
 eventManApp.filter('attendeesFilter', ['$filter',
     function($filter) {
         return function(inputArray) {
             var returnArray = [];
             for (var x=0; x < inputArray.length; x++) {
-                if (inputArray[x]['attended']) {
+                if (inputArray[x]['attended'] && !inputArray[x]['cancelled']) {
                     returnArray.push(inputArray[x]);
                 }
             }
