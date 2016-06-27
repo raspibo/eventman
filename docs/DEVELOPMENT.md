@@ -1,3 +1,11 @@
+Development
+===========
+
+As of June 2016, Event Man(ager) is under heavy refactoring. For a list of main changes that will be introduced, see https://github.com/raspibo/eventman/issues
+
+Every contribution, in form of code or ideas, is welcome.
+
+
 Definitions
 ===========
 
@@ -74,10 +82,20 @@ Also, remember that most of the paths can take query parameters that will be use
 
 You have probably noticed that the /events/:event\_id/persons/\* and /events/:event\_id/tickets/\* paths seems to do the same thing. That's mostly true, and if we're talking about the data structure they are indeed the same (i.e.: a GET to /events/:event\_id/tickets/:ticket\_id will return the same {"person": {"name": "Mario", [...]}} structure as a call to /events/:event\_id/persons/:person\_id). The main difference is that the first works on the \_id property of the entry, the other on person\_id. Plus, the input and output are filtered in a different way, for example to prevent a registered person to autonomously set the attendee status or getting the complete list of registered persons.
 
+Beware that most probably the /persons and /events/:event\_id/persons paths will be removed from a future version of Event Man(mager) in an attempt to rationalize how we handle data.
+
 
 Permissions
 ===========
 
+Being too lazy to implement a proper MAC or RBAC, we settled to a simpler mapping on CRUD operations on paths. This will probably change in the future.
+
+User's permission are stored in the *permission* key, and merged with a set of defaults, valid also for unregistered users. Operations are *read*, *create*, *update* and *delete* (plus the spcial *all* value). There's also the special *admin|all* value: if present, the user has every privilege.
+
+Permissions are strings: the path and the permission are separated by **|**; the path components (resource:sub-resource, if any) are separated by **:**. In case we are not accessing a specific sub-resource (i.e.: we don't have a sub-resource ID), the **-all** string is appended to the resource name. For example:
+- **events|read**: ability to retrieve the list of events and their data (some fields, like the list of registered persons, are filtered out if you don't have other permissions)
+- **event:tickets|all**: ability to do everything to a ticket (provided that you know its ID)
+- **event:tickets-all|create**: ability to create a new ticket (you don't have an ID, if you're creating a new ticket, hence the -all suffix)
 
 
 Triggers
@@ -115,8 +133,7 @@ In the **data/triggers-available** there is an example of script: **echo.py**.
 Database layout
 ===============
 
-Information are stored in MongoDB.  Whenever possible, object are converted
-into integer, native ObjectId and datetime.
+Information are stored in MongoDB.  Whenever possible, object are converted into integer, native ObjectId and datetime.
 
 events collection
 -----------------
