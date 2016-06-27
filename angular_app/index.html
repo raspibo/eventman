@@ -101,6 +101,7 @@
         <div ng-if="error.error" ng-class="{clearfix: true, alert: true, 'alert-danger': true}">
             <div class="container">
                 {{error.message}}
+                <button class="close" ng-click="clearError()">&times;</button>
             </div>
         </div>
         <!-- all the magic takes place here: the content inside the next div changes accordingly to the location you're visiting -->
