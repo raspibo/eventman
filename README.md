@@ -53,7 +53,7 @@ Be sure to have a running MongoDB server, locally. If you want to install the de
     sudo pip install pycups # only needed if you want to print labels
     git clone https://github.com/raspibo/eventman
     cd eventman
-    ./eventman\_server.py --debug
+    ./eventman_server.py --debug
 
 
 Open browser and navigate to: http://localhost:5242/
