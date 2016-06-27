@@ -8,13 +8,15 @@ EventMan will help you handle your list of attendees at an event, managing the l
 Main features:
 - an admin (in the future: anyone) can create and manage new events
 - events can define a registration form with many custom fields
-- a person can join (or leave) an event, filling the custom forms
+- a person can join (or leave) an event, submitting the custom forms
 - no registration is required to join/leave an event
 - quickly mark a registered person as an attendee
 - easy way to add a new person, if it's already known from a previous event or if it's a completely new person
 - can import Eventbrite CSV export files
 - RESTful interface that can be called by third-party applications (see the https://github.com/raspibo/event_man/ repository for a simple script that checks people in using a barcode/QR-code reader)
 - ability to run triggers to respond to an event (e.g. when a person is marked as attending to an event)
+- can run on HTTPS
+- multiple workstations are kept in sync (i.e.: marking a person as an attendee is shown in every workstation currently viewing the list of persons registered at an event)
 
 See the *screenshots* directory for some images.
 
@@ -51,7 +53,7 @@ Be sure to have a running MongoDB server, locally. If you want to install the de
     sudo pip install pycups # only needed if you want to print labels
     git clone https://github.com/raspibo/eventman
     cd eventman
-    ./eventman_server.py --debug
+    ./eventman\_server.py --debug
 
 
 Open browser and navigate to: http://localhost:5242/
@@ -61,7 +63,9 @@ If you store SSL key and certificate in the *ssl* directory (default names: even
 Authentication
 ==============
 
-By default, authentication is required; default username and password are *admin* and *eventman*. If you want to completely disable authentication, run the daemon with --authentication=off
+By default, authentication is not required; unregistered and unprivileged users can see and join events, but are unable to edit or handle them. Administrator users can create ed edit events; more information about how permissions are handled can be found in the *docs/DEVELOPMENT.md* file.
+
+The default administrator username and password are **admin** and **eventman**. If you want to force authentication, run the daemon with --authentication=on
 
 Demo database
 =============
