@@ -25,7 +25,7 @@ var eventManApp = angular.module('eventManApp', [
     'angularFileUpload',
     'angular-websocket',
     'eda.easyFormViewer',
-	'eda.easyformGen.stepway'
+    'eda.easyformGen.stepway'
 ]);
 
 
@@ -113,6 +113,11 @@ eventManApp.config(['$stateProvider', '$urlRouterProvider',
             })
             .state('event.new', {
                 url: '/new',
+                templateUrl: 'event-edit.html',
+                controller: 'EventDetailsCtrl'
+            })
+            .state('event.view', {
+                url: '/:id/view',
                 templateUrl: 'event-edit.html',
                 controller: 'EventDetailsCtrl'
             })

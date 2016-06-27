@@ -92,6 +92,7 @@ class BaseHandler(tornado.web.RequestHandler):
         'users|create': True
     }
 
+    # Cache currently connected users.
     _users_cache = {}
 
     # A property to access the first value of each argument.
@@ -513,9 +514,12 @@ class CollectionHandler(BaseHandler):
         :param message: message to send
         :type message: str
         """
-        ws = yield tornado.websocket.websocket_connect(self.build_ws_url(path))
-        ws.write_message(message)
-        ws.close()
+        try:
+            ws = yield tornado.websocket.websocket_connect(self.build_ws_url(path))
+            ws.write_message(message)
+            ws.close()
+        except Exception, e:
+            self.logger.error('Error yielding WebSocket message: %s', e)
 
 
 class PersonsHandler(CollectionHandler):
@@ -615,12 +619,14 @@ class EventsHandler(CollectionHandler):
         self._clean_dict(data)
         data['seq'] = self.get_next_seq('event_%s_persons' % id_)
         data['seq_hex'] = '%06X' % data['seq']
-        doc = self.db.query('events',
-                {'_id': id_, 'persons.person_id': person_id})
+        if person_id is None:
+            doc = {}
+        else:
+            doc = self.db.query('events', {'_id': id_, 'persons.person_id': person_id})
         ret = {'action': 'add', 'person_id': person_id, 'person': data, 'uuid': uuid}
         if '_id' in data:
             del data['_id']
-            self.send_ws_message('event/%s/updates' % id_, json.dumps(ret))
+            self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(ret))
         if not doc:
             data['_id'] = self.gen_id()
             merged, doc = self.db.update('events',
@@ -660,7 +666,7 @@ class EventsHandler(CollectionHandler):
                 doc.get('persons') or [])
         env = self._dict2env(new_person_data)
         # always takes the person_id from the new person (it may have
-        # be a ticket_id).
+        # been a ticket_id).
         person_id = str(new_person_data.get('person_id'))
         env.update({'PERSON_ID': person_id, 'EVENT_ID': id_,
             'EVENT_TITLE': doc.get('title', ''), 'WEB_USER': self.current_user,
@@ -695,7 +701,7 @@ class EventsHandler(CollectionHandler):
                     {'persons': {'person_id': person_id}},
                     operation='delete',
                     create=False)
-            self.send_ws_message('event/%s/updates' % id_, json.dumps(ret))
+            self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(ret))
         return ret
 
     handle_delete_tickets = handle_delete_persons
@@ -826,7 +832,6 @@ class WebSocketEventUpdatesHandler(tornado.websocket.WebSocketHandler):
 
     def open(self, event_id, *args, **kwds):
         logging.debug('WebSocketEventUpdatesHandler.on_open event_id:%s' % event_id)
-
         _ws_clients.setdefault(self._clean_url(self.request.uri), set()).add(self)
         logging.debug('WebSocketEventUpdatesHandler.on_open %s clients connected' % len(_ws_clients))
 

@@ -4,17 +4,23 @@
     <div class="container">
         <div class="row">
             <div class="col-md-7 col-xs-7 vcenter">
-                <h1>{{event.title}} - {{'new ticket' | translate}}</h1>
+                <h1><a ui-sref="event.view({id: event._id})" ng-if="event._id">{{event.title}}</a><span ng-if="!ticket._id"> - {{'join this event' | translate}}</span><span ng-if="ticket._id"> - {{'your ticket' | translate}}</span></h1>
             </div>
         </div>
     </div>
 
+    <!-- FIXME: ideally, here we would have put a ng-if="!ticket.cancelled" directive, but for some
+         odd reason, any kind ng-if directive will prevent the form being populated with the formData model.
+    -->
     <div class="container">
         <div class="row">
             <div class="col-md-12">
                 <div class="panel panel-info table-striped top5">
-                    <div class="panel-heading">{{'Register to this event' | translate}}</div>
+                    <div class="panel-heading">{{'Join this event' | translate}}</div>
                     <div class="panel-body">
+                        <div ng-if="ticket.cancelled" class="clearfix alert alert-danger">
+                            {{'Your ticket has been cancelled; you can join again this event using the commands below' | translate}}
+                        </div>
                         <eda-easy-form-viewer
                             eda-easy-form-viewer-data-model="formData"
                             eda-easy-form-viewer-easy-form-generator-fields-model="formSchema"
@@ -22,6 +28,34 @@
                             eda-easy-form-viewer-submit-form-event="submitForm(dataModelSubmitted)"
                             eda-easy-form-viewer-cancel-form-event="cancelForm()">
                         </eda-easy-form-viewer>
+                        <div ng-if="ticket._id">
+                            <div ng-controller="NavigationCtrl">
+                                <span><strong>{{'Save this URL if you want to modify your order later:'}} <a ng-href="{{getLocation()}}">{{getLocation()}}</a></strong></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" ng-if="ticket._id">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-danger table-striped top5">
+                    <div class="panel-heading">{{'Dangerous stuff' | translate}}</div>
+                    <div class="panel-body">
+                    <button ng-click="dangerousActionsEnabled = !dangerousActionsEnabled" class="btn btn-warning">
+                        <span class="fa fa-exclamation-triangle vcenter"></span>
+                        {{'Toggle dangerous actions' | translate}}
+                    </button>
+                    &nbsp;
+                    <button ng-disabled="!dangerousActionsEnabled" ng-click="toggleTicket({id: ticket._id})" class="btn btn-danger">
+                        <span ng-class="{fa: true, 'fa-sign-out': !ticket.cancelled, 'fa-sign-in': ticket.cancelled, vcenter: true}"></span>
+                        <span ng-if="!ticket.cancelled">{{'Leave this event' | translate}}</span>
+                        <span ng-if="ticket.cancelled">{{'Join again this event' | translate}}</span>
+                    </button>
+
                     </div>
                 </div>
             </div>

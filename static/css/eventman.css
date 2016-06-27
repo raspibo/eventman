@@ -8,8 +8,16 @@ body { padding-top: 70px; }
     padding-bottom: 0px;
 }
 
+a:focus a:hover {
+    color: #23527c;
+}
+
 a:hover {
     color: #23527c;
+}
+
+input[type=text].form-control, input[type=search].form-control {
+    border: 1px solid rgb(204, 204, 204);
 }
 
 /* fix styling for empty href */
