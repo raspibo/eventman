@@ -89,10 +89,10 @@ class BaseHandler(tornado.web.RequestHandler):
         'event:tickets-all|create': True,
         'events|read': True,
         'persons|create': True,
-        'person|create': True,
         'users|create': True
     }
 
+    # Cache currently connected users.
     _users_cache = {}
 
     # A property to access the first value of each argument.
