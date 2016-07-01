@@ -51,23 +51,23 @@ eventManControllers.controller('DatetimePickerCtrl', ['$scope',
 
 
 /* Controller for modals. */
-eventManControllers.controller('ModalConfirmInstanceCtrl', ['$scope', '$modalInstance', 'message',
-    function ($scope, $modalInstance, message) {
+eventManControllers.controller('ModalConfirmInstanceCtrl', ['$scope', '$uibModalInstance', 'message',
+    function ($scope, $uibModalInstance, message) {
         $scope.message = message;
 
         $scope.ok = function () {
-            $modalInstance.close($scope);
+            $uibModalInstance.close($scope);
         };
 
         $scope.cancel = function () {
-            $modalInstance.dismiss('cancel');
+            $uibModalInstance.dismiss('cancel');
         };
     }]
 );
 
 
-eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$modal', '$log', '$translate', '$rootScope',
-    function ($scope, Event, $modal, $log, $translate, $rootScope) {
+eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$uibModal', '$log', '$translate', '$rootScope',
+    function ($scope, Event, $uibModal, $log, $translate, $rootScope) {
         $scope.events = Event.all();
         $scope.personsOrderProp = 'name';
         $scope.eventsOrderProp = "-begin_date";
@@ -80,7 +80,7 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$modal', '
         });
 
         $scope.remove = function(_id) {
-            var modalInstance = $modal.open({
+            var modalInstance = $uibModal.open({
                 scope: $scope,
                 templateUrl: 'modal-confirm-action.html',
                 controller: 'ModalConfirmInstanceCtrl',
@@ -99,8 +99,8 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$modal', '
 );
 
 
-eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event', 'Person', 'EventUpdates', '$stateParams', 'Setting', '$log', '$translate', '$rootScope', 'easyFormSteWayConfig',
-    function ($scope, $state, Event, Person, EventUpdates, $stateParams, Setting, $log, $translate, $rootScope, easyFormSteWayConfig) {
+eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event', 'Person', 'EventUpdates', '$stateParams', 'Setting', '$log', '$translate', '$rootScope', 'easyFormSteWayConfig', '$uibModal',
+    function ($scope, $state, Event, Person, EventUpdates, $stateParams, Setting, $log, $translate, $rootScope, easyFormSteWayConfig, $uibModal) {
         $scope.personsOrder = ["name", "surname"];
         $scope.countAttendees = 0;
         $scope.message = {};
@@ -265,6 +265,16 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
             }
         };
 
+        $scope.openQuickAddTicket = function(_id) {
+            var modalInstance = $uibModal.open({
+                templateUrl: 'modal-quick-add-ticket.html',
+                controller: 'EventTicketsCtrl'
+            });
+            modalInstance.result.then(function(x) {
+                $scope.event = Event.get($stateParams);
+            });
+        };
+
         $scope.addRegisteredPerson = function(person) {
             $scope.fastAddAttendee(person, true);
         };
@@ -425,7 +435,11 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                 person._id = $state.params.id; // that's the id of the event, not the person.
                 EventTicket.add(person, function(ticket) {
                     $log.debug(ticket);
-                    $state.go('event.ticket.edit', {id: $scope.event._id, ticket_id: ticket._id});
+                    if (!$state.is('event.tickets')) {
+                        $state.go('event.ticket.edit', {id: $scope.event._id, ticket_id: ticket._id});
+                    } else if ($scope.$close) {
+                        $scope.$close();
+                    }
                 });
             });
         };
@@ -464,14 +478,18 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
         };
 
         $scope.cancelForm = function() {
-            $state.go('events');
+            if (!$state.is('event.tickets')) {
+                $state.go('events');
+            } else if ($scope.$close) {
+                $scope.$close();
+            }
         };
     }]
 );
 
 
-eventManControllers.controller('PersonsListCtrl', ['$scope', 'Person', 'Setting', '$modal', '$translate', '$rootScope',
-    function ($scope, Person, Setting, $modal, $translate, $rootScope) {
+eventManControllers.controller('PersonsListCtrl', ['$scope', 'Person', 'Setting', '$uibModal', '$translate', '$rootScope',
+    function ($scope, Person, Setting, $uibModal, $translate, $rootScope) {
         $scope.persons = Person.all();
         $scope.personsOrder = ["name", "surname"];
         $scope.customFields = Setting.query({setting: 'person_custom_field',
@@ -511,7 +529,7 @@ eventManControllers.controller('PersonsListCtrl', ['$scope', 'Person', 'Setting'
         };
 
         $scope.remove = function(_id) {
-            var modalInstance = $modal.open({
+            var modalInstance = $uibModal.open({
                 scope: $scope,
                 templateUrl: 'modal-confirm-action.html',
                 controller: 'ModalConfirmInstanceCtrl',

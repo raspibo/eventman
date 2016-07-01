@@ -9,6 +9,11 @@
                         <span class="fa fa-pencil-square-o vcenter"></span>
                         {{'Edit' | translate}}
                     </button>
+                    &nbsp;
+                    <button ng-if="event._id" ng-click="openQuickAddTicket()" class="btn btn-success">
+                        <span class="fa fa-user-plus vcenter"></span>
+                        {{'Quick add ticket' | translate}}
+                    </button>
                 </h1>
             </div><!--
          --><div class="col-md-5 col-xs-5 vcenter">
@@ -77,40 +82,6 @@
             </div>
 
             <div class="col-md-4">
-
-                <div class="panel panel-info table-striped top5">
-                    <div class="panel-heading">{{'Quick add' | translate}}</div>
-                    <div class="panel-body">
-                        <form>
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-addon min70-compact">{{'Name' | translate}}</span>
-                                <input type="text" class="form-control" placeholder="{{'Name' | translate}}" ng-model="newPerson.name" ng-required="1">
-                            </div>
-                            <div class="input-group input-group-sm top5">
-                                <span class="input-group-addon min70-compact">{{'Surname' | translate}}</span>
-                                <input type="text" class="form-control" placeholder="{{'Surname' | translate}}" ng-model="newPerson.surname">
-                            </div>
-                            <div class="input-group top5">
-                                <span class="input-group-addon min70-compact">{{'Email' | translate}}</span>
-                                <input type="email" name="email" class="form-control" placeholder="{{'name.surname@example.com' | translate}}"  ng-model="newPerson.email">
-                            </div>
-                            <div class="input-group top5">
-                                <span class="input-group-addon min70-compact">{{'Company' | translate}}</span>
-                                <input name="company" class="form-control" placeholder="{{'Acme Corporation' | translate}}"  ng-model="newPerson.company">
-                            </div>
-                            <div class="input-group top5">
-                                <span class="input-group-addon min70-compact">{{'Job' | translate}}</span>
-                                <input name="job_title" class="form-control" placeholder="{{'Evil Ruler' | translate}}"  ng-model="newPerson.job_title">
-                            </div>
-
-                            <button reset-focus ng-disabled="!(newPerson.name && newPerson.surname)" ng-click="fastAddAttendee(newPerson, true)" class="btn btn-success top5">
-                                <span class="fa fa-plus-circle vcenter"></span>
-                                {{'Add' | translate}}
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
                 <div class="panel panel-info top5">
                     <div class="panel-heading">{{'Unregistered persons' | translate}}</div>
                     <div class="panel-body small-table">

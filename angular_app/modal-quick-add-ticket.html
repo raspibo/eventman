@@ -1,0 +1,19 @@
+<div>
+    <div class="modal-header">
+        <h3>{{'Quick add a ticket' | translate}}</h3>
+    </div>
+
+    <div class="modal-body" ng-cloak>
+        <eda-easy-form-viewer 
+            eda-easy-form-viewer-data-model="formData"
+            eda-easy-form-viewer-easy-form-generator-fields-model="formSchema"
+
+            eda-easy-form-viewer-submit-form-event="submitForm(dataModelSubmitted)"
+            eda-easy-form-viewer-cancel-form-event="cancelForm()">
+        </eda-easy-form-viewer>
+    </div>
+
+    <div class="modal-footer">
+    </div>
+</div>
+
