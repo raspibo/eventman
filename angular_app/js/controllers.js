@@ -98,8 +98,8 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$uibModal'
 );
 
 
-eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event', 'Setting', '$log', '$translate', '$rootScope', '$uibModal',
-    function ($scope, $state, Event, Setting, $log, $translate, $rootScope, $uibModal) {
+eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event', '$log', '$translate', '$rootScope',
+    function ($scope, $state, Event, $log, $translate, $rootScope) {
         $scope.event = {};
         $scope.event.persons = [];
         $scope.event.formSchema = {};
@@ -130,8 +130,8 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
 );
 
 
-eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event', 'EventTicket', 'Person', 'Setting', '$log', '$translate', '$rootScope', 'EventUpdates',
-    function ($scope, $state, Event, EventTicket, Person, Setting, $log, $translate, $rootScope, EventUpdates) {
+eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event', 'EventTicket', 'Person', 'Setting', '$log', '$translate', '$rootScope', 'EventUpdates', '$uibModal',
+    function ($scope, $state, Event, EventTicket, Person, Setting, $log, $translate, $rootScope, EventUpdates, $uibModal) {
         $scope.personsOrder = ["name", "surname"];
         $scope.countAttendees = 0;
         $scope.message = {};
@@ -139,7 +139,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
         $scope.ticket = {};
         $scope.formSchema = {};
         $scope.formData = {};
-        $scope.dangerousActionsEnabled = false;
+        $scope.guiOptions = {dangerousActionsEnabled: false};
         $scope.customFields = Setting.query({setting: 'person_custom_field', in_event_details: true});
 
         $scope.formFieldsMap = {};
@@ -416,9 +416,10 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
 
         $scope.openQuickAddTicket = function(_id) {
             var modalInstance = $uibModal.open({
-                templateUrl: 'modal-quick-add-ticket.html'
+                templateUrl: 'modal-quick-add-ticket.html',
+                controller: 'EventTicketsCtrl'
             });
-            modalInstance.result.then(function(x) {
+            modalInstance.result.then(function() {
             });
         };
 
@@ -430,6 +431,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                 if (!$state.is('event.tickets')) {
                     $state.go('event.ticket.edit', {id: $scope.event._id, ticket_id: ticket._id});
                 } else if ($scope.$close) {
+                    $scope._setAttended(person);
                     $scope.$close();
                 }
             });
@@ -462,8 +464,8 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                 return;
             }
             $scope.ticket.cancelled = !$scope.ticket.cancelled;
-            $scope.updateTicket($scope.ticket, function() {
-                $scope.dangerousActionsEnabled = false;
+            $scope.setPersonAttribute($scope.ticket, 'cancelled', $scope.ticket.cancelled, function() {
+                $scope.guiOptions.dangerousActionsEnabled = false;
             });
         };
 
@@ -618,6 +620,7 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$state', 'Person
         };
     }]
 );
+
 
 eventManControllers.controller('LoginCtrl', ['$scope', '$rootScope', '$state', '$log', 'User',
     function ($scope, $rootScope, $state, $log, User) {

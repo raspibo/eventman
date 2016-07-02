@@ -45,17 +45,16 @@
                 <div class="panel panel-danger table-striped top5">
                     <div class="panel-heading">{{'Dangerous stuff' | translate}}</div>
                     <div class="panel-body">
-                    <button ng-click="dangerousActionsEnabled = !dangerousActionsEnabled" class="btn btn-warning">
-                        <span class="fa fa-exclamation-triangle vcenter"></span>
-                        {{'Toggle dangerous actions' | translate}}
-                    </button>
-                    &nbsp;
-                    <button ng-disabled="!dangerousActionsEnabled" ng-click="toggleTicket({id: ticket._id})" class="btn btn-danger">
-                        <span ng-class="{fa: true, 'fa-sign-out': !ticket.cancelled, 'fa-sign-in': ticket.cancelled, vcenter: true}"></span>
-                        <span ng-if="!ticket.cancelled">{{'Leave this event' | translate}}</span>
-                        <span ng-if="ticket.cancelled">{{'Join again this event' | translate}}</span>
-                    </button>
-
+                        <button ng-click="guiOptions.dangerousActionsEnabled = !guiOptions.dangerousActionsEnabled" class="btn btn-warning">
+                            <span class="fa fa-exclamation-triangle vcenter"></span>
+                            {{'Toggle dangerous actions' | translate}}
+                        </button>
+                        &nbsp;
+                        <button ng-disabled="!guiOptions.dangerousActionsEnabled" ng-click="toggleTicket({id: ticket._id})" class="btn btn-danger">
+                            <span ng-class="{fa: true, 'fa-sign-out': !ticket.cancelled, 'fa-sign-in': ticket.cancelled, vcenter: true}"></span>
+                            <span ng-if="!ticket.cancelled">{{'Leave this event' | translate}}</span>
+                            <span ng-if="ticket.cancelled">{{'Join again this event' | translate}}</span>
+                        </button>
                     </div>
                 </div>
             </div>
