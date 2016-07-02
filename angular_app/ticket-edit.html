@@ -50,7 +50,7 @@
                             {{'Toggle dangerous actions' | translate}}
                         </button>
                         &nbsp;
-                        <button ng-disabled="!guiOptions.dangerousActionsEnabled" ng-click="toggleTicket({id: ticket._id})" class="btn btn-danger">
+                        <button ng-disabled="!guiOptions.dangerousActionsEnabled" ng-click="toggleCancelledTicket({id: ticket._id})" class="btn btn-danger">
                             <span ng-class="{fa: true, 'fa-sign-out': !ticket.cancelled, 'fa-sign-in': ticket.cancelled, vcenter: true}"></span>
                             <span ng-if="!ticket.cancelled">{{'Leave this event' | translate}}</span>
                             <span ng-if="ticket.cancelled">{{'Join again this event' | translate}}</span>

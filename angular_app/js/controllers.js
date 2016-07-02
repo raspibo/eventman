@@ -267,7 +267,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
         });
 
         $scope._localRemoveTicket = function(person) {
-            $log.debug('_localRemoveAttendee');
+            $log.debug('_localRemoveTicket');
             $log.debug(person);
             if (!(person && person._id && $scope.event.persons)) {
                 return;
@@ -290,17 +290,6 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
             if (all_person_idx == -1 && person._id) {
                 $scope.allPersons.push(person);
             }
-        };
-
-        $scope._setAttended = function(person) {
-            $scope.setPersonAttribute(person, 'attended', true, function() {
-                var all_person_idx = $scope.allPersons.findIndex(function(el, idx, array) {
-                    return person._id == el._id;
-                });
-                if (all_person_idx != -1) {
-                    $scope.allPersons.splice(all_person_idx, 1);
-                }
-            }, true);
         };
 
         $scope.setPersonAttribute = function(person, key, value, callback, hideMessage) {
@@ -344,7 +333,18 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
             $scope.query = '';
         };
 
-        $scope.removeAttendee = function(person) {
+        $scope._setAttended = function(person) {
+            $scope.setPersonAttribute(person, 'attended', true, function() {
+                var all_person_idx = $scope.allPersons.findIndex(function(el, idx, array) {
+                    return person._id == el._id;
+                });
+                if (all_person_idx != -1) {
+                    $scope.allPersons.splice(all_person_idx, 1);
+                }
+            }, true);
+        };
+
+        $scope.deleteTicket = function(person) {
             EventTicket.delete({
                     event_id: $state.params.id,
                     ticket_id: person._id
@@ -380,7 +380,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
             });
         };
 
-        $scope.toggleTicket = function() {
+        $scope.toggleCancelledTicket = function() {
             if (!$scope.ticket._id) {
                 return;
             }
