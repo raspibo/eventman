@@ -58,39 +58,6 @@ eventManServices.factory('Event', ['$resource', '$rootScope',
             update: {
                 method: 'PUT',
                 interceptor : {responseError: $rootScope.errorHandler}
-            },
-
-            updatePerson: {
-                method: 'PUT',
-                interceptor : {responseError: $rootScope.errorHandler},
-                isArray: false,
-                url: 'events/:id/tickets/:ticket_id',
-                params: {uuid: $rootScope.app_uuid},
-                transformResponse: function(data, headers) {
-                    return angular.fromJson(data);
-                }
-            },
-
-            addPerson: {
-                method: 'POST',
-                interceptor : {responseError: $rootScope.errorHandler},
-                isArray: false,
-                url: 'events/:id/tickets',
-                params: {uuid: $rootScope.app_uuid},
-                transformResponse: function(data, headers) {
-                    return angular.fromJson(data);
-                }
-            },
-
-            deletePerson: {
-                method: 'DELETE',
-                interceptor : {responseError: $rootScope.errorHandler},
-                isArray: false,
-                url: 'events/:_id/persons/:ticket_id',
-                params: {uuid: $rootScope.app_uuid},
-                transformResponse: function(data, headers) {
-                    return angular.fromJson(data);
-                }
             }
         });
     }]
@@ -123,7 +90,7 @@ eventManServices.factory('EventTicket', ['$resource', '$rootScope',
                 }
             },
 
-            updateTicket: {
+            update: {
                 method: 'PUT',
                 interceptor : {responseError: $rootScope.errorHandler},
                 isArray: false,
@@ -134,7 +101,7 @@ eventManServices.factory('EventTicket', ['$resource', '$rootScope',
                 }
             },
 
-            deleteTicket: {
+            'delete': {
                 method: 'DELETE',
                 interceptor : {responseError: $rootScope.errorHandler},
                 isArray: false,
