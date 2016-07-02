@@ -592,7 +592,7 @@ class EventsHandler(CollectionHandler):
                 if all(person.get(k) == v for k, v in person_id_or_query.iteritems()):
                     return person
             else:
-                if str(person.get('person_id')) == person_id_or_query:
+                if str(person.get('_id')) == person_id_or_query:
                     return person
         return {}
 
@@ -622,8 +622,8 @@ class EventsHandler(CollectionHandler):
         if person_id is None:
             doc = {}
         else:
-            doc = self.db.query('events', {'_id': id_, 'persons.person_id': person_id})
-        ret = {'action': 'add', 'person_id': person_id, 'person': data, 'uuid': uuid}
+            doc = self.db.query('events', {'_id': id_, 'persons._id': person_id})
+        ret = {'action': 'add', '_id': person_id, 'person': data, 'uuid': uuid}
         if '_id' in data:
             del data['_id']
             self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(ret))
@@ -644,12 +644,9 @@ class EventsHandler(CollectionHandler):
         uuid, arguments = self.uuid_arguments
         query = dict([('persons.%s' % k, v) for k, v in arguments.iteritems()])
         query['_id'] = id_
-        if ticket:
+        if person_id is not None:
             query['persons._id'] = person_id
             person_query = {'_id': person_id}
-        elif person_id is not None:
-            query['persons.person_id'] = person_id
-            person_query = person_id
         else:
             person_query = self.arguments
         old_person_data = {}
@@ -667,8 +664,8 @@ class EventsHandler(CollectionHandler):
         env = self._dict2env(new_person_data)
         # always takes the person_id from the new person (it may have
         # been a ticket_id).
-        person_id = str(new_person_data.get('person_id'))
-        env.update({'PERSON_ID': person_id, 'EVENT_ID': id_,
+        ticket_id = str(new_person_data.get('_id'))
+        env.update({'PERSON_ID': ticket_id, 'TICKED_ID': ticket_id, 'EVENT_ID': id_,
             'EVENT_TITLE': doc.get('title', ''), 'WEB_USER': self.current_user,
             'WEB_REMOTE_IP': self.request.remote_ip})
         stdin_data = {'old': old_person_data,
@@ -681,7 +678,7 @@ class EventsHandler(CollectionHandler):
             if new_person_data.get('attended'):
                 self.run_triggers('attends', stdin_data=stdin_data, env=env)
 
-        ret = {'action': 'update', 'person_id': person_id, 'person': new_person_data, 'uuid': uuid}
+        ret = {'action': 'update', '_id': ticket_id, 'person': new_person_data, 'uuid': uuid}
         if old_person_data != new_person_data:
             self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(ret))
         return ret
@@ -693,12 +690,12 @@ class EventsHandler(CollectionHandler):
         # Remove a specific person from the list of persons registered at this event.
         uuid, arguments = self.uuid_arguments
         doc = self.db.query('events',
-                {'_id': id_, 'persons.person_id': person_id})
-        ret = {'action': 'delete', 'person_id': person_id, 'uuid': uuid}
+                {'_id': id_, 'persons._id': person_id})
+        ret = {'action': 'delete', '_id': person_id, 'uuid': uuid}
         if doc:
             merged, doc = self.db.update('events',
                     {'_id': id_},
-                    {'persons': {'person_id': person_id}},
+                    {'persons': {'_id': person_id}},
                     operation='delete',
                     create=False)
             self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(ret))

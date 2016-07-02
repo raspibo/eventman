@@ -18,7 +18,7 @@ function convert_dates(obj) {
 
 eventManServices.factory('Event', ['$resource', '$rootScope',
     function($resource, $rootScope) {
-        return $resource('events/:id', {id: '@_id', person_id: '@person_id'}, {
+        return $resource('events/:id', {id: '@_id', ticket_id: '@_id'}, {
 
             all: {
                 method: 'GET',
@@ -64,7 +64,7 @@ eventManServices.factory('Event', ['$resource', '$rootScope',
                 method: 'PUT',
                 interceptor : {responseError: $rootScope.errorHandler},
                 isArray: false,
-                url: 'events/:id/persons/:person_id',
+                url: 'events/:id/tickets/:ticket_id',
                 params: {uuid: $rootScope.app_uuid},
                 transformResponse: function(data, headers) {
                     return angular.fromJson(data);
@@ -75,7 +75,7 @@ eventManServices.factory('Event', ['$resource', '$rootScope',
                 method: 'POST',
                 interceptor : {responseError: $rootScope.errorHandler},
                 isArray: false,
-                url: 'events/:id/persons/:person_id',
+                url: 'events/:id/tickets',
                 params: {uuid: $rootScope.app_uuid},
                 transformResponse: function(data, headers) {
                     return angular.fromJson(data);
@@ -86,7 +86,7 @@ eventManServices.factory('Event', ['$resource', '$rootScope',
                 method: 'DELETE',
                 interceptor : {responseError: $rootScope.errorHandler},
                 isArray: false,
-                url: 'events/:_id/persons/:person_id',
+                url: 'events/:_id/persons/:ticket_id',
                 params: {uuid: $rootScope.app_uuid},
                 transformResponse: function(data, headers) {
                     return angular.fromJson(data);
@@ -99,7 +99,7 @@ eventManServices.factory('Event', ['$resource', '$rootScope',
 
 eventManServices.factory('EventTicket', ['$resource', '$rootScope',
     function($resource, $rootScope) {
-        return $resource('events/:id/tickets', {id: '@_id', ticket_id: '@ticket_id'}, {
+        return $resource('events/:id/tickets', {event_id: '@event_id', ticket_id: '@_id'}, {
 
             get: {
                 method: 'GET',
@@ -115,7 +115,7 @@ eventManServices.factory('EventTicket', ['$resource', '$rootScope',
                 method: 'POST',
                 interceptor : {responseError: $rootScope.errorHandler},
                 isArray: false,
-                url: 'events/:id/tickets/:ticket_id',
+                url: 'events/:event_id/tickets',
                 params: {uuid: $rootScope.app_uuid},
                 transformResponse: function(data, headers) {
                     data = angular.fromJson(data);
@@ -123,11 +123,11 @@ eventManServices.factory('EventTicket', ['$resource', '$rootScope',
                 }
             },
 
-            update: {
+            updateTicket: {
                 method: 'PUT',
                 interceptor : {responseError: $rootScope.errorHandler},
                 isArray: false,
-                url: 'events/:id/tickets/:ticket_id',
+                url: 'events/:event_id/tickets/:ticket_id',
                 params: {uuid: $rootScope.app_uuid},
                 transformResponse: function(data, headers) {
                     return angular.fromJson(data);
@@ -138,7 +138,7 @@ eventManServices.factory('EventTicket', ['$resource', '$rootScope',
                 method: 'DELETE',
                 interceptor : {responseError: $rootScope.errorHandler},
                 isArray: false,
-                url: 'events/:_id/tickets/:ticket_id',
+                url: 'events/:event_id/tickets/:ticket_id',
                 params: {uuid: $rootScope.app_uuid},
                 transformResponse: function(data, headers) {
                     return angular.fromJson(data);
@@ -158,6 +158,8 @@ eventManServices.factory('Person', ['$resource', '$rootScope',
                 interceptor : {responseError: $rootScope.errorHandler},
                 isArray: true,
                 transformResponse: function(data, headers) {
+                    // TODO: REMOVE!
+                    return [];
                     data = angular.fromJson(data);
                     if (data.error) {
                         return data;
