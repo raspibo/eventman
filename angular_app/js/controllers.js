@@ -180,7 +180,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
 
             // Managing the list of tickets.
             if ($state.is('event.tickets')) {
-                $scope.allPersons = Person.all();
+                $scope.allPersons = Event.group_persons({id: $state.params.id});
 
                 // Handle WebSocket connection used to update the list of persons.
                 $scope.EventUpdates = EventUpdates;
@@ -203,7 +203,6 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                         var person_idx = $scope.event.persons.findIndex(function(el, idx, array) {
                             return data._id == el._id;
                         });
-                        $log.debug(data);
                         if (person_idx != -1) {
                             $log.debug('_id ' + data._id + ' found');
                         } else {
@@ -238,21 +237,43 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
 
         /* Stuff to do when a ticket is added, modified or removed locally. */
 
-        $scope._localAddTicket = function(person) {
+        $scope._localAddTicket = function(ticket, original_person) {
+            var ret = true;
             if (!$scope.event.persons) {
                 $scope.event.persons = [];
             }
-            var person_idx = $scope.event.persons.findIndex(function(el, idx, array) {
-                    return person._id == el._id;
+            var ticket_idx = $scope.event.persons.findIndex(function(el, idx, array) {
+                    return ticket._id == el._id;
             });
-            if (person_idx != -1) {
-                $log.debug('person already present: not added');
-                return false;
+            if (ticket_idx != -1) {
+                $log.warn('ticket already present: not added');
+                ret = false;
+            } else {
+                $scope.event.persons.push(ticket);
             }
-            $scope.event.persons.push(person);
+
+            // Try to remove this person from the allPersons list using ID or email.
+            var field = null;
+            var field_value = null;
+            if (original_person && original_person._id) {
+                field = '_id';
+                field_value = original_person._id;
+            } else if (ticket.email) {
+                field = 'email';
+                field_value = ticket.email;
+            }
+            if (field) {
+                var all_person_idx = $scope.allPersons.findIndex(function(el, idx, array) {
+                    return field_value == el[field];
+                });
+                if (all_person_idx != -1) {
+                    $scope.allPersons.splice(all_person_idx, 1);
+                }
+            }
+            return ret;
         };
 
-        $scope._localUpdateTicket(ticket) {
+        $scope._localUpdateTicket = function(ticket) {
             if (!$scope.event.persons) {
                 $scope.event.persons = [];
             }
@@ -260,15 +281,13 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                 return ticket._id == el._id;
             });
             if (ticket_idx == -1) {
-                $log.debug('person not present: not updated');
+                $log.warn('ticket not present: not updated');
                 return false;
             }
             $scope.event.persons[ticket_idx] = ticket;
-        });
+        };
 
         $scope._localRemoveTicket = function(person) {
-            $log.debug('_localRemoveTicket');
-            $log.debug(person);
             if (!(person && person._id && $scope.event.persons)) {
                 return;
             }
@@ -292,10 +311,8 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
             }
         };
 
-        $scope.setPersonAttribute = function(person, key, value, callback, hideMessage) {
-            $log.debug('EventDetailsCtrl.setPersonAttribute.event_id: ' + $state.params.id);
-            $log.debug('EventDetailsCtrl.setPersonAttribute._id: ' + person._id);
-            $log.debug('EventDetailsCtrl.setPersonAttribute.key: ' + key + ' value: ' + value);
+        $scope.setTicketAttribute = function(person, key, value, callback, hideMessage) {
+            $log.debug('setTicketAttribute for _id ' + person._id + ' key: ' + key + ' value: ' + value);
             var newData = {event_id: $state.params.id, _id: person._id};
             newData[key] = value;
             EventTicket.update(newData, function(data) {
@@ -328,20 +345,13 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
             });
         };
 
-        $scope.setPersonAttributeAndRefocus = function(person, key, value) {
-            $scope.setPersonAttribute(person, key, value);
+        $scope.setTicketAttributeAndRefocus = function(person, key, value) {
+            $scope.setTicketAttribute(person, key, value);
             $scope.query = '';
         };
 
         $scope._setAttended = function(person) {
-            $scope.setPersonAttribute(person, 'attended', true, function() {
-                var all_person_idx = $scope.allPersons.findIndex(function(el, idx, array) {
-                    return person._id == el._id;
-                });
-                if (all_person_idx != -1) {
-                    $scope.allPersons.splice(all_person_idx, 1);
-                }
-            }, true);
+            $scope.setTicketAttribute(person, 'attended', true, null, true);
         };
 
         $scope.deleteTicket = function(person) {
@@ -356,8 +366,9 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
         $scope.addTicket = function(person) {
             person.event_id = $state.params.id;
             EventTicket.add(person, function(ticket) {
+                $log.debug('addTicket');
                 $log.debug(ticket);
-                $scope._localAddTicket(ticket);
+                $scope._localAddTicket(ticket, person);
                 if (!$state.is('event.tickets')) {
                     $state.go('event.ticket.edit', {id: $scope.event._id, ticket_id: ticket._id});
                 } else {
@@ -385,7 +396,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                 return;
             }
             $scope.ticket.cancelled = !$scope.ticket.cancelled;
-            $scope.setPersonAttribute($scope.ticket, 'cancelled', $scope.ticket.cancelled, function() {
+            $scope.setTicketAttribute($scope.ticket, 'cancelled', $scope.ticket.cancelled, function() {
                 $scope.guiOptions.dangerousActionsEnabled = false;
             });
         };
@@ -570,7 +581,7 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$state', 'Person
             $scope.personForm.$setPristine(false);
         };
 
-        $scope.setPersonAttributeAtEvent = function(evnt, key, value) {
+        $scope.setTicketAttributeAtEvent = function(evnt, key, value) {
             var attrs = {_id: evnt._id, person_id: $state.params.id};
             attrs[key] = value;
             Event.updatePerson(attrs,

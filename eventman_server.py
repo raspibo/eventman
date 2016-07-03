@@ -576,6 +576,15 @@ class EventsHandler(CollectionHandler):
                     event['persons'] = []
         return output
 
+    def filter_input_post(self, data):
+        # Auto-generate the group_id, if missing.
+        if 'group_id' not in data:
+            data['group_id'] = self.gen_id()
+        return data
+
+    filter_input_post_all = filter_input_post
+    filter_input_put = filter_input_post
+
     def filter_input_post_tickets(self, data):
         if not self.has_permission('event|update'):
             if 'attended' in data:
@@ -583,6 +592,23 @@ class EventsHandler(CollectionHandler):
         return data
 
     filter_input_put_tickets = filter_input_post_tickets
+
+    def handle_get_group_persons(self, id_, resource_id=None):
+        persons = []
+        this_query = {'_id': id_}
+        this_event = self.db.query('events', this_query)[0]
+        group_id = this_event.get('group_id')
+        if group_id is None:
+            return {'persons': persons}
+        this_persons = [p for p in (this_event.get('persons') or []) if not p.get('cancelled')]
+        this_emails = filter(None, [p.get('email') for p in this_persons])
+        all_query = {'group_id': group_id}
+        events = self.db.query('events', all_query)
+        for event in events:
+            if str(event.get('_id')) == id_:
+                continue
+            persons += [p for p in (event.get('persons') or []) if p.get('email') and p.get('email') not in this_emails]
+        return {'persons': persons}
 
     def _get_person_data(self, person_id_or_query, persons):
         """Filter a list of persons returning the first item with a given person_id

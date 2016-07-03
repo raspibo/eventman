@@ -18,7 +18,7 @@ function convert_dates(obj) {
 
 eventManServices.factory('Event', ['$resource', '$rootScope',
     function($resource, $rootScope) {
-        return $resource('events/:id', {id: '@_id', ticket_id: '@_id'}, {
+        return $resource('events/:id', {id: '@_id'}, {
 
             all: {
                 method: 'GET',
@@ -58,6 +58,16 @@ eventManServices.factory('Event', ['$resource', '$rootScope',
             update: {
                 method: 'PUT',
                 interceptor : {responseError: $rootScope.errorHandler}
+            },
+
+            group_persons: {
+                method: 'GET',
+                url: 'events/:id/group_persons',
+                isArray: true,
+                transformResponse: function(data, headers) {
+                    data = angular.fromJson(data);
+                    return data.persons || [];
+                }
             }
         });
     }]
