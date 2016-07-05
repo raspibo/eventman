@@ -142,6 +142,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
         $scope.message = {};
         $scope.event = {};
         $scope.ticket = {}; // current ticket, for the event.ticket.* states
+        $scope.tickets = []; // list of all tickets, for the 'tickets' state
         $scope.formSchema = {};
         $scope.formData = {};
         $scope.guiOptions = {dangerousActionsEnabled: false};
@@ -219,6 +220,8 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                     }
                 );
             }
+        } else if ($state.is('tickets')) {
+            $scope.tickets = EventTicket.all();
         }
 
         $scope.calcAttendees = function() {

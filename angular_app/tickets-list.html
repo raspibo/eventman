@@ -45,7 +45,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                <tr ng-repeat="person in persons | splittedFilter:query | orderBy:personsOrder">
+                <tr ng-repeat="person in tickets | splittedFilter:query | orderBy:personsOrder">
                     <td class="text-right">{{$index+1}}</td>
                     <td>
                         <span><strong><a ui-sref="person.info({id: person._id})"><span>{{person.name}}</span>&nbsp;<span>{{person.surname}}</span></a></strong></span><span ng-if="person.email">&nbsp;&lt;{{person.email}}&gt;</span>

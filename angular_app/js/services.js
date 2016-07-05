@@ -88,6 +88,20 @@ eventManServices.factory('EventTicket', ['$resource', '$rootScope',
                 }
             },
 
+            all: {
+                method: 'GET',
+                url: '/tickets',
+                interceptor : {responseError: $rootScope.errorHandler},
+                isArray: true,
+                transformResponse: function(data, headers) {
+                    data = angular.fromJson(data);
+                    if (data.error) {
+                        return data;
+                    }
+                    return data.persons;
+                }
+            },
+
             add: {
                 method: 'POST',
                 interceptor : {responseError: $rootScope.errorHandler},

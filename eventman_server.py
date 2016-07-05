@@ -522,10 +522,30 @@ class CollectionHandler(BaseHandler):
             self.logger.error('Error yielding WebSocket message: %s', e)
 
 
+class TicketsHandler(CollectionHandler):
+    """Handle requests for Tickes."""
+
+    @gen.coroutine
+    @authenticated
+    def get(self, id_=None, resource=None, resource_id=None, acl=True, **kwargs):
+        query = {}
+        events = self.db.query('events', {})
+        persons = {}
+        for event in events:
+            id_ = str(event['_id'])
+            title = event['title']
+            for person in (event.get('persons') or []):
+                email = person.get('email')
+                if not email:
+                    continue
+                if email not in persons:
+                    persons[email] = person
+                persons[email].setdefault('events', {})[id_] = title
+        self.write({'persons': persons.values()})
+
+
 class PersonsHandler(CollectionHandler):
     """Handle requests for Persons."""
-    document = 'person'
-    collection = 'persons'
 
     def handle_get_events(self, id_, resource_id=None, **kwargs):
         # Get a list of events attended by this person.
@@ -605,7 +625,7 @@ class EventsHandler(CollectionHandler):
         all_query = {'group_id': group_id}
         events = self.db.query('events', all_query)
         for event in events:
-            if str(event.get('_id')) == id_:
+            if id_ is not None and  str(event.get('_id')) == id_:
                 continue
             persons += [p for p in (event.get('persons') or []) if p.get('email') and p.get('email') not in this_emails]
         return {'persons': persons}
@@ -837,7 +857,7 @@ class SettingsHandler(BaseHandler):
 
 
 class InfoHandler(BaseHandler):
-    """Handle requests for Info."""
+    """Handle requests for information about the logged in user."""
     @gen.coroutine
     @authenticated
     def get(self, **kwds):
@@ -998,6 +1018,7 @@ def run():
     _persons_path = r"/persons/?(?P<id_>[\w\d_-]+)?/?(?P<resource>[\w\d_-]+)?/?(?P<resource_id>[\w\d_-]+)?"
     _events_path = r"/events/?(?P<id_>[\w\d_-]+)?/?(?P<resource>[\w\d_-]+)?/?(?P<resource_id>[\w\d_-]+)?"
     _users_path = r"/users/?(?P<id_>[\w\d_-]+)?/?(?P<resource>[\w\d_-]+)?/?(?P<resource_id>[\w\d_-]+)?"
+    _tickets_path = r"/tickets"
     application = tornado.web.Application([
             (_persons_path, PersonsHandler, init_params),
             (r'/v%s%s' % (API_VERSION, _persons_path), PersonsHandler, init_params),
@@ -1005,6 +1026,8 @@ def run():
             (r'/v%s%s' % (API_VERSION, _events_path), EventsHandler, init_params),
             (_users_path, UsersHandler, init_params),
             (r'/v%s%s' % (API_VERSION, _users_path), UsersHandler, init_params),
+            (_tickets_path, TicketsHandler, init_params),
+            (r'/v%s%s' % (API_VERSION, _tickets_path), TicketsHandler, init_params),
             (r"/(?:index.html)?", RootHandler, init_params),
             (r"/ebcsvpersons", EbCSVImportPersonsHandler, init_params),
             (r"/settings", SettingsHandler, init_params),
