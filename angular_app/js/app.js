@@ -148,7 +148,7 @@ eventManApp.config(['$stateProvider', '$urlRouterProvider',
             .state('tickets', {
                 url: '/tickets',
                 templateUrl: 'tickets-list.html',
-                controller: 'EventTicketsCtrl'
+                controller: 'EventsListCtrl'
             })
             .state('import', {
                 url: '/import',

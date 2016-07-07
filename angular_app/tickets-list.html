@@ -1,66 +1,49 @@
-<!-- show the list of Persons -->
+<!-- show the list of Tickets -->
 <div class="container">
     <div class="container">
         <div class="row">
             <div class="col-md-7 col-xs-7 vcenter">
-                <h1>{{'Persons' | translate}}
-                    <button ng-click="$state.go('person.new')" class="btn btn-success">
-                        <span class="fa fa-plus-circle vcenter"></span>
-                        {{'Add person' | translate}}
-                    </button>
-                    <button ng-click="$state.go('import.persons')" class="btn btn-success">
-                        <span class="fa fa-download vcenter"></span>
-                        {{'Import persons' | translate}}
-                    </button>
-                </h1>
+                <h1>{{'All tickets' | translate}}</h1>
             </div><!--
          --><div class="col-md-5 col-xs-5 vcenter">
                 <div class="row">
                     <div class="col-md-6">
-                        <h2><div class="label label-info vcenter">{{'Persons:' | translate}} {{persons.length || 0}}</div></h2>
+                        <h2><div class="label label-info vcenter">{{'Tickets:' | translate}} {{tickets.length || 0}}</div></h2>
                     </div>
                 </div>
         </div>
     </div>
     <div class="panel panel-primary table-striped top5">
-        <div class="panel-heading">{{'Persons' | translate}}</div>
+        <div class="panel-heading">{{'Tickets' | translate}}</div>
         <div class="panel-body">
             <form class="form-inline">
                 <div class="form-group">
-                    <label for="query-persons">{{'Search:' | translate}}</label>
-                    <input eventman-focus type="text" id="query-persons" class="form-control" placeholder="{{'Name or email' | translate}}" ng-model="query" ng-model-options="{debounce: 600}">
+                    <label for="query-tickets">{{'Search:' | translate}}</label>
+                    <input eventman-focus type="text" id="query-tickets" class="form-control" placeholder="{{'Name or email' | translate}}" ng-model="query" ng-model-options="{debounce: 600}">
                 </div>
             </form>
 
-            <div ng-include=" 'modal-confirm-action.html' " class="hidden"></div>
             <table class="table table-striped">
                 <thead>
                     <tr>
                         <th class="text-right nowrap">#</th>
-                        <th class="nowrap">{{'Person' | translate}} <a ng-click="updateOrded('name')" href=""><i class="fa fa-caret-up"></i></a>{{'Name' | translate}}<a ng-click="updateOrded('-name')" href=""><i class="fa fa-caret-down"></i></a> <a ng-click="updateOrded('surname')" href=""><i class="fa fa-caret-up"></i></a>{{'Surname' | translate}}<a ng-click="updateOrded('-surname')" href=""><i class="fa fa-caret-down"></i></a></th>
-                        <th ng-repeat="col in customFields" class="text-center nowrap">
-                            <a ng-click="updateOrded(col.key)" href=""><i class="fa fa-caret-up"></i></a>{{col.label | translate}}<a ng-click="updateOrded('-' + col.key)" href=""><i class="fa fa-caret-down"></i></a>
-                        </th>
-                        <th class="text-center nowrap"><strong>{{'Delete' | translate}}</strong></th>
+                        <th class="nowrap"><a ng-click="updateOrded('name')" href=""><i class="fa fa-caret-up"></i></a>{{'Name' | translate}}<a ng-click="updateOrded('-name')" href=""><i class="fa fa-caret-down"></i></a> <a ng-click="updateOrded('surname')" href=""><i class="fa fa-caret-up"></i></a>{{'Surname' | translate}}<a ng-click="updateOrded('-surname')" href=""><i class="fa fa-caret-down"></i></a> <a ng-click="updateOrded('email')" href=""><i class="fa fa-caret-up"></i></a>{{'Email' | translate}}<a ng-click="updateOrded('-email')" href=""><i class="fa fa-caret-down"></i></a></th>
+                        <th class="text-center nowrap"><strong>{{'Event' | translate}}</strong></th>
+                        <th class="text-center nowrap"><strong>{{'Attended' | translate}}</strong></th>
                     </tr>
                 </thead>
                 <tbody>
-                <tr ng-repeat="person in tickets | splittedFilter:query | orderBy:personsOrder">
+                <tr ng-repeat="ticket in tickets | splittedFilter:query | orderBy:ticketsOrderProp">
                     <td class="text-right">{{$index+1}}</td>
                     <td>
-                        <span><strong><a ui-sref="person.info({id: person._id})"><span>{{person.name}}</span>&nbsp;<span>{{person.surname}}</span></a></strong></span><span ng-if="person.email">&nbsp;&lt;{{person.email}}&gt;</span>
-                        <p ng-if="person.company || person.job_title"><i ng-if="person.job_title">{{person.job_title}}</i><span ng-if="person.company && person.job_title">&nbsp;@&nbsp;</span><i ng-if="person.company">{{person.company}}</i></p>
-                    </td>
-                    <td ng-repeat="col in customFields" class="text-center">
-                        <span ng-if="col.type == 'boolean'">
-                            <button class="btn btn-link" ng-click="setAttribute(person, col.key, !person[col.key])"><span class="fa fa-lg {{(person[col.key]) && 'fa-check-circle text-success' || 'fa-times-circle text-danger'}}"></span></button>
-                        </span>
-                        <span ng-if="col.type != 'boolean'">
-                            {{person[col.key]}}
-                        </span>
+                        <span><strong><a ui-sref="event.ticket.edit({id: ticket.event_id, ticket_id: ticket._id})"><span>{{ticket.name}}</span>&nbsp;<span>{{ticket.surname}}</span></a></strong></span><span ng-if="ticket.email">&nbsp;&lt;{{ticket.email}}&gt;</span>
+                        <p ng-if="ticket.company || ticket.job_title"><i ng-if="ticket.job_title">{{ticket.job_title}}</i><span ng-if="ticket.company && ticket.job_title">&nbsp;@&nbsp;</span><i ng-if="ticket.company">{{ticket.company}}</i></p>
                     </td>
                     <td class="text-center">
-                        <button ng-click="remove(person._id)" type="button" class="btn btn-link fa fa-trash fa-lg"></button>
+                        <a ui-sref="event.view({id: ticket.event_id})">{{ticket.event_title}}</a>
+                    </td>
+                    <td class="text-center">
+                        <span class="fa fa-lg {{(ticket.attended) && 'fa-check-circle text-success' || 'fa-times-circle text-danger'}}"></span>
                     </td>
                 </tr>
                 </tbody>

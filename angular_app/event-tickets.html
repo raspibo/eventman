@@ -57,7 +57,12 @@
                                 <tr ng-repeat="person in (event.persons || []) | splittedFilter:query | registeredFilter | orderBy:personsOrder">
                                     <td class="text-right">{{$index+1}}</td>
                                     <td>
-                                        <span><strong><a ui-sref="person.info({id: person.person_id})"><span class="fa fa-lg fa-user"></span></a>&nbsp;<a ui-sref="event.ticket.edit({id: event._id, ticket_id: person._id})" ng-if="person._id"><span>{{person.name}}</span>&nbsp;<span>{{person.surname}}</span></a></strong></span><span ng-if="!person._id"><span>{{person.name}}</span>&nbsp;<span>{{person.surname}}</span></a></strong></span></span><span ng-if="person.email">&nbsp;&lt;{{person.email}}&gt;</span>
+                                        <span>
+                                            <strong>
+                                                <a ui-sref="event.ticket.edit({id: event._id, ticket_id: person._id})"><span>{{person.name}}</span>&nbsp;<span>{{person.surname}}</span></a>
+                                            </strong>
+                                        </span>
+                                        <span ng-if="person.email">&nbsp;&lt;{{person.email}}&gt;</span>
                                         <p ng-if="person.company || person.job_title"><i ng-if="person.job_title">{{person.job_title}}</i><span ng-if="person.company && person.job_title">&nbsp;@&nbsp;</span><i ng-if="person.company">{{person.company}}</i></p>
                                     </td>
                                     <td class="text-center">
@@ -95,7 +100,7 @@
                             <tbody>
                                 <tr ng-repeat="person in allPersons | splittedFilter:query | personRegistered:{event: event, present: false}">
                                     <td>
-                                        <strong><a ui-sref="person.info({id: person._id})">{{person.name}} {{person.surname}}</a></strong>
+                                        <strong>{{person.name}} {{person.surname}}</strong>
                                         <br />
                                         {{person.email}}
                                     </td>

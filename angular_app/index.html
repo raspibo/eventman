@@ -73,8 +73,8 @@
                     <div ng-if="logo.imgURL" class="navbar-brand"><a ng-if="logo.link" href="{{logo.link}}" target="_blank"><img src="{{logo.imgURL}}" /></a></div>
                     <ul class="nav navbar-nav">
                         <li ng-class="{active: isActive('/events') || isActive('/event')}"><a ui-sref="events">{{'Events' | translate}}</a></li>
-                        <li ng-if="hasPermission('admin|all')" ng-class="{active: isActive('/tickets')}"><a ui-sref="tickets">{{'Tickets' | translate}}</a></li>
-                        <li ng-if="hasPermission('admin|all')" ng-class="{active: isActive('/import/persons')}"><a ui-sref="import.persons">{{'Import persons' | translate}}</a></li>
+                        <li ng-if="hasPermission('admin|all')" ng-class="{active: isActive('/tickets')}"><a ui-sref="tickets">{{'All tickets' | translate}}</a></li>
+                        <li ng-if="hasPermission('admin|all')" ng-class="{active: isActive('/import/persons')}"><a ui-sref="import.persons">{{'Import tickets' | translate}}</a></li>
                     </ul>
                 </div>
                 <div class="collapse navbar-collapse">

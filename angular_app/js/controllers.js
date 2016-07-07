@@ -66,10 +66,23 @@ eventManControllers.controller('ModalConfirmInstanceCtrl', ['$scope', '$uibModal
 );
 
 
-eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$uibModal', '$log', '$translate', '$rootScope',
-    function ($scope, Event, $uibModal, $log, $translate, $rootScope) {
-        $scope.events = Event.all();
+eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$uibModal', '$log', '$translate', '$rootScope', '$state',
+    function ($scope, Event, $uibModal, $log, $translate, $rootScope, $state) {
+        $scope.tickets = [];
+        $scope.events = Event.all(function(events) {
+            if (events && $state.is('tickets')) {
+                angular.forEach(events, function(evt, idx) {
+                    var evt_tickets = (evt.persons || []).slice(0);
+                    angular.forEach(evt_tickets, function(obj, obj_idx) {
+                        obj.event_title = evt.title;
+                        obj.event_id = evt._id;
+                    });
+                    $scope.tickets.push.apply($scope.tickets, evt_tickets || []);
+                });
+            }
+        });
         $scope.eventsOrderProp = "-begin_date";
+        $scope.ticketsOrderProp = ["name", "surname"];
 
         $scope.confirm_delete = 'Do you really want to delete this event?';
         $rootScope.$on('$translateChangeSuccess', function () {
@@ -94,6 +107,25 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$uibModal'
                 );
             });
         };
+
+        $scope.updateOrded = function(key) {
+            var new_order = [key];
+            var inv_key;
+            if (key && key[0] === '-') {
+                inv_key = key.substring(1);
+            } else {
+                inv_key = '-' + key;
+            }
+            angular.forEach($scope.ticketsOrderProp,
+                function(value, idx) {
+                    if (value !== key && value !== inv_key) {
+                        new_order.push(value);
+                    }
+                }
+            );
+            $scope.ticketsOrderProp = new_order;
+        };
+
     }]
 );
 
