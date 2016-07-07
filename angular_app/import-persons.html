@@ -15,7 +15,7 @@
                 
                 <div class="form-group">
                     <label for="forEvent">{{'Associate users to this event' | translate}}</label>
-                    <select class="form-control" id="forEvent" ng-model="targetEvent">
+                    <select class="form-control" id="forEvent" ng-model="targetEvent" ng-required="true">
                         <option ng-repeat="event in events" value="{{event._id}}">{{event.title}}</option>
                     </select>
                 </div>

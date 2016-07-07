@@ -789,9 +789,9 @@ class EbCSVImportPersonsHandler(BaseHandler):
         # import a CSV list of persons
         event_handler = EventsHandler(self.application, self.request)
         event_handler.db = self.db
-        targetEvent = None
+        event_id = None
         try:
-            targetEvent = self.get_body_argument('targetEvent')
+            event_id = self.get_body_argument('targetEvent')
         except:
             pass
         reply = dict(total=0, valid=0, merged=0, new_in_event=0)
@@ -802,25 +802,10 @@ class EbCSVImportPersonsHandler(BaseHandler):
                 reply['total'] += parseStats['total']
                 reply['valid'] += parseStats['valid']
                 for person in persons:
-                    person_data = dict([(k, person[k]) for k in self.keepPersonData
-                        if k in person])
-                    merged, stored_person = self.db.update('persons',
-                            [('email', 'name', 'surname')],
-                            person_data)
-                    if merged:
-                        reply['merged'] += 1
-                    if targetEvent and stored_person:
-                        event_id = targetEvent
-                        person_id = stored_person['_id']
-                        registered_data = {
-                                'person_id': person_id,
-                                'attended': False,
-                                'from_file': filename}
-                        person.update(registered_data)
-                        if not self.db.query('events',
-                                {'_id': event_id, 'persons.person_id': person_id}):
-                            event_handler.handle_post_persons(event_id, person_id, person)
-                            reply['new_in_event'] += 1
+                    person['attended'] = False
+                    person['from_file'] = filename
+                    event_handler.handle_post_persons(event_id, None, person)
+                    reply['new_in_event'] += 1
         self.write(reply)
 
 
