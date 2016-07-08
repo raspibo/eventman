@@ -74,6 +74,7 @@
                     <ul class="nav navbar-nav">
                         <li ng-class="{active: isActive('/events') || isActive('/event')}"><a ui-sref="events">{{'Events' | translate}}</a></li>
                         <li ng-if="hasPermission('admin|all')" ng-class="{active: isActive('/tickets')}"><a ui-sref="tickets">{{'All tickets' | translate}}</a></li>
+                        <li ng-if="hasPermission('admin|all')" ng-class="{active: isActive('/users')}"><a ui-sref="users">{{'Users' | translate}}</a></li>
                         <li ng-if="hasPermission('admin|all')" ng-class="{active: isActive('/import/persons')}"><a ui-sref="import.persons">{{'Import tickets' | translate}}</a></li>
                     </ul>
                 </div>
@@ -82,7 +83,7 @@
                         <li ng-if="info.user.username">
                             <span class="btn">{{info.user.username}}</span>
                             <span class="btn btn-link">
-                                <a ng-controller="LoginCtrl" ng-click="logout()"><span class="fa fa-sign-out vcenter"></span>&nbsp;{{'logout' | translate}}</a>
+                                <a ng-controller="UsersCtrl" ng-click="logout()"><span class="fa fa-sign-out vcenter"></span>&nbsp;{{'logout' | translate}}</a>
                             </span>
                         </li>
                         <li ng-if="!info.user.username">

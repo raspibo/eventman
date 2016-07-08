@@ -234,6 +234,19 @@ eventManServices.factory('Info', ['$resource', '$rootScope',
 eventManServices.factory('User', ['$resource', '$rootScope',
     function($resource, $rootScope) {
         return $resource('users/:id', {id: '@_id'}, {
+            all: {
+                method: 'GET',
+                interceptor : {responseError: $rootScope.errorHandler},
+                isArray: true,
+                transformResponse: function(data, headers) {
+                    data = angular.fromJson(data);
+                    if (data.error) {
+                        return data;
+                    }
+                    return data.users;
+                }
+            },
+
             get: {
                 method: 'GET',
                 interceptor : {responseError: $rootScope.errorHandler},
@@ -248,6 +261,11 @@ eventManServices.factory('User', ['$resource', '$rootScope',
 
             add: {
                 method: 'POST',
+                interceptor : {responseError: $rootScope.errorHandler}
+            },
+
+            update: {
+                method: 'PUT',
                 interceptor : {responseError: $rootScope.errorHandler}
             },
 

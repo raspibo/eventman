@@ -652,9 +652,22 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$state', 'Person
 );
 
 
-eventManControllers.controller('LoginCtrl', ['$scope', '$rootScope', '$state', '$log', 'User',
+eventManControllers.controller('UsersCtrl', ['$scope', '$rootScope', '$state', '$log', 'User',
     function ($scope, $rootScope, $state, $log, User) {
         $scope.loginData = {};
+        $scope.usersOrderProp = ['username'];
+
+        $scope.updateUsersList = function() {
+            if ($state.is('users')) {
+                $scope.users = User.all();
+            }
+        };
+
+        $scope.updateUsersList();
+
+        $scope.deleteUser = function(user_id) {
+            User.delete({id: user_id}, $scope.updateUsersList);
+        };
 
         $scope.register = function() {
             User.add($scope.newUser, function(data) {

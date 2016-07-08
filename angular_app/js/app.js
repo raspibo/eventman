@@ -159,10 +159,15 @@ eventManApp.config(['$stateProvider', '$urlRouterProvider',
                 templateUrl: 'import-persons.html',
                 controller: 'FileUploadCtrl'
             })
+            .state('users', {
+                url: '/users',
+                templateUrl: 'users-list.html',
+                controller: 'UsersCtrl'
+            })
             .state('login', {
                 url: '/login',
                 templateUrl: 'login.html',
-                controller: 'LoginCtrl'
+                controller: 'UsersCtrl'
             });
     }
 ]);

@@ -733,6 +733,14 @@ class UsersHandler(CollectionHandler):
     document = 'user'
     collection = 'users'
 
+    def filter_get_all(self, data):
+        if 'users' not in data:
+            return data
+        for user in data['users']:
+            if 'password' in user:
+                del user['password']
+        return data
+
     def filter_input_post_all(self, data):
         username = (data.get('username') or '').strip()
         password = (data.get('password') or '').strip()
