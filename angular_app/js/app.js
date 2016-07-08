@@ -43,7 +43,7 @@ eventManApp.run(['$rootScope', '$state', '$stateParams', '$log', 'Info',
             Info.get({}, function(data) {
                 $rootScope.info = data || {};
                 if (callback) {
-                    callback();
+                    callback(data);
                 }
             });
         };

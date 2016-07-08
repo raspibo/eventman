@@ -668,7 +668,8 @@ eventManControllers.controller('LoginCtrl', ['$scope', '$rootScope', '$state', '
             }
             User.login(loginData, function(data) {
                 if (!data.error) {
-                    $rootScope.readInfo(function() {
+                    $rootScope.readInfo(function(info) {
+                        $log.debug('logged in user: ' + info.user.username);
                         $rootScope.clearError();
                         $state.go('events');
                     });
@@ -680,6 +681,7 @@ eventManControllers.controller('LoginCtrl', ['$scope', '$rootScope', '$state', '
             User.logout({}, function(data) {
                 if (!data.error) {
                     $rootScope.readInfo(function() {
+                        $log.debug('logged out user');
                         $state.go('events');
                     });
                 }
