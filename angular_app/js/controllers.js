@@ -167,8 +167,8 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
 );
 
 
-eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event', 'EventTicket', 'Person', 'Setting', '$log', '$translate', '$rootScope', 'EventUpdates', '$uibModal',
-    function ($scope, $state, Event, EventTicket, Person, Setting, $log, $translate, $rootScope, EventUpdates, $uibModal) {
+eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event', 'EventTicket', 'Setting', '$log', '$translate', '$rootScope', 'EventUpdates', '$uibModal',
+    function ($scope, $state, Event, EventTicket, Setting, $log, $translate, $rootScope, EventUpdates, $uibModal) {
         $scope.personsOrder = ["name", "surname"];
         $scope.countAttendees = 0;
         $scope.message = {};
@@ -340,6 +340,9 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
             // to be used to populate allPersons, if needed.
             if (removed_person.length) {
                 person = removed_person[0];
+            }
+            if (!$scope.allPersons) {
+                $scope.allPersons = [];
             }
             var all_person_idx = $scope.allPersons.findIndex(function(el, idx, array) {
                 return person._id == el._id;
@@ -513,144 +516,6 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
         $scope.$on('$destroy', function() {
             $scope.EventUpdates && $scope.EventUpdates.close();
         });
-    }]
-);
-
-
-eventManControllers.controller('PersonsListCtrl', ['$scope', 'Person', 'Setting', '$uibModal', '$translate', '$rootScope',
-    function ($scope, Person, Setting, $uibModal, $translate, $rootScope) {
-        $scope.persons = Person.all();
-        $scope.personsOrder = ["name", "surname"];
-        $scope.customFields = Setting.query({setting: 'person_custom_field',
-            in_persons_list: true});
-
-        $scope.confirm_delete = 'Do you really want to delete this person?';
-        $rootScope.$on('$translateChangeSuccess', function () {
-            $translate('Do you really want to delete this person?').then(function (translation) {
-                $scope.confirm_delete = translation;
-            });
-        });
-
-        $scope.updateOrded = function(key) {
-            var new_order = [key];
-            var inv_key;
-            if (key && key[0] === '-') {
-                inv_key = key.substring(1);
-            } else {
-                inv_key = '-' + key;
-            }
-            angular.forEach($scope.personsOrder,
-                function(value, idx) {
-                    if (value !== key && value !== inv_key) {
-                        new_order.push(value);
-                    }
-                }
-            );
-            $scope.personsOrder = new_order;
-        };
-
-        $scope.setAttribute = function(person, key, value) {
-            var data = {_id: person._id};
-            data[key] = value;
-            Person.update(data, function() {
-                $scope.persons = Person.all();
-            });
-        };
-
-        $scope.remove = function(_id) {
-            var modalInstance = $uibModal.open({
-                scope: $scope,
-                templateUrl: 'modal-confirm-action.html',
-                controller: 'ModalConfirmInstanceCtrl',
-                resolve: {
-                    message: function() { return $scope.confirm_delete; }
-                }
-            });
-            modalInstance.result.then(function() {
-                Person.remove({'id': _id}, function() {
-                    $scope.persons = Person.all();
-                    }
-                );
-            });
-        };
-    }]
-);
-
-
-eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$state', 'Person', 'Event', 'Setting', '$log',
-    function ($scope, $state, Person, Event, Setting, $log) {
-        $scope.personsOrderProp = 'name';
-        $scope.eventsOrderProp = '-begin_date';
-        $scope.addToEvent = '';
-        $scope.customFields = Setting.query({setting: 'person_custom_field',
-            in_persons_list: true});
-
-        if ($state.params.id) {
-            $scope.person = Person.get($state.params);
-            $scope.events = Person.getEvents({_id: $state.arams.id, all: true});
-        } else {
-            $scope.events = Event.all();
-        }
-
-        // store a new Person or update an existing one
-        $scope.save = function() {
-            if ($scope.person._id === undefined) {
-                $scope.person = new Person($scope.person);
-                $scope.person.$save(function(person) {
-                    if ($scope.addToEvent) {
-                        var data = angular.copy(person);
-                        data.person_id = data._id;
-                        data._id = $scope.addToEvent;
-                        data.attended = false;
-                        Event.addPerson(data);
-                    }
-                });
-            } else {
-                $scope.person = Person.update($scope.person, function(data) {
-                    if ($scope.addToEvent) {
-                        var data = angular.copy($scope.person);
-                        data._id = $scope.addToEvent;
-                        data.person_id = $scope.person._id;
-                        data.attended = false;
-                        Event.addPerson(data);
-                    }
-                });
-            }
-            $scope.personForm.$setPristine(false);
-        };
-
-        $scope.setTicketAttributeAtEvent = function(evnt, key, value) {
-            var attrs = {_id: evnt._id, person_id: $state.params.id};
-            attrs[key] = value;
-            Event.updatePerson(attrs,
-                function(data) {
-                    $scope.events = Person.getEvents({_id: $state.params.id, all: true});
-                }
-            );
-        };
-
-        $scope.switchRegistered = function(evnt, person, add) {
-            $log.debug('PersonDetailsCtrl.switchRegistered.event_id: ' + evnt._id);
-            $log.debug('PersonDetailsCtrl.switchRegistered.person_id: ' + person._id);
-            $log.debug('PersonDetailsCtrl.switchRegistered.add: ' + add);
-            if (add) {
-                var data = angular.copy(person);
-                data._id = evnt._id;
-                data.person_id = person._id;
-                data.attended = false;
-                Event.addPerson(data,
-                    function(data) {
-                        $scope.events = Person.getEvents({_id: $state.params.id, all: true});
-                    }
-                );
-            } else {
-                Event.deletePerson({_id: evnt._id, person_id: person._id},
-                    function(data) {
-                        $scope.events = Person.getEvents({_id: $state.params.id, all: true});
-                    }
-                );
-            }
-        };
     }]
 );
 

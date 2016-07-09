@@ -140,51 +140,6 @@ eventManServices.factory('EventTicket', ['$resource', '$rootScope',
 );
 
 
-eventManServices.factory('Person', ['$resource', '$rootScope',
-    function($resource, $rootScope) {
-        return $resource('persons/:id', {id: '@_id'}, {
-
-            all: {
-                method: 'GET',
-                interceptor : {responseError: $rootScope.errorHandler},
-                isArray: true,
-                transformResponse: function(data, headers) {
-                    // TODO: REMOVE!
-                    return [];
-                    data = angular.fromJson(data);
-                    if (data.error) {
-                        return data;
-                    }
-                    return data.persons;
-                }
-            },
-
-            update: {
-                method: 'PUT',
-                interceptor : {responseError: $rootScope.errorHandler}
-            },
-
-            getEvents: {
-                method: 'GET',
-                interceptor : {responseError: $rootScope.errorHandler},
-                url: 'persons/:_id/events',
-                isArray: true,
-                transformResponse: function(data, headers) {
-                    data = angular.fromJson(data);
-                    if (data.error) {
-                        return data;
-                    }
-                    angular.forEach(data.events || [], function(event_, event_idx) {
-                        convert_dates(event_);
-                    });
-                    return data.events;
-                }
-            }
-        });
-    }]
-);
-
-
 eventManServices.factory('Setting', ['$resource', '$rootScope',
     function($resource, $rootScope) {
         return $resource('settings/', {}, {

@@ -550,40 +550,6 @@ class CollectionHandler(BaseHandler):
             self.logger.error('Error yielding WebSocket message: %s', e)
 
 
-class PersonsHandler(CollectionHandler):
-    """Handle requests for Persons."""
-
-    def handle_get_events(self, id_, resource_id=None, **kwargs):
-        # Get a list of events attended by this person.
-        # Inside the data of each event, a 'person_data' dictionary is
-        # created, duplicating the entry for the current person (so that
-        # there's no need to parse the 'persons' list on the client).
-        #
-        # If resource_id is given, only the specified event is considered.
-        #
-        # If the 'all' parameter is given, every event (also unattended ones) is returned.
-        args = self.request.arguments
-        query = {}
-        if id_ and not self.tobool(args.get('all')):
-            query = {'persons.person_id': id_}
-        if resource_id:
-            query['_id'] = resource_id
-
-        events = self.db.query('events', query)
-        for event in events:
-            person_data = {}
-            for persons in event.get('persons') or []:
-                if str(persons.get('person_id')) == id_:
-                    person_data = persons
-                    break
-            if 'persons' in event:
-                del event['persons']
-            event['person_data'] = person_data
-        if resource_id and events:
-            return events[0]
-        return {'events': events}
-
-
 class EventsHandler(CollectionHandler):
     """Handle requests for Events."""
     document = 'event'
@@ -1045,12 +1011,9 @@ def run():
                 {'setting': 'server_cookie_secret', 'cookie_secret': cookie_secret})
 
     _ws_handler = (r"/ws/+event/+(?P<event_id>[\w\d_-]+)/+tickets/+updates/?", WebSocketEventUpdatesHandler)
-    _persons_path = r"/persons/?(?P<id_>[\w\d_-]+)?/?(?P<resource>[\w\d_-]+)?/?(?P<resource_id>[\w\d_-]+)?"
     _events_path = r"/events/?(?P<id_>[\w\d_-]+)?/?(?P<resource>[\w\d_-]+)?/?(?P<resource_id>[\w\d_-]+)?"
     _users_path = r"/users/?(?P<id_>[\w\d_-]+)?/?(?P<resource>[\w\d_-]+)?/?(?P<resource_id>[\w\d_-]+)?"
     application = tornado.web.Application([
-            (_persons_path, PersonsHandler, init_params),
-            (r'/v%s%s' % (API_VERSION, _persons_path), PersonsHandler, init_params),
             (_events_path, EventsHandler, init_params),
             (r'/v%s%s' % (API_VERSION, _events_path), EventsHandler, init_params),
             (_users_path, UsersHandler, init_params),
