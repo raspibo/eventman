@@ -596,7 +596,7 @@ eventManControllers.controller('UsersCtrl', ['$scope', '$rootScope', '$state', '
                 if (!data.error) {
                     $rootScope.readInfo(function() {
                         $log.debug('logged out user');
-                        $state.go('events');
+                        $state.go('login');
                     });
                 }
             });

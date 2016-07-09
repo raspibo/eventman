@@ -1,20 +1,12 @@
 <!-- show the list of Tickets -->
 <div class="container">
-    <div class="container">
-        <div class="row">
-            <div class="col-md-7 col-xs-7 vcenter">
-                <h1>{{'All tickets' | translate}}</h1>
-            </div><!--
-         --><div class="col-md-5 col-xs-5 vcenter">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h2><div class="label label-info vcenter">{{'Tickets:' | translate}} {{tickets.length || 0}}</div></h2>
-                    </div>
-                </div>
-        </div>
-    </div>
     <div class="panel panel-primary table-striped top5">
-        <div class="panel-heading">{{'Tickets' | translate}}</div>
+        <div class="panel-heading">
+            <h1>
+                {{'All Tickets' | translate}}
+                <div class="label label-info vcenter">{{'Tickets:' | translate}} {{tickets.length || 0}}</div>
+            </h1>
+        </div>
         <div class="panel-body">
             <form class="form-inline">
                 <div class="form-group">

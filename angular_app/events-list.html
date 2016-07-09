@@ -1,13 +1,14 @@
 <!-- show the list of Events -->
 <div class="container">
-    <h1>{{'Events' | translate}}
-        <button ng-click="$state.go('event.new')" class="btn btn-success">
-            <span class="fa fa-plus-circle vcenter"></span>
-            {{'Add event' | translate}}
-        </button>
-    </h1>
     <div class="panel panel-primary table-striped top5">
-        <div class="panel-heading">{{'Events' | translate}}</div>
+        <div class="panel-heading">
+            <h1>{{'Events' | translate}}
+                <button ng-click="$state.go('event.new')" class="btn btn-success" ng-if="hasPermission('event|create')">
+                    <span class="fa fa-plus-circle vcenter"></span>
+                    {{'Add event' | translate}}
+                </button>
+            </h1>
+        </div>
         <div class="panel-body">
             <form class="form-inline">
                 <div class="form-group">

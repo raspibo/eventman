@@ -3,7 +3,9 @@
     <div class="panel panel-primary table-striped top5">
         <div class="panel-heading">
             <h1>
-                <button ng-if="event._id && hasPermission('tickets-all|read')" ng-click="$state.go('event.tickets', {id: event._id})" class="btn btn-success">
+                {{event.title}}
+                <span ng-if="hasPermission('event|create') && !event._id">{{'New event' | translate}}</span>
+                &nbsp;<button ng-if="event._id && hasPermission('tickets-all|read')" ng-click="$state.go('event.tickets', {id: event._id})" class="btn btn-success">
                     <span class="fa fa-ticket vcenter"></span>
                     {{'Tickets' | translate}}
                 </button>
@@ -11,7 +13,6 @@
                     <span class="fa fa-user-plus vcenter"></span>
                     {{'Join this event' | translate}}
                 </button>
-                &nbsp;<span ng-if="hasPermission('event|create') && !event.title">{{'New event' | translate}}</span>{{event.title}}
             </h1>
         </div>
         <div class="panel-body">

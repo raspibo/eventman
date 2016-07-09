@@ -1,8 +1,13 @@
 <!-- show details of a User -->
 <div class="container">
-    <h1>{{user.username}}</h1>
-    <div class="panel panel-success table-striped">
-        <div class="panel-heading">{{'Update user information' | translate}}</div>
+    <div class="panel panel-primary table-striped">
+        <div class="panel-heading">
+            <h1>
+                {{user.username}}
+                <span ng-if="user.email">&nbsp;&lt;{{user.email}}&gt;</span>
+                &nbsp;-&nbsp;{{'update user information' | translate}}
+            </h1>
+        </div>
         <div class="panel-body">
             <form method="POST">
                 <div class="input-group input-group-lg top10">
@@ -20,7 +25,7 @@
         </div>
     </div>
     <div class="panel panel-primary table-striped top5">
-        <div class="panel-heading">{{'Tickets' | translate}}</div>
+        <div class="panel-heading"><h1>{{'Tickets' | translate}}</h1></div>
         <div class="panel-body">
 
             <form class="form-inline">
@@ -39,13 +44,24 @@
             <table class="table">
                 <thead>
                     <tr>
+                        <th>{{'Ticket' | translate}}</th>
                         <th>{{'Event' | translate}}</th>
                         <th class="text-center">{{'Attended' | translate}}</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr ng-repeat="ticket in (user.tickets || []) | splittedFilter:query | orderBy:ticketsOrderProp">
-                        <td><strong><a ui-sref="event.ticket.edit({id: ticket.event_id, ticket_id: ticket._id})">{{ticket.event_title}}</a></strong></td>
+                        <td>
+                            <strong>
+                                <a ui-sref="event.ticket.edit({id: ticket.event_id, ticket_id: ticket._id})">
+                                    <span ng-if="ticket.name || ticket.surname || ticket.email">
+                                        {{ticket.name}} {{ticket.surname}}<span ng-if="ticket.email">&nbsp;&lt;{{ticket.email}}&gt;</span>
+                                    </span>
+                                    <span ng-if="!(ticket.name || ticket.surname || ticket.email)">{{ticket.event_title}}</span>
+                                </a>
+                            </strong>
+                        </td>
+                        <td><strong>{{ticket.event_title}}</strong></td>
                         <td class="text-center">
                             <span class="fa fa-lg {{(ticket.attended) && 'fa-check-circle text-success' || 'fa-times-circle text-danger'}}"></span>
                         </td>
