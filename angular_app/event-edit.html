@@ -3,7 +3,7 @@
     <div class="panel panel-primary table-striped top5">
         <div class="panel-heading">
             <h1>
-                <button ng-if="event._id && hasPermission('persons|read')" ng-click="$state.go('event.tickets', {id: event._id})" class="btn btn-success">
+                <button ng-if="event._id && hasPermission('tickets-all|read')" ng-click="$state.go('event.tickets', {id: event._id})" class="btn btn-success">
                     <span class="fa fa-ticket vcenter"></span>
                     {{'Tickets' | translate}}
                 </button>

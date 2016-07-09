@@ -88,7 +88,6 @@ class BaseHandler(tornado.web.RequestHandler):
         'event:tickets|all': True,
         'event:tickets-all|create': True,
         'events|read': True,
-        'persons|create': True,
         'users|create': True
     }
 
@@ -556,16 +555,16 @@ class EventsHandler(CollectionHandler):
     collection = 'events'
 
     def filter_get(self, output):
-        if not self.has_permission('persons-all|read'):
-            if 'persons' in output:
-                output['persons'] = []
+        if not self.has_permission('tckets-all|read'):
+            if 'tickets' in output:
+                output['tickets'] = []
         return output
 
     def filter_get_all(self, output):
-        if not self.has_permission('persons-all|read'):
+        if not self.has_permission('tickets-all|read'):
             for event in output.get('events') or []:
-                if 'persons' in event:
-                    event['persons'] = []
+                if 'tickets' in event:
+                    event['tickets'] = []
         return output
 
     def filter_input_post(self, data):
@@ -592,56 +591,56 @@ class EventsHandler(CollectionHandler):
         group_id = this_event.get('group_id')
         if group_id is None:
             return {'persons': persons}
-        this_persons = [p for p in (this_event.get('persons') or []) if not p.get('cancelled')]
+        this_persons = [p for p in (this_event.get('tickets') or []) if not p.get('cancelled')]
         this_emails = filter(None, [p.get('email') for p in this_persons])
         all_query = {'group_id': group_id}
         events = self.db.query('events', all_query)
         for event in events:
             if id_ is not None and  str(event.get('_id')) == id_:
                 continue
-            persons += [p for p in (event.get('persons') or []) if p.get('email') and p.get('email') not in this_emails]
+            persons += [p for p in (event.get('tickets') or []) if p.get('email') and p.get('email') not in this_emails]
         return {'persons': persons}
 
-    def _get_person_data(self, person_id_or_query, persons):
-        """Filter a list of persons returning the first item with a given person_id
+    def _get_ticket_data(self, ticket_id_or_query, tickets):
+        """Filter a list of tickets returning the first item with a given _id
         or which set of keys specified in a dictionary match their respective values."""
-        for person in persons:
-            if isinstance(person_id_or_query, dict):
-                if all(person.get(k) == v for k, v in person_id_or_query.iteritems()):
-                    return person
+        for ticket in tickets:
+            if isinstance(ticket_id_or_query, dict):
+                if all(ticket.get(k) == v for k, v in ticket_id_or_query.iteritems()):
+                    return ticket
             else:
-                if str(person.get('_id')) == person_id_or_query:
-                    return person
+                if str(ticket.get('_id')) == ticket_id_or_query:
+                    return ticket
         return {}
 
-    def handle_get_persons(self, id_, resource_id=None, match_query=None):
-        # Return every person registered at this event, or the information
-        # about a specific person.
+    def handle_get_tickets(self, id_, resource_id=None, match_query=None):
+        # Return every ticket registered at this event, or the information
+        # about a specific ticket.
         query = {'_id': id_}
         event = self.db.query('events', query)[0]
         if match_query is None:
             match_query = resource_id
         if resource_id:
-            return {'person': self._get_person_data(match_query, event.get('persons') or [])}
-        persons = self._filter_results(event.get('persons') or [], self.arguments)
-        return {'persons': persons}
+            return {'ticket': self._get_ticket_data(match_query, event.get('tickets') or [])}
+        tickets = self._filter_results(event.get('tickets') or [], self.arguments)
+        return {'tickets': tickets}
 
-    def handle_get_tickets(self, id_, resource_id=None):
+    def __handle_get_tickets_REMOVE(self, id_, resource_id=None):
         if resource_id is None and not self.has_permission('event:tickets|all'):
             return self.build_error(status=401, message='insufficient permissions: event:tickets|all')
         return self.handle_get_persons(id_, resource_id, {'_id': resource_id})
 
-    def handle_post_persons(self, id_, person_id, data):
-        # Add a person to the list of persons registered at this event.
+    def handle_post_tickets(self, id_, ticket_id, data):
+        # Add a ticket to the list of tickets registered at this event.
         uuid, arguments = self.uuid_arguments
         self._clean_dict(data)
-        data['seq'] = self.get_next_seq('event_%s_persons' % id_)
+        data['seq'] = self.get_next_seq('event_%s_tickets' % id_)
         data['seq_hex'] = '%06X' % data['seq']
-        if person_id is None:
+        if ticket_id is None:
             doc = {}
         else:
-            doc = self.db.query('events', {'_id': id_, 'persons._id': person_id})
-        ret = {'action': 'add', '_id': person_id, 'person': data, 'uuid': uuid}
+            doc = self.db.query('events', {'_id': id_, 'tickets._id': ticket_id})
+        ret = {'action': 'add', '_id': ticket_id, 'ticket': data, 'uuid': uuid}
         if '_id' in data:
             del data['_id']
             self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(ret))
@@ -649,77 +648,70 @@ class EventsHandler(CollectionHandler):
             data['_id'] = self.gen_id()
             merged, doc = self.db.update('events',
                     {'_id': id_},
-                    {'persons': data},
+                    {'tickets': data},
                     operation='appendUnique',
                     create=False)
         return ret
 
-    handle_post_tickets = handle_post_persons
-
-    def handle_put_persons(self, id_, person_id, data, ticket=False):
-        # Update an existing entry for a person registered at this event.
+    def handle_put_tickets(self, id_, ticket_id, data, ticket=True):
+        # Update an existing entry for a ticket registered at this event.
         self._clean_dict(data)
         uuid, arguments = self.uuid_arguments
-        query = dict([('persons.%s' % k, v) for k, v in arguments.iteritems()])
+        query = dict([('tickets.%s' % k, v) for k, v in arguments.iteritems()])
         query['_id'] = id_
-        if person_id is not None:
-            query['persons._id'] = person_id
-            person_query = {'_id': person_id}
+        if ticket_id is not None:
+            query['tickets._id'] = ticket_id
+            ticket_query = {'_id': ticket_id}
         else:
-            person_query = self.arguments
-        old_person_data = {}
+            ticket_query = self.arguments
+        old_ticket_data = {}
         current_event = self.db.query(self.collection, query)
         if current_event:
             current_event = current_event[0]
         else:
             current_event = {}
-        old_person_data = self._get_person_data(person_query,
-                current_event.get('persons') or [])
+        old_ticket_data = self._get_ticket_data(ticket_query,
+                current_event.get('tickets') or [])
         merged, doc = self.db.update('events', query,
-                data, updateList='persons', create=False)
-        new_person_data = self._get_person_data(person_query,
-                doc.get('persons') or [])
-        env = self._dict2env(new_person_data)
-        # always takes the person_id from the new person (it may have
+                data, updateList='tickets', create=False)
+        new_ticket_data = self._get_ticket_data(ticket_query,
+                doc.get('tickets') or [])
+        env = self._dict2env(new_ticket_data)
+        # always takes the ticket_id from the new ticket (it may have
         # been a ticket_id).
-        ticket_id = str(new_person_data.get('_id'))
+        ticket_id = str(new_ticket_data.get('_id'))
         env.update({'PERSON_ID': ticket_id, 'TICKED_ID': ticket_id, 'EVENT_ID': id_,
             'EVENT_TITLE': doc.get('title', ''), 'WEB_USER': self.current_user,
             'WEB_REMOTE_IP': self.request.remote_ip})
-        stdin_data = {'old': old_person_data,
-            'new': new_person_data,
+        stdin_data = {'old': old_ticket_data,
+            'new': new_ticket_data,
             'event': doc,
             'merged': merged
         }
-        self.run_triggers('update_person_in_event', stdin_data=stdin_data, env=env)
-        if old_person_data and old_person_data.get('attended') != new_person_data.get('attended'):
-            if new_person_data.get('attended'):
+        self.run_triggers('update_ticket_in_event', stdin_data=stdin_data, env=env)
+        if old_ticket_data and old_ticket_data.get('attended') != new_ticket_data.get('attended'):
+            if new_ticket_data.get('attended'):
                 self.run_triggers('attends', stdin_data=stdin_data, env=env)
 
-        ret = {'action': 'update', '_id': ticket_id, 'person': new_person_data, 'uuid': uuid}
-        if old_person_data != new_person_data:
+        ret = {'action': 'update', '_id': ticket_id, 'ticket': new_ticket_data, 'uuid': uuid}
+        if old_ticket_data != new_ticket_data:
             self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(ret))
         return ret
 
-    def handle_put_tickets(self, id_, person_id, data):
-        return self.handle_put_persons(id_, person_id, data, True)
-
-    def handle_delete_persons(self, id_, person_id):
-        # Remove a specific person from the list of persons registered at this event.
+    def handle_delete_tickets(self, id_, ticket_id):
+        # Remove a specific ticket from the list of tickets registered at this event.
         uuid, arguments = self.uuid_arguments
         doc = self.db.query('events',
-                {'_id': id_, 'persons._id': person_id})
-        ret = {'action': 'delete', '_id': person_id, 'uuid': uuid}
+                {'_id': id_, 'tickets._id': ticket_id})
+        ret = {'action': 'delete', '_id': ticket_id, 'uuid': uuid}
         if doc:
             merged, doc = self.db.update('events',
                     {'_id': id_},
-                    {'persons': {'_id': person_id}},
+                    {'tickets': {'_id': ticket_id}},
                     operation='delete',
                     create=False)
             self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(ret))
         return ret
-
-    handle_delete_tickets = handle_delete_persons
 
 
 class UsersHandler(CollectionHandler):
@@ -732,11 +724,11 @@ class UsersHandler(CollectionHandler):
             del data['password']
         if '_id' in data:
             tickets = []
-            events = self.db.query('events', {'persons.created_by': data['_id']})
+            events = self.db.query('events', {'tickets.created_by': data['_id']})
             for event in events:
                 event_title = event.get('title') or ''
                 event_id = str(event.get('_id'))
-                evt_tickets = self._filter_results(event.get('persons') or [], {'created_by': data['_id']})
+                evt_tickets = self._filter_results(event.get('tickets') or [], {'created_by': data['_id']})
                 for evt_ticket in evt_tickets:
                     evt_ticket['event_title'] = event_title
                     evt_ticket['event_id'] = event_id

@@ -80,8 +80,8 @@
                 </div>
                 <div class="collapse navbar-collapse">
                     <ul class="nav navbar-nav navbar-right">
-                        <li ng-if="info.user.username">
-                            <span class="btn">{{info.user.username}}</span>
+                        <li ng-if="info && info.user && info.user.username && info.user._id">
+                            <span class="btn"><a ui-sref="user.edit({id: info.user._id})">{{info.user.username}}</a></span>
                             <span class="btn btn-link">
                                 <a ng-controller="UsersCtrl" ng-click="logout()"><span class="fa fa-sign-out vcenter"></span>&nbsp;{{'logout' | translate}}</a>
                             </span>

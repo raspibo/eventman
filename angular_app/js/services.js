@@ -44,10 +44,10 @@ eventManServices.factory('Event', ['$resource', '$rootScope',
                     data = angular.fromJson(data);
                     convert_dates(data);
                     // strip empty keys.
-                    angular.forEach(data.persons || [], function(person, person_idx) {
-                        angular.forEach(person, function(value, key) {
+                    angular.forEach(data.tickets || [], function(ticket, ticket_idx) {
+                        angular.forEach(ticket, function(value, key) {
                             if (value === "") {
-                                delete person[key];
+                                delete ticket[key];
                             }
                         });
                     });
@@ -84,7 +84,7 @@ eventManServices.factory('EventTicket', ['$resource', '$rootScope',
                 interceptor : {responseError: $rootScope.errorHandler},
                 transformResponse: function(data, headers) {
                     data = angular.fromJson(data);
-                    return data.person;
+                    return data.ticket;
                 }
             },
 
@@ -98,7 +98,7 @@ eventManServices.factory('EventTicket', ['$resource', '$rootScope',
                     if (data.error) {
                         return data;
                     }
-                    return data.persons;
+                    return data.tickets;
                 }
             },
 
@@ -110,7 +110,7 @@ eventManServices.factory('EventTicket', ['$resource', '$rootScope',
                 params: {uuid: $rootScope.app_uuid},
                 transformResponse: function(data, headers) {
                     data = angular.fromJson(data);
-                    return data.person;
+                    return data.ticket;
                 }
             },
 
@@ -236,7 +236,7 @@ eventManServices.factory('User', ['$resource', '$rootScope',
 );
 
 
-/* WebSocket collection used to update the list of persons of an Event. */
+/* WebSocket collection used to update the list of tickets of an Event. */
 eventManApp.factory('EventUpdates', ['$websocket', '$location', '$log',
     function($websocket, $location, $log) {
 

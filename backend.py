@@ -24,7 +24,7 @@ re_objectid = re.compile(r'[0-9a-f]{24}')
 
 _force_conversion = {
     'seq_hex': str,
-    'persons.seq_hex': str
+    'tickets.seq_hex': str
 }
 
 

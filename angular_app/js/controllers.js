@@ -72,7 +72,7 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$uibModal'
         $scope.events = Event.all(function(events) {
             if (events && $state.is('tickets')) {
                 angular.forEach(events, function(evt, idx) {
-                    var evt_tickets = (evt.persons || []).slice(0);
+                    var evt_tickets = (evt.tickets || []).slice(0);
                     angular.forEach(evt_tickets, function(obj, obj_idx) {
                         obj.event_title = evt.title;
                         obj.event_id = evt._id;
@@ -133,7 +133,7 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$uibModal'
 eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event', '$log', '$translate', '$rootScope',
     function ($scope, $state, Event, $log, $translate, $rootScope) {
         $scope.event = {};
-        $scope.event.persons = [];
+        $scope.event.tickets = [];
         $scope.event.formSchema = {};
         $scope.eventFormDisabled = false;
 
@@ -146,10 +146,10 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
 
         // store a new Event or update an existing one
         $scope.save = function() {
-                // avoid override of event.persons list.
+                // avoid override of event.tickets list.
                 var this_event = angular.copy($scope.event);
-                if (this_event.persons) {
-                    delete this_event.persons;
+                if (this_event.tickets) {
+                    delete this_event.tickets;
                 }
                 if (this_event._id === undefined) {
                     $scope.event = Event.save(this_event);
@@ -169,7 +169,7 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
 
 eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event', 'EventTicket', 'Setting', '$log', '$translate', '$rootScope', 'EventUpdates', '$uibModal',
     function ($scope, $state, Event, EventTicket, Setting, $log, $translate, $rootScope, EventUpdates, $uibModal) {
-        $scope.personsOrder = ["name", "surname"];
+        $scope.ticketsOrder = ["name", "surname"];
         $scope.countAttendees = 0;
         $scope.message = {};
         $scope.event = {};
@@ -178,7 +178,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
         $scope.formSchema = {};
         $scope.formData = {};
         $scope.guiOptions = {dangerousActionsEnabled: false};
-        $scope.customFields = Setting.query({setting: 'person_custom_field', in_event_details: true});
+        $scope.customFields = Setting.query({setting: 'ticket_custom_field', in_event_details: true});
 
         $scope.formFieldsMap = {};
         $scope.formFieldsMapRev = {};
@@ -186,7 +186,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
         if ($state.params.id) {
             $scope.event = Event.get({id: $state.params.id}, function(data) {
                 $scope.$watchCollection(function() {
-                        return $scope.event.persons;
+                        return $scope.event.tickets;
                     }, function(prev, old) {
                         $scope.calcAttendees();
                     }
@@ -215,7 +215,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
             if ($state.is('event.tickets')) {
                 $scope.allPersons = Event.group_persons({id: $state.params.id});
 
-                // Handle WebSocket connection used to update the list of persons.
+                // Handle WebSocket connection used to update the list of tickets.
                 $scope.EventUpdates = EventUpdates;
                 $scope.EventUpdates.open();
                 $scope.$watchCollection(function() {
@@ -230,23 +230,23 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                             $log.debug('do not process our own message');
                             return false;
                         }
-                        if (!$scope.event.persons) {
-                            $scope.event.persons = [];
+                        if (!$scope.event.tickets) {
+                            $scope.event.tickets = [];
                         }
-                        var person_idx = $scope.event.persons.findIndex(function(el, idx, array) {
+                        var ticket_idx = $scope.event.tickets.findIndex(function(el, idx, array) {
                             return data._id == el._id;
                         });
-                        if (person_idx != -1) {
+                        if (ticket_idx != -1) {
                             $log.debug('_id ' + data._id + ' found');
                         } else {
                             $log.debug('_id ' + data._id + ' not found');
                         }
 
-                        if (data.action == 'update' && person_idx != -1 && $scope.event.persons[person_idx] != data.person) {
-                            $scope.event.persons[person_idx] = data.person;
-                        } else if (data.action == 'add' && person_idx == -1) {
-                            $scope._localAddTicket(data.person);
-                        } else if (data.action == 'delete' && person_idx != -1) {
+                        if (data.action == 'update' && ticket_idx != -1 && $scope.event.tickets[ticket_idx] != data.ticket) {
+                            $scope.event.tickets[ticket_idx] = data.ticket;
+                        } else if (data.action == 'add' && ticket_idx == -1) {
+                            $scope._localAddTicket(data.ticket);
+                        } else if (data.action == 'delete' && ticket_idx != -1) {
                             $scope._localRemoveTicket({_id: data._id});
                         }
                     }
@@ -257,12 +257,12 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
         }
 
         $scope.calcAttendees = function() {
-            if (!($scope.event && $scope.event.persons)) {
+            if (!($scope.event && $scope.event.tickets)) {
                 $scope.countAttendees = 0;
                 return;
             }
             var attendees = 0;
-            angular.forEach($scope.event.persons, function(value, key) {
+            angular.forEach($scope.event.tickets, function(value, key) {
                 if (value.attended && !value.cancelled) {
                     attendees += 1;
                 }
@@ -272,30 +272,30 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
 
         /* Stuff to do when a ticket is added, modified or removed locally. */
 
-        $scope._localAddTicket = function(ticket, original_person) {
+        $scope._localAddTicket = function(ticket, original_ticket) {
             if (!$state.is('event.tickets')) {
                 return true;
             }
             var ret = true;
-            if (!$scope.event.persons) {
-                $scope.event.persons = [];
+            if (!$scope.event.tickets) {
+                $scope.event.tickets = [];
             }
-            var ticket_idx = $scope.event.persons.findIndex(function(el, idx, array) {
+            var ticket_idx = $scope.event.tickets.findIndex(function(el, idx, array) {
                     return ticket._id == el._id;
             });
             if (ticket_idx != -1) {
                 $log.warn('ticket already present: not added');
                 ret = false;
             } else {
-                $scope.event.persons.push(ticket);
+                $scope.event.tickets.push(ticket);
             }
 
             // Try to remove this person from the allPersons list using ID or email.
             var field = null;
             var field_value = null;
-            if (original_person && original_person._id) {
+            if (original_ticket && original_ticket._id) {
                 field = '_id';
-                field_value = original_person._id;
+                field_value = original_ticket._id;
             } else if (ticket.email) {
                 field = 'email';
                 field_value = ticket.email;
@@ -312,34 +312,36 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
         };
 
         $scope._localUpdateTicket = function(ticket) {
-            if (!$scope.event.persons) {
-                $scope.event.persons = [];
+            if (!$scope.event.tickets) {
+                $scope.event.tickets = [];
             }
-            var ticket_idx = $scope.event.persons.findIndex(function(el, idx, array) {
+            var ticket_idx = $scope.event.tickets.findIndex(function(el, idx, array) {
                 return ticket._id == el._id;
             });
             if (ticket_idx == -1) {
                 $log.warn('ticket not present: not updated');
                 return false;
             }
-            $scope.event.persons[ticket_idx] = ticket;
+            $scope.event.tickets[ticket_idx] = ticket;
         };
 
-        $scope._localRemoveTicket = function(person) {
-            if (!(person && person._id && $scope.event.persons)) {
+        $scope._localRemoveTicket = function(ticket) {
+            if (!(ticket && ticket._id && $scope.event.tickets)) {
                 return;
             }
-            var person_idx = $scope.event.persons.findIndex(function(el, idx, array) {
-                return person._id == el._id;
+            var ticket_idx = $scope.event.tickets.findIndex(function(el, idx, array) {
+                return ticket._id == el._id;
             });
-            if (person_idx == -1) {
-                $log.warn('unable to find and delete ticket _id ' + person._id);
+            if (ticket_idx == -1) {
+                $log.warn('unable to find and delete ticket _id ' + ticket._id);
                 return;
             }
-            var removed_person = $scope.event.persons.splice(person_idx, 1);
+            var removed_person = $scope.event.tickets.splice(ticket_idx, 1);
             // to be used to populate allPersons, if needed.
             if (removed_person.length) {
                 person = removed_person[0];
+            } else {
+                return;
             }
             if (!$scope.allPersons) {
                 $scope.allPersons = [];
@@ -352,23 +354,23 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
             }
         };
 
-        $scope.setTicketAttribute = function(person, key, value, callback, hideMessage) {
-            $log.debug('setTicketAttribute for _id ' + person._id + ' key: ' + key + ' value: ' + value);
-            var newData = {event_id: $state.params.id, _id: person._id};
+        $scope.setTicketAttribute = function(ticket, key, value, callback, hideMessage) {
+            $log.debug('setTicketAttribute for _id ' + ticket._id + ' key: ' + key + ' value: ' + value);
+            var newData = {event_id: $state.params.id, _id: ticket._id};
             newData[key] = value;
             EventTicket.update(newData, function(data) {
-                if (!(data && data._id && data.person)) {
+                if (!(data && data._id && data.ticket)) {
                     return;
                 }
-                var person_idx = $scope.event.persons.findIndex(function(el, idx, array) {
+                var ticket_idx = $scope.event.tickets.findIndex(function(el, idx, array) {
                     return data._id == el._id;
                 });
-                if (person_idx == -1) {
+                if (ticket_idx == -1) {
                     $log.warn('unable to find ticket _id ' + _id);
                     return;
                 }
-                if ($scope.event.persons[person_idx] != data.person) {
-                    $scope.event.persons[person_idx] = data.person;
+                if ($scope.event.tickets[ticket_idx] != data.ticket) {
+                    $scope.event.tickets[ticket_idx] = data.ticket;
                 }
                 if (callback) {
                     callback(data);
@@ -376,9 +378,9 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                 if (key === 'attended' && !hideMessage) {
                     var msg = {};
                     if (value) {
-                        msg.message = '' + person.name + ' ' + person.surname + ' successfully added to event ' + $scope.event.title;
+                        msg.message = '' + ticket.name + ' ' + ticket.surname + ' successfully added to event ' + $scope.event.title;
                     } else {
-                        msg.message = '' + person.name + ' ' + person.surname + ' successfully removed from event ' + $scope.event.title;
+                        msg.message = '' + ticket.name + ' ' + ticket.surname + ' successfully removed from event ' + $scope.event.title;
                         msg.isError = true;
                     }
                     $scope.showMessage(msg);
@@ -386,30 +388,30 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
             });
         };
 
-        $scope.setTicketAttributeAndRefocus = function(person, key, value) {
-            $scope.setTicketAttribute(person, key, value);
+        $scope.setTicketAttributeAndRefocus = function(ticket, key, value) {
+            $scope.setTicketAttribute(ticket, key, value);
             $scope.query = '';
         };
 
-        $scope._setAttended = function(person) {
-            $scope.setTicketAttribute(person, 'attended', true, null, true);
+        $scope._setAttended = function(ticket) {
+            $scope.setTicketAttribute(ticket, 'attended', true, null, true);
         };
 
-        $scope.deleteTicket = function(person) {
+        $scope.deleteTicket = function(ticket) {
             EventTicket.delete({
                     event_id: $state.params.id,
-                    ticket_id: person._id
+                    ticket_id: ticket._id
                 }, function() {
-                    $scope._localRemoveTicket(person);
+                    $scope._localRemoveTicket(ticket);
             });
         };
 
-        $scope.addTicket = function(person) {
-            person.event_id = $state.params.id;
-            EventTicket.add(person, function(ticket) {
+        $scope.addTicket = function(ticket) {
+            ticket.event_id = $state.params.id;
+            EventTicket.add(ticket, function(ticket) {
                 $log.debug('addTicket');
                 $log.debug(ticket);
-                $scope._localAddTicket(ticket, person);
+                $scope._localAddTicket(ticket, ticket);
                 if (!$state.is('event.tickets')) {
                     $state.go('event.ticket.edit', {id: $scope.event._id, ticket_id: ticket._id});
                 } else {
@@ -425,7 +427,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
         $scope.updateTicket = function(ticket, cb) {
             ticket.event_id = $state.params.id;
             EventTicket.update(ticket, function(t) {
-                $scope._localUpdateTicket(t.person);
+                $scope._localUpdateTicket(t.ticket);
                 if (cb) {
                     cb(t);
                 }
@@ -499,14 +501,14 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
             } else {
                 inv_key = '-' + key;
             }
-            angular.forEach($scope.personsOrder,
+            angular.forEach($scope.ticketsOrder,
                 function(value, idx) {
                     if (value !== key && value !== inv_key) {
                         new_order.push(value);
                     }
                 }
             );
-            $scope.personsOrder = new_order;
+            $scope.ticketsOrder = new_order;
         };
 
         $scope.showMessage = function(cfg) {
