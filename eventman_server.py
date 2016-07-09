@@ -331,7 +331,7 @@ class CollectionHandler(BaseHandler):
         return filtered
 
     def _clean_dict(self, data):
-        """Filter a dictionary (in place) to remove unwanted keywords.
+        """Filter a dictionary (in place) to remove unwanted keywords in db queries.
 
         :param data: dictionary to clean
         :type data: dict"""
@@ -433,6 +433,7 @@ class CollectionHandler(BaseHandler):
                 output = self.apply_filter(output, 'get_%s' % resource)
                 self.write(output)
                 return
+            return self.build_error(status=404, message='unable to access resource: %s' % resource)
         if id_ is not None:
             permission = '%s|%s' % (self.document, crud_method)
             if not self.has_permission(permission):
@@ -449,7 +450,8 @@ class CollectionHandler(BaseHandler):
             newData = self.apply_filter(newData, '%s_all' % method)
         self.write(newData)
 
-    # PUT (update an existing document) is handled by the POST (create a new document) method
+    # PUT (update an existing document) is handled by the POST (create a new document) method;
+    # in subclasses you can always separate sub-resources handlers like handle_post_tickets and handle_put_tickets
     put = post
 
     @gen.coroutine
@@ -464,6 +466,7 @@ class CollectionHandler(BaseHandler):
             if method and callable(method):
                 self.write(method(id_, resource_id, **kwargs))
                 return
+            return self.build_error(status=404, message='unable to access resource: %s' % resource)
         if id_:
             permission = '%s|delete' % self.document
             if not self.has_permission(permission):
@@ -562,7 +565,7 @@ class EventsHandler(CollectionHandler):
     collection = 'events'
 
     def filter_get(self, output):
-        if not self.has_permission('tckets-all|read'):
+        if not self.has_permission('tickets-all|read'):
             if 'tickets' in output:
                 output['tickets'] = []
         return output
@@ -584,6 +587,7 @@ class EventsHandler(CollectionHandler):
     filter_input_put = filter_input_post
 
     def filter_input_post_tickets(self, data):
+        # Avoid users to be able to auto-update their 'attendee' status.
         if not self.has_permission('event|update'):
             if 'attended' in data:
                 del data['attended']
@@ -620,47 +624,38 @@ class EventsHandler(CollectionHandler):
                     return ticket
         return {}
 
-    def handle_get_tickets(self, id_, resource_id=None, match_query=None):
+    def handle_get_tickets(self, id_, resource_id=None):
         # Return every ticket registered at this event, or the information
         # about a specific ticket.
         query = {'_id': id_}
         event = self.db.query('events', query)[0]
-        if match_query is None:
-            match_query = resource_id
         if resource_id:
-            return {'ticket': self._get_ticket_data(match_query, event.get('tickets') or [])}
+            return {'ticket': self._get_ticket_data(resource_id, event.get('tickets') or [])}
         tickets = self._filter_results(event.get('tickets') or [], self.arguments)
         return {'tickets': tickets}
 
-    def __handle_get_tickets_REMOVE(self, id_, resource_id=None):
-        if resource_id is None and not self.has_permission('event:tickets|all'):
-            return self.build_error(status=401, message='insufficient permissions: event:tickets|all')
-        return self.handle_get_persons(id_, resource_id, {'_id': resource_id})
-
-    def handle_post_tickets(self, id_, ticket_id, data):
-        # Add a ticket to the list of tickets registered at this event.
+    def handle_post_tickets(self, id_, resource_id, data):
         uuid, arguments = self.uuid_arguments
         self._clean_dict(data)
         data['seq'] = self.get_next_seq('event_%s_tickets' % id_)
         data['seq_hex'] = '%06X' % data['seq']
-        if ticket_id is None:
-            doc = {}
-        else:
-            doc = self.db.query('events', {'_id': id_, 'tickets._id': ticket_id})
-        ret = {'action': 'add', '_id': ticket_id, 'ticket': data, 'uuid': uuid}
-        if '_id' in data:
-            del data['_id']
-            self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(ret))
-        if not doc:
-            data['_id'] = self.gen_id()
-            merged, doc = self.db.update('events',
-                    {'_id': id_},
-                    {'tickets': data},
-                    operation='appendUnique',
-                    create=False)
+        data['_id'] = self.gen_id()
+        ret = {'action': 'add', 'ticket': data, 'uuid': uuid}
+        merged, doc = self.db.update('events',
+                {'_id': id_},
+                {'tickets': data},
+                operation='appendUnique',
+                create=False)
+        if doc:
+            msg_ret = ret.copy()
+            msg_ret['ticket'] = msg_ret['ticket'].copy()
+            # Do not send ticket IDs over the WebSocket.
+            if '_id' in msg_ret['ticket']:
+                del msg_ret['ticket']['_id']
+            self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(msg_ret))
         return ret
 
-    def handle_put_tickets(self, id_, ticket_id, data, ticket=True):
+    def handle_put_tickets(self, id_, ticket_id, data):
         # Update an existing entry for a ticket registered at this event.
         self._clean_dict(data)
         uuid, arguments = self.uuid_arguments
@@ -684,8 +679,7 @@ class EventsHandler(CollectionHandler):
         new_ticket_data = self._get_ticket_data(ticket_query,
                 doc.get('tickets') or [])
         env = self._dict2env(new_ticket_data)
-        # always takes the ticket_id from the new ticket (it may have
-        # been a ticket_id).
+        # always takes the ticket_id from the new ticket
         ticket_id = str(new_ticket_data.get('_id'))
         env.update({'PERSON_ID': ticket_id, 'TICKED_ID': ticket_id, 'EVENT_ID': id_,
             'EVENT_TITLE': doc.get('title', ''), 'WEB_USER': self.current_user,
@@ -730,6 +724,7 @@ class UsersHandler(CollectionHandler):
         if 'password' in data:
             del data['password']
         if '_id' in data:
+            # Also add a 'tickets' list with all the tickets created by this user
             tickets = []
             events = self.db.query('events', {'tickets.created_by': data['_id']})
             for event in events:
@@ -798,7 +793,7 @@ class UsersHandler(CollectionHandler):
 
 
 class EbCSVImportPersonsHandler(BaseHandler):
-    """Importer for CSV files exported from eventbrite."""
+    """Importer for CSV files exported from Eventbrite."""
     csvRemap = {
         'Nome evento': 'event_title',
         'ID evento': 'event_id',

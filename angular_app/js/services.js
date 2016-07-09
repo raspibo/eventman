@@ -239,9 +239,7 @@ eventManServices.factory('User', ['$resource', '$rootScope',
 /* WebSocket collection used to update the list of tickets of an Event. */
 eventManApp.factory('EventUpdates', ['$websocket', '$location', '$log',
     function($websocket, $location, $log) {
-
         var dataStream = null;
-
         var data = {};
 
         var methods = {
