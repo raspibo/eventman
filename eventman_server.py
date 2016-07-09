@@ -124,6 +124,8 @@ class BaseHandler(tornado.web.RequestHandler):
         'true': True
     }
 
+    _re_split_salt = re.compile(r'\$(?P<salt>.+)\$(?P<hash>.+)')
+
     def write_error(self, status_code, **kwargs):
         """Default error handler."""
         if isinstance(kwargs.get('exc_info', (None, None))[1], BaseException):
@@ -199,6 +201,32 @@ class BaseHandler(tornado.web.RequestHandler):
         if callable(collection_permission):
             return collection_permission(permission)
         return False
+
+    def user_authorized(self, username, password):
+        """Check if a combination of username/password is valid.
+
+        :param username: username or email
+        :type username: str
+        :param password: password
+        :type password: str
+
+        :returns: tuple like (bool_user_is_authorized, dict_user_info)
+        :rtype: dict"""
+        query = [{'username': username}, {'email': username}]
+        res = self.db.query('users', query)
+        if not res:
+            return (False, {})
+        user = res[0]
+        db_password = user.get('password') or ''
+        if not db_password:
+            return (False, {})
+        match = self._re_split_salt.match(db_password)
+        if not match:
+            return (False, {})
+        salt = match.group('salt')
+        if utils.hash_password(password, salt=salt) == db_password:
+            return (True, user)
+        return (False, {})
 
     def build_error(self, message='', status=400):
         """Build and write an error message."""
@@ -733,6 +761,23 @@ class UsersHandler(CollectionHandler):
     document = 'user'
     collection = 'users'
 
+    def filter_get(self, data):
+        if 'password' in data:
+            del data['password']
+        if '_id' in data:
+            tickets = []
+            events = self.db.query('events', {'persons.created_by': data['_id']})
+            for event in events:
+                event_title = event.get('title') or ''
+                event_id = str(event.get('_id'))
+                evt_tickets = self._filter_results(event.get('persons') or [], {'created_by': data['_id']})
+                for evt_ticket in evt_tickets:
+                    evt_ticket['event_title'] = event_title
+                    evt_ticket['event_id'] = event_id
+                tickets.extend(evt_tickets)
+            data['tickets'] = tickets
+        return data
+
     def filter_get_all(self, data):
         if 'users' not in data:
             return data
@@ -740,6 +785,14 @@ class UsersHandler(CollectionHandler):
             if 'password' in user:
                 del user['password']
         return data
+
+    @gen.coroutine
+    @authenticated
+    def get(self, id_=None, resource=None, resource_id=None, acl=True, **kwargs):
+        if id_ is not None:
+            if (self.has_permission('user|read') or str(self.current_user_info.get('_id')) == id_):
+                acl = False
+        super(UsersHandler, self).get(id_, resource, resource_id, acl=acl, **kwargs)
 
     def filter_input_post_all(self, data):
         username = (data.get('username') or '').strip()
@@ -752,6 +805,31 @@ class UsersHandler(CollectionHandler):
             raise InputException('username already exists')
         return {'username': username, 'password': utils.hash_password(password),
                 'email': email, '_id': self.gen_id()}
+
+    def filter_input_put(self, data):
+        old_pwd = data.get('old_password')
+        new_pwd = data.get('new_password')
+        if old_pwd is not None:
+            del data['old_password']
+        if new_pwd is not None:
+            del data['new_password']
+            authorized, user = self.user_authorized(data['username'], old_pwd)
+            if not (self.has_permission('user|update') or (authorized and self.current_user == data['username'])):
+                raise InputException('not authorized to change password')
+            data['password'] = utils.hash_password(new_pwd)
+        if '_id' in data:
+            # Avoid overriding _id
+            del data['_id']
+        return data
+
+    @gen.coroutine
+    @authenticated
+    def put(self, id_=None, resource=None, resource_id=None, **kwargs):
+        if id_ is None:
+            return self.build_error(status=404, message='unable to access the resource')
+        if not (self.has_permission('user|update') or str(self.current_user_info.get('_id')) == id_):
+            return self.build_error(status=401, message='insufficient permissions: user|update or current user')
+        super(UsersHandler, self).put(id_, resource, resource_id, **kwargs)
 
 
 class EbCSVImportPersonsHandler(BaseHandler):
@@ -870,7 +948,6 @@ class WebSocketEventUpdatesHandler(tornado.websocket.WebSocketHandler):
 
 class LoginHandler(BaseHandler):
     """Handle user authentication requests."""
-    re_split_salt = re.compile(r'\$(?P<salt>.+)\$(?P<hash>.+)')
 
     @gen.coroutine
     def get(self, **kwds):
@@ -882,26 +959,6 @@ class LoginHandler(BaseHandler):
         else:
             with open(self.angular_app_path + "/login.html", 'r') as fd:
                 self.write(fd.read())
-
-    def _authorize(self, username, password, email=None):
-        """Return True is this username/password is valid."""
-        query = [{'username': username}]
-        if email is not None:
-            query.append({'email': email})
-        res = self.db.query('users', query)
-        if not res:
-            return False
-        user = res[0]
-        db_password = user.get('password') or ''
-        if not db_password:
-            return False
-        match = self.re_split_salt.match(db_password)
-        if not match:
-            return False
-        salt = match.group('salt')
-        if utils.hash_password(password, salt=salt) == db_password:
-            return True
-        return False
 
     @gen.coroutine
     def post(self, *args, **kwargs):
@@ -917,7 +974,9 @@ class LoginHandler(BaseHandler):
             self.set_status(401)
             self.write({'error': True, 'message': 'missing username or password'})
             return
-        if self._authorize(username, password):
+        authorized, user = self.user_authorized(username, password)
+        if authorized and user.get('username'):
+            username = user['username']
             logging.info('successful login for user %s' % username)
             self.set_secure_cookie("user", username)
             self.write({'error': False, 'message': 'successful login'})

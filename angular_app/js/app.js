@@ -164,6 +164,15 @@ eventManApp.config(['$stateProvider', '$urlRouterProvider',
                 templateUrl: 'users-list.html',
                 controller: 'UsersCtrl'
             })
+            .state('user', {
+                url: '/user',
+                templateUrl: 'user-main.html'
+            })
+            .state('user.edit', {
+                url: '/edit/:id',
+                templateUrl: 'user-edit.html',
+                controller: 'UsersCtrl'
+            })
             .state('login', {
                 url: '/login',
                 templateUrl: 'login.html',

@@ -273,6 +273,9 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
         /* Stuff to do when a ticket is added, modified or removed locally. */
 
         $scope._localAddTicket = function(ticket, original_person) {
+            if (!$state.is('event.tickets')) {
+                return true;
+            }
             var ret = true;
             if (!$scope.event.persons) {
                 $scope.event.persons = [];
@@ -652,10 +655,21 @@ eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$state', 'Person
 );
 
 
-eventManControllers.controller('UsersCtrl', ['$scope', '$rootScope', '$state', '$log', 'User',
-    function ($scope, $rootScope, $state, $log, User) {
+eventManControllers.controller('UsersCtrl', ['$scope', '$rootScope', '$state', '$log', 'User', '$uibModal',
+    function ($scope, $rootScope, $state, $log, User, $uibModal) {
         $scope.loginData = {};
-        $scope.usersOrderProp = ['username'];
+        $scope.user = {};
+        $scope.updateUserInfo = {};
+        $scope.users = [];
+        $scope.usersOrderProp = 'username';
+        $scope.ticketsOrderProp = 'title';
+
+        $scope.confirm_delete = 'Do you really want to delete this user?';
+        $rootScope.$on('$translateChangeSuccess', function () {
+            $translate('Do you really want to delete this user?').then(function (translation) {
+                $scope.confirm_delete = translation;
+            });
+        });
 
         $scope.updateUsersList = function() {
             if ($state.is('users')) {
@@ -665,8 +679,28 @@ eventManControllers.controller('UsersCtrl', ['$scope', '$rootScope', '$state', '
 
         $scope.updateUsersList();
 
+        if ($state.is('user.edit') && $state.params.id) {
+            $scope.user = User.get({id: $state.params.id}, function() {
+                $scope.updateUserInfo = $scope.user;
+            });
+        }
+
+        $scope.updateUser = function() {
+            User.update($scope.updateUserInfo);
+        };
+
         $scope.deleteUser = function(user_id) {
-            User.delete({id: user_id}, $scope.updateUsersList);
+            var modalInstance = $uibModal.open({
+                scope: $scope,
+                templateUrl: 'modal-confirm-action.html',
+                controller: 'ModalConfirmInstanceCtrl',
+                resolve: {
+                    message: function() { return $scope.confirm_delete; }
+                }
+            });
+            modalInstance.result.then(function() {
+                User.delete({id: user_id}, $scope.updateUsersList);
+            });
         };
 
         $scope.register = function() {

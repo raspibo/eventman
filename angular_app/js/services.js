@@ -251,11 +251,7 @@ eventManServices.factory('User', ['$resource', '$rootScope',
                 method: 'GET',
                 interceptor : {responseError: $rootScope.errorHandler},
                 transformResponse: function(data, headers) {
-                    data = angular.fromJson(data);
-                    if (data.error) {
-                        return data;
-                    }
-                    return data.user || {};
+                    return angular.fromJson(data);
                 }
             },
 
