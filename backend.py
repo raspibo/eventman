@@ -2,8 +2,8 @@
 
 Classes and functions used to manage events and attendees database.
 
-Copyright 2015 Davide Alberani <da@erlug.linux.it>
-               RaspiBO <info@raspibo.org>
+Copyright 2015-2016 Davide Alberani <da@erlug.linux.it>
+                    RaspiBO <info@raspibo.org>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -41,13 +41,6 @@ def convert_obj(obj):
         return obj
     try:
         return ObjectId(obj)
-    except:
-        pass
-    try:
-        i_obj = int(obj)
-        if i_obj > 2**64 - 1:
-            return obj
-        return i_obj
     except:
         pass
     return obj

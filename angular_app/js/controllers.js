@@ -7,8 +7,8 @@ var eventManControllers = angular.module('eventManControllers', []);
 
 
 /* A controller that can be used to navigate. */
-eventManControllers.controller('NavigationCtrl', ['$scope', '$rootScope', '$location', 'Setting', 'Info', '$state',
-    function ($scope, $rootScope, $location, Setting, Info, $state) {
+eventManControllers.controller('NavigationCtrl', ['$scope', '$rootScope', '$location', 'Setting', '$state',
+    function ($scope, $rootScope, $location, Setting, $state) {
         $scope.logo = {};
 
         $scope.getLocation = function() {
@@ -91,7 +91,7 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$uibModal'
             });
         });
 
-        $scope.remove = function(_id) {
+        $scope.deleteEvent = function(_id) {
             var modalInstance = $uibModal.open({
                 scope: $scope,
                 templateUrl: 'modal-confirm-action.html',
@@ -101,10 +101,9 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$uibModal'
                 }
             });
             modalInstance.result.then(function() {
-                Event.remove({'id': _id}, function() {
+                Event.delete({'id': _id}, function() {
                     $scope.events = Event.all();
-                    }
-                );
+                });
             });
         };
 

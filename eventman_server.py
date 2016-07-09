@@ -980,10 +980,14 @@ def run():
     if options.debug:
         logger.setLevel(logging.DEBUG)
 
+    ssl_options = {}
+    if os.path.isfile(options.ssl_key) and os.path.isfile(options.ssl_cert):
+        ssl_options = dict(certfile=options.ssl_cert, keyfile=options.ssl_key)
+
     # database backend connector
     db_connector = backend.EventManDB(url=options.mongo_url, dbName=options.db_name)
     init_params = dict(db=db_connector, data_dir=options.data_dir, listen_port=options.port,
-            authentication=options.authentication, logger=logger)
+            authentication=options.authentication, logger=logger, ssl_options=ssl_options)
 
     # If not present, we store a user 'admin' with password 'eventman' into the database.
     if not db_connector.query('users', {'username': 'admin'}):
@@ -1025,9 +1029,6 @@ def run():
         cookie_secret='__COOKIE_SECRET__',
         login_url='/login',
         debug=options.debug)
-    ssl_options = {}
-    if os.path.isfile(options.ssl_key) and os.path.isfile(options.ssl_cert):
-        ssl_options = dict(certfile=options.ssl_cert, keyfile=options.ssl_key)
     http_server = tornado.httpserver.HTTPServer(application, ssl_options=ssl_options or None)
     logger.info('Start serving on %s://%s:%d', 'https' if ssl_options else 'http',
                                                  options.address if options.address else '127.0.0.1',
@@ -1038,7 +1039,7 @@ def run():
     ws_application = tornado.web.Application([_ws_handler], debug=options.debug)
     ws_http_server = tornado.httpserver.HTTPServer(ws_application)
     ws_http_server.listen(options.port+1, address='127.0.0.1')
-    logger.debug('Starting WebSocket on ws://127.0.0.1:%d', options.port+1)
+    logger.debug('Starting WebSocket on %s://127.0.0.1:%d', 'wss' if ssl_options else 'ws', options.port+1)
     tornado.ioloop.IOLoop.instance().start()
 
 

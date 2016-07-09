@@ -77,17 +77,6 @@ eventManServices.factory('Event', ['$resource', '$rootScope',
 eventManServices.factory('EventTicket', ['$resource', '$rootScope',
     function($resource, $rootScope) {
         return $resource('events/:id/tickets', {event_id: '@event_id', ticket_id: '@_id'}, {
-
-            get: {
-                method: 'GET',
-                url: 'events/:id/tickets/:ticket_id',
-                interceptor : {responseError: $rootScope.errorHandler},
-                transformResponse: function(data, headers) {
-                    data = angular.fromJson(data);
-                    return data.ticket;
-                }
-            },
-
             all: {
                 method: 'GET',
                 url: '/tickets',
@@ -99,6 +88,16 @@ eventManServices.factory('EventTicket', ['$resource', '$rootScope',
                         return data;
                     }
                     return data.tickets;
+                }
+            },
+
+            get: {
+                method: 'GET',
+                url: 'events/:id/tickets/:ticket_id',
+                interceptor : {responseError: $rootScope.errorHandler},
+                transformResponse: function(data, headers) {
+                    data = angular.fromJson(data);
+                    return data.ticket;
                 }
             },
 
@@ -143,7 +142,6 @@ eventManServices.factory('EventTicket', ['$resource', '$rootScope',
 eventManServices.factory('Setting', ['$resource', '$rootScope',
     function($resource, $rootScope) {
         return $resource('settings/', {}, {
-
             query: {
                 method: 'GET',
                 interceptor : {responseError: $rootScope.errorHandler},
