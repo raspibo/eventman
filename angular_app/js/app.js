@@ -33,6 +33,7 @@ var eventManApp = angular.module('eventManApp', [
 eventManApp.run(['$rootScope', '$state', '$stateParams', '$log', 'Info',
     function($rootScope, $state, $stateParams, $log, Info) {
         $rootScope.app_uuid = guid();
+        $rootScope.info = {};
         $log.debug('App UUID: ' + $rootScope.app_uuid);
         $rootScope.$state = $state;
         $rootScope.$stateParams = $stateParams;
@@ -42,7 +43,9 @@ eventManApp.run(['$rootScope', '$state', '$stateParams', '$log', 'Info',
         $rootScope.readInfo = function(callback) {
             Info.get({}, function(data) {
                 $rootScope.info = data || {};
-                if (callback) {
+                if (data.authentication_required && !(data.user && data.user._id)) {
+                    $state.go('login');
+                } else if (callback) {
                     callback(data);
                 }
             });

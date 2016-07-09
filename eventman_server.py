@@ -244,7 +244,6 @@ class RootHandler(BaseHandler):
     angular_app_path = os.path.join(os.path.dirname(__file__), "angular_app")
 
     @gen.coroutine
-    @authenticated
     def get(self, *args, **kwargs):
         # serve the ./angular_app/index.html file
         with open(self.angular_app_path + "/index.html", 'r') as fd:
@@ -866,12 +865,12 @@ class SettingsHandler(BaseHandler):
 class InfoHandler(BaseHandler):
     """Handle requests for information about the logged in user."""
     @gen.coroutine
-    @authenticated
     def get(self, **kwds):
         info = {}
         user_info = self.current_user_info
         if user_info:
             info['user'] = user_info
+        info['authentication_required'] = self.authentication
         self.write({'info': info})
 
 
@@ -904,7 +903,7 @@ class WebSocketEventUpdatesHandler(tornado.websocket.WebSocketHandler):
             logging.warn('WebSocketEventUpdatesHandler.on_close error closing websocket: %s', str(e))
 
 
-class LoginHandler(BaseHandler):
+class LoginHandler(RootHandler):
     """Handle user authentication requests."""
 
     @gen.coroutine
@@ -914,9 +913,6 @@ class LoginHandler(BaseHandler):
             self.set_status(401)
             self.write({'error': True,
                 'message': 'authentication required'})
-        else:
-            with open(self.angular_app_path + "/login.html", 'r') as fd:
-                self.write(fd.read())
 
     @gen.coroutine
     def post(self, *args, **kwargs):
@@ -1024,7 +1020,7 @@ def run():
         template_path=os.path.join(os.path.dirname(__file__), "templates"),
         static_path=os.path.join(os.path.dirname(__file__), "static"),
         cookie_secret='__COOKIE_SECRET__',
-        login_url='/login',
+        login_url='/#/login',
         debug=options.debug)
     ssl_options = {}
     if os.path.isfile(options.ssl_key) and os.path.isfile(options.ssl_cert):
