@@ -312,6 +312,9 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
         };
 
         $scope._localUpdateTicket = function(ticket) {
+            if (!$state.is('event.tickets')) {
+                return;
+            }
             if (!$scope.event.tickets) {
                 $scope.event.tickets = [];
             }
@@ -362,18 +365,21 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                 if (!(data && data._id && data.ticket)) {
                     return;
                 }
+                if (callback) {
+                    callback(data);
+                }
+                if (!$state.is('event.tickets')) {
+                    return;
+                }
                 var ticket_idx = $scope.event.tickets.findIndex(function(el, idx, array) {
                     return data._id == el._id;
                 });
                 if (ticket_idx == -1) {
-                    $log.warn('unable to find ticket _id ' + _id);
+                    $log.warn('unable to find ticket _id ' + data._id);
                     return;
                 }
                 if ($scope.event.tickets[ticket_idx] != data.ticket) {
                     $scope.event.tickets[ticket_idx] = data.ticket;
-                }
-                if (callback) {
-                    callback(data);
                 }
                 if (key === 'attended' && !hideMessage) {
                     var msg = {};

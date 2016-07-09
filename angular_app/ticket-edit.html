@@ -20,7 +20,7 @@
                                     <span class="fa fa-calendar vcenter"></span>
                                     {{'Edit event' | translate}}
                                 </button>
-                                &nbsp;<button ng-click="$state.go('event.tickets', {id: event._id})" class="btn btn-success" ng-if="event._id && hasPermission('tickets-all|read')">
+                                &nbsp;<button ng-click="$state.go('event.tickets', {id: event._id})" class="btn btn-success" ng-if="event._id && hasPermission('event:tickets-all|read')">
                                     <span class="fa fa-ticket vcenter"></span>
                                     {{'Tickets' | translate}}
                                 </button>

@@ -46,9 +46,12 @@ API_VERSION = '1.0'
 re_env_key = re.compile('[^A-Z_]+')
 re_slashes = re.compile(r'//+')
 
+# Keep track of WebSocket connections.
+_ws_clients = {}
+
 
 def authenticated(method):
-    """Decorator to handle authentication."""
+    """Decorator to handle forced authentication."""
     original_wrapper = tornado.web.authenticated(method)
     @tornado.web.functools.wraps(method)
     def my_wrapper(self, *args, **kwargs):
@@ -85,7 +88,9 @@ class BaseHandler(tornado.web.RequestHandler):
     """Base class for request handlers."""
     permissions = {
         'event|read': True,
-        'event:tickets|all': True,
+        'event:tickets|read': True,
+        'event:tickets|create': True,
+        'event:tickets|update': True,
         'event:tickets-all|create': True,
         'events|read': True,
         'users|create': True
@@ -228,7 +233,13 @@ class BaseHandler(tornado.web.RequestHandler):
         return (False, {})
 
     def build_error(self, message='', status=400):
-        """Build and write an error message."""
+        """Build and write an error message.
+
+        :param message: textual message
+        :type message: str
+        :param status: HTTP status code
+        :type status: int
+        """
         self.set_status(status)
         self.write({'error': True, 'message': message})
 
@@ -249,9 +260,6 @@ class RootHandler(BaseHandler):
         with open(self.angular_app_path + "/index.html", 'r') as fd:
             self.write(fd.read())
 
-
-# Keep track of WebSocket connections.
-_ws_clients = {}
 
 class CollectionHandler(BaseHandler):
     """Base class for handlers that need to interact with the database backend.
@@ -856,7 +864,7 @@ class SettingsHandler(BaseHandler):
     """Handle requests for Settings."""
     @gen.coroutine
     @authenticated
-    def get(self, **kwds):
+    def get(self, **kwargs):
         query = self.arguments_tobool()
         settings = self.db.query('settings', query)
         self.write({'settings': settings})
@@ -865,7 +873,7 @@ class SettingsHandler(BaseHandler):
 class InfoHandler(BaseHandler):
     """Handle requests for information about the logged in user."""
     @gen.coroutine
-    def get(self, **kwds):
+    def get(self, **kwargs):
         info = {}
         user_info = self.current_user_info
         if user_info:
@@ -879,7 +887,7 @@ class WebSocketEventUpdatesHandler(tornado.websocket.WebSocketHandler):
     def _clean_url(self, url):
         return re_slashes.sub('/', url)
 
-    def open(self, event_id, *args, **kwds):
+    def open(self, event_id, *args, **kwargs):
         logging.debug('WebSocketEventUpdatesHandler.on_open event_id:%s' % event_id)
         _ws_clients.setdefault(self._clean_url(self.request.uri), set()).add(self)
         logging.debug('WebSocketEventUpdatesHandler.on_open %s clients connected' % len(_ws_clients))
@@ -907,7 +915,7 @@ class LoginHandler(RootHandler):
     """Handle user authentication requests."""
 
     @gen.coroutine
-    def get(self, **kwds):
+    def get(self, **kwargs):
         # show the login page
         if self.is_api():
             self.set_status(401)
@@ -943,7 +951,7 @@ class LoginHandler(RootHandler):
 class LogoutHandler(BaseHandler):
     """Handle user logout requests."""
     @gen.coroutine
-    def get(self, **kwds):
+    def get(self, **kwargs):
         # log the user out
         logging.info('logout')
         self.logout()
@@ -1020,7 +1028,7 @@ def run():
         template_path=os.path.join(os.path.dirname(__file__), "templates"),
         static_path=os.path.join(os.path.dirname(__file__), "static"),
         cookie_secret='__COOKIE_SECRET__',
-        login_url='/#/login',
+        login_url='/login',
         debug=options.debug)
     ssl_options = {}
     if os.path.isfile(options.ssl_key) and os.path.isfile(options.ssl_cert):

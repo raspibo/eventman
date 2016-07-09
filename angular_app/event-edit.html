@@ -5,7 +5,7 @@
             <h1>
                 {{event.title}}
                 <span ng-if="hasPermission('event|create') && !event._id">{{'New event' | translate}}</span>
-                &nbsp;<button ng-if="event._id && hasPermission('tickets-all|read')" ng-click="$state.go('event.tickets', {id: event._id})" class="btn btn-success">
+                &nbsp;<button ng-if="event._id && hasPermission('event:tickets-all|read')" ng-click="$state.go('event.tickets', {id: event._id})" class="btn btn-success">
                     <span class="fa fa-ticket vcenter"></span>
                     {{'Tickets' | translate}}
                 </button>
