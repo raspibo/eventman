@@ -165,6 +165,7 @@ Code layout
 ===========
 
 The code is so divided:
+
     +- eventman\_server.py - the Tornado Web server
     +- backend.py - stuff to interact with MongoDB
     +- utils.py - utilities
