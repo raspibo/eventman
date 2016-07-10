@@ -1,13 +1,6 @@
 <!-- show details of an Event -->
 <div class="container">
     <div eventman-message="eventman-message" control="message"></div>
-    <div class="container">
-        <div class="row">
-            <div class="col-md-7 col-xs-7 vcenter">
-                <h1><a ui-sref="event.view({id: event._id})" ng-if="event._id">{{event.title}}</a><span ng-if="!ticket._id"> - {{'join this event' | translate}}</span><span ng-if="ticket._id"> - {{'your ticket' | translate}}</span></h1>
-            </div>
-        </div>
-    </div>
 
     <!-- FIXME: ideally, here we would have put a ng-if="!ticket.cancelled" directive, but for some
          odd reason, any kind ng-if directive will prevent the form being populated with the formData model.
@@ -15,8 +8,24 @@
     <div class="container">
         <div class="row">
             <div class="col-md-12">
-                <div class="panel panel-info table-striped top5">
-                    <div class="panel-heading">{{'Join this event' | translate}}</div>
+                <div class="panel panel-primary table-striped top5">
+                    <div class="panel-heading">
+                        <h1>
+                            {{event.title}}<span ng-if="!ticket._id"> - {{'join this event' | translate}}</span><span ng-if="ticket._id"> - {{'your ticket' | translate}}</span>
+                                &nbsp;<button ng-click="$state.go('event.view', {id: event._id})" class="btn btn-success" ng-if="event._id && !hasPermission('event|update')">
+                                    <span class="fa fa-calendar vcenter"></span>
+                                    {{'Event details' | translate}}
+                                </button>
+                                &nbsp;<button ng-click="$state.go('event.edit', {id: event._id})" class="btn btn-success" ng-if="event._id && hasPermission('event|update')">
+                                    <span class="fa fa-gear vcenter"></span>
+                                    {{'Edit event' | translate}}
+                                </button>
+                                &nbsp;<button ng-click="$state.go('event.tickets', {id: event._id})" class="btn btn-success" ng-if="event._id && hasPermission('event:tickets-all|read')">
+                                    <span class="fa fa-ticket vcenter"></span>
+                                    {{'Tickets' | translate}}
+                                </button>
+                        </h1>
+                    </div>
                     <div class="panel-body">
                         <div ng-if="ticket.cancelled" class="clearfix alert alert-danger">
                             {{'Your ticket has been cancelled; you can join again this event using the commands below' | translate}}
@@ -45,17 +54,16 @@
                 <div class="panel panel-danger table-striped top5">
                     <div class="panel-heading">{{'Dangerous stuff' | translate}}</div>
                     <div class="panel-body">
-                    <button ng-click="dangerousActionsEnabled = !dangerousActionsEnabled" class="btn btn-warning">
-                        <span class="fa fa-exclamation-triangle vcenter"></span>
-                        {{'Toggle dangerous actions' | translate}}
-                    </button>
-                    &nbsp;
-                    <button ng-disabled="!dangerousActionsEnabled" ng-click="toggleTicket({id: ticket._id})" class="btn btn-danger">
-                        <span ng-class="{fa: true, 'fa-sign-out': !ticket.cancelled, 'fa-sign-in': ticket.cancelled, vcenter: true}"></span>
-                        <span ng-if="!ticket.cancelled">{{'Leave this event' | translate}}</span>
-                        <span ng-if="ticket.cancelled">{{'Join again this event' | translate}}</span>
-                    </button>
-
+                        <button ng-click="guiOptions.dangerousActionsEnabled = !guiOptions.dangerousActionsEnabled" class="btn btn-warning">
+                            <span class="fa fa-exclamation-triangle vcenter"></span>
+                            {{'Toggle dangerous actions' | translate}}
+                        </button>
+                        &nbsp;
+                        <button ng-disabled="!guiOptions.dangerousActionsEnabled" ng-click="toggleCancelledTicket({id: ticket._id})" class="btn btn-danger">
+                            <span ng-class="{fa: true, 'fa-sign-out': !ticket.cancelled, 'fa-sign-in': ticket.cancelled, vcenter: true}"></span>
+                            <span ng-if="!ticket.cancelled">{{'Leave this event' | translate}}</span>
+                            <span ng-if="ticket.cancelled">{{'Join again this event' | translate}}</span>
+                        </button>
                     </div>
                 </div>
             </div>

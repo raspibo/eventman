@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-"""print_label.py - print a label with the name, the company and the person_id (in a barcode) of an attendee
+"""print_label.py - print a label with the name, the company and SEQ_HEX (in a barcode) of an attendee
 
-Copyright 2015 Emiliano Mattioli <oloturia AT gmail.com>
-               Davide Alberani <da@erlug.linux.it>
-               RaspiBO <info@raspibo.org>
+Copyright 2015-2016 Emiliano Mattioli <oloturia AT gmail.com>
+                    Davide Alberani <da@erlug.linux.it>
+                    RaspiBO <info@raspibo.org>
 
 Licensed under the Apache License 2.0
 """

@@ -1,21 +1,20 @@
-<!-- import persons -->
+<!-- import tickets -->
 <div class="container">
-    <h1>{{'Import persons' | translate}}</h1>
     <div class="panel panel-primary">
         <div class="panel-heading">
-            <div class="panel-title">{{'Import persons from eventbrite CSV' | translate}}</div>
+            <div class="panel-title"><h1>{{'Import tickets from Eventbrite CSV' | translate}}</h1></div>
         </div>
         <div class="panel-body">
             <form name="ebCSVForm" class="well">
                 <div class="form-group">
                     <label for="eb-csv-import">{{'CSV file' | translate}}</label>
                     <input name="file" ng-file-select ng-model="file" type="file" id="eb-csv-import" ng-required="true">
-                    <p class="help-block">{{'CSV exported from eventbrite' | translate}}</p>
+                    <p class="help-block">{{'CSV exported from Eventbrite' | translate}}</p>
                 </div>
                 
                 <div class="form-group">
-                    <label for="forEvent">{{'Associate users to this event' | translate}}</label>
-                    <select class="form-control" id="forEvent" ng-model="targetEvent">
+                    <label for="forEvent">{{'Associate tickets to this event' | translate}}</label>
+                    <select class="form-control" id="forEvent" ng-model="targetEvent" ng-required="true">
                         <option ng-repeat="event in events" value="{{event._id}}">{{event.title}}</option>
                     </select>
                 </div>

@@ -3,44 +3,38 @@
     <div eventman-message="eventman-message" control="message"></div>
     <div class="container">
         <div class="row">
-            <div class="col-md-7 col-xs-7 vcenter">
-                <h1>{{event.title}}
-                    <button ng-if="event._id" ng-click="$state.go('event.edit', {id: event._id})" class="btn btn-success">
-                        <span class="fa fa-pencil-square-o vcenter"></span>
-                        {{'Edit' | translate}}
-                    </button>
-                </h1>
-            </div><!--
-         --><div class="col-md-5 col-xs-5 vcenter">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h2><div class="label label-warning vcenter">{{'Registered:' | translate}} {{((event.persons || []) | registeredFilter).length}}</div></h2>
-                    </div>
-                    <div class="col-md-6">
-                        <h2><div class="label label-info vcenter">{{'Attendees:' | translate}} {{countAttendees}}</div></h2>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="container">
-        <div class="row">
             <div class="col-md-8">
                 <div class="panel panel-primary table-striped top5">
-                    <div class="panel-heading">{{'Persons' | translate}}</div>
+                    <div class="panel-heading">
+                        <h1>{{event.title}} - {{'tickets' | translate}}
+                    <button ng-if="event._id" ng-click="$state.go('event.edit', {id: event._id})" class="btn btn-success">
+                        <span class="fa fa-gear vcenter"></span>
+                        {{'Edit event' | translate}}
+                    </button>
+                    &nbsp;
+                    <button ng-if="event._id" ng-click="openQuickAddTicket()" class="btn btn-success">
+                        <span class="fa fa-user-plus vcenter"></span>
+                        {{'Quick add ticket' | translate}}
+                    </button>
+                    <span>
+                    <span class="label label-info vcenter pull-right">{{'Attendees:' | translate}} {{countAttendees}}</span>
+                    &nbsp;
+                    <span class="label label-warning vcenter pull-right">{{'Registered:' | translate}} {{((event.tickets || []) | registeredFilter).length}}</span>
+                    </span>
+                </h1>
+                    </div>
                     <div class="panel-body">
                         <form class="form-inline">
                             <div class="form-group">
-                                <label for="query-persons">{{'Search:' | translate}}</label>
-                                <input eventman-focus type="text" id="query-persons" class="form-control" placeholder="{{'Name or email' | translate}}" ng-model="query" ng-model-options="{debounce: 600}">
-                            </div>
+                                <label for="query-tickets">{{'Search:' | translate}}</label>
+                                <input eventman-focus type="text" id="query-tickets" class="form-control" placeholder="{{'Name or email' | translate}}" ng-model="query" ng-model-options="{debounce: 600}">
+                            </div>&nbsp;<label>&nbsp;<input type="checkbox" ng-model="registeredFilterOptions.all" /> {{'Show cancelled tickets' | translate}}</label>
                         </form>
                         <table class="table table-striped">
                             <thead>
                                 <tr>
                                     <th class="text-right nowrap">#</th>
-                                    <th class="nowrap">{{'Person' | translate}} <a ng-click="updateOrded('name')" href=""><i class="fa fa-caret-up"></i></a>{{'Name' | translate}}<a ng-click="updateOrded('-name')" href=""><i class="fa fa-caret-down"></i></a> <a ng-click="updateOrded('surname')" href=""><i class="fa fa-caret-up"></i></a>{{'Surname' | translate}}<a ng-click="updateOrded('-surname')" href=""><i class="fa fa-caret-down"></i></a></th>
+                                    <th class="nowrap"><a ng-click="updateOrded('name')" href=""><i class="fa fa-caret-up"></i></a>{{'Name' | translate}}<a ng-click="updateOrded('-name')" href=""><i class="fa fa-caret-down"></i></a> <a ng-click="updateOrded('surname')" href=""><i class="fa fa-caret-up"></i></a>{{'Surname' | translate}}<a ng-click="updateOrded('-surname')" href=""><i class="fa fa-caret-down"></i></a></th>
                                     <th class="text-center nowrap"><a ng-click="updateOrded('-attended')" href=""><i class="fa fa-caret-up"></i></a>{{'Attended' | translate}}<a ng-click="updateOrded('attended')" href=""><i class="fa fa-caret-down"></i></a></th>
                                     <th class="text-center nowrap" ng-repeat="col in customFields">
                                         <a ng-click="updateOrded(col.key)" href=""><i class="fa fa-caret-up"></i></a>{{col.label | translate}}<a ng-click="updateOrded('-' + col.key)" href=""><i class="fa fa-caret-down"></i></a>
@@ -49,25 +43,30 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr ng-repeat="person in (event.persons || []) | splittedFilter:query | registeredFilter | orderBy:personsOrder">
+                                <tr ng-repeat="ticket in (event.tickets || []) | splittedFilter:query | registeredFilter:registeredFilterOptions | orderBy:ticketsOrder">
                                     <td class="text-right">{{$index+1}}</td>
                                     <td>
-                                        <span><strong><a ui-sref="person.info({id: person.person_id})"><span class="fa fa-lg fa-user"></span></a>&nbsp;<a ui-sref="event.ticket.edit({id: event._id, ticket_id: person._id})" ng-if="person._id"><span>{{person.name}}</span>&nbsp;<span>{{person.surname}}</span></a></strong></span><span ng-if="!person._id"><span>{{person.name}}</span>&nbsp;<span>{{person.surname}}</span></a></strong></span></span><span ng-if="person.email">&nbsp;&lt;{{person.email}}&gt;</span>
-                                        <p ng-if="person.company || person.job_title"><i ng-if="person.job_title">{{person.job_title}}</i><span ng-if="person.company && person.job_title">&nbsp;@&nbsp;</span><i ng-if="person.company">{{person.company}}</i></p>
+                                        <span>
+                                            <strong>
+                                                <a ui-sref="event.ticket.edit({id: event._id, ticket_id: ticket._id})"><span>{{ticket.name}}</span>&nbsp;<span>{{ticket.surname}}</span></a>
+                                            </strong>
+                                        </span>
+                                        <span ng-if="ticket.email">&nbsp;&lt;{{ticket.email}}&gt;</span><span ng-if="ticket.cancelled">&nbsp;({{'cancelled' | translate}})</span>
+                                        <p ng-if="ticket.company || ticket.job_title"><i ng-if="ticket.job_title">{{ticket.job_title}}</i><span ng-if="ticket.company && ticket.job_title">&nbsp;@&nbsp;</span><i ng-if="ticket.company">{{ticket.company}}</i></p>
                                     </td>
                                     <td class="text-center">
-                                        <button class="btn btn-link" reset-focus name="switch-attended" ng-click="setPersonAttributeAndRefocus(person, 'attended', !person.attended)"><span class="fa fa-lg {{(person.attended) && 'fa-check-circle text-success' || 'fa-times-circle text-danger'}}"></span></button>
+                                        <button class="btn btn-link" reset-focus name="switch-attended" ng-click="setTicketAttributeAndRefocus(ticket, 'attended', !ticket.attended)"><span class="fa fa-lg {{(ticket.attended) && 'fa-check-circle text-success' || 'fa-times-circle text-danger'}}"></span></button>
                                     </td>
                                     <td class="text-center" ng-repeat="col in customFields">
                                         <span ng-if="col.type == 'boolean'">
-                                            <button class="btn btn-link" ng-click="setPersonAttribute(person, col.key, !person[col.key])"><span class="fa fa-lg {{(person[col.key]) && 'fa-check-circle text-success' || 'fa-times-circle text-danger'}}"></span></button>
+                                            <button class="btn btn-link" ng-click="setTicketAttribute(ticket, col.key, !ticket[col.key])"><span class="fa fa-lg {{(ticket[col.key]) && 'fa-check-circle text-success' || 'fa-times-circle text-danger'}}"></span></button>
                                         </span>
                                         <span ng-if="col.type != 'boolean'">
-                                            {{person[col.key]}}
+                                            {{ticket[col.key]}}
                                         </span>
                                     </td>
                                     <td class="text-center">
-                                        <button ng-click="removeAttendee(person)" type="button" class="btn btn-link fa fa-lg fa-trash"></button>
+                                        <button ng-click="deleteTicket(ticket)" type="button" class="btn btn-link fa fa-lg fa-trash"></button>
                                     </td>
                                 </tr>
                             </tbody>
@@ -77,42 +76,8 @@
             </div>
 
             <div class="col-md-4">
-
-                <div class="panel panel-info table-striped top5">
-                    <div class="panel-heading">{{'Quick add' | translate}}</div>
-                    <div class="panel-body">
-                        <form>
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-addon min70-compact">{{'Name' | translate}}</span>
-                                <input type="text" class="form-control" placeholder="{{'Name' | translate}}" ng-model="newPerson.name" ng-required="1">
-                            </div>
-                            <div class="input-group input-group-sm top5">
-                                <span class="input-group-addon min70-compact">{{'Surname' | translate}}</span>
-                                <input type="text" class="form-control" placeholder="{{'Surname' | translate}}" ng-model="newPerson.surname">
-                            </div>
-                            <div class="input-group top5">
-                                <span class="input-group-addon min70-compact">{{'Email' | translate}}</span>
-                                <input type="email" name="email" class="form-control" placeholder="{{'name.surname@example.com' | translate}}"  ng-model="newPerson.email">
-                            </div>
-                            <div class="input-group top5">
-                                <span class="input-group-addon min70-compact">{{'Company' | translate}}</span>
-                                <input name="company" class="form-control" placeholder="{{'Acme Corporation' | translate}}"  ng-model="newPerson.company">
-                            </div>
-                            <div class="input-group top5">
-                                <span class="input-group-addon min70-compact">{{'Job' | translate}}</span>
-                                <input name="job_title" class="form-control" placeholder="{{'Evil Ruler' | translate}}"  ng-model="newPerson.job_title">
-                            </div>
-
-                            <button reset-focus ng-disabled="!(newPerson.name && newPerson.surname)" ng-click="fastAddAttendee(newPerson, true)" class="btn btn-success top5">
-                                <span class="fa fa-plus-circle vcenter"></span>
-                                {{'Add' | translate}}
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
                 <div class="panel panel-info top5">
-                    <div class="panel-heading">{{'Unregistered persons' | translate}}</div>
+                    <div class="panel-heading"><h1>{{'Unregistered persons' | translate}}</h1></div>
                     <div class="panel-body small-table">
                         <table class="table table-striped table-condensed">
                             <thead>
@@ -124,12 +89,12 @@
                             <tbody>
                                 <tr ng-repeat="person in allPersons | splittedFilter:query | personRegistered:{event: event, present: false}">
                                     <td>
-                                        <strong><a ui-sref="person.info({id: person._id})">{{person.name}} {{person.surname}}</a></strong>
+                                        <strong>{{person.name}} {{person.surname}}</strong>
                                         <br />
                                         {{person.email}}
                                     </td>
                                     <td class="text-left">
-                                        <button reset-focus ng-click="fastAddAttendee(person)" type="button" class="btn btn-link fa fa-plus-circle vcenter"></button>
+                                        <button reset-focus ng-click="addTicket(person)" type="button" class="btn btn-link fa fa-plus-circle vcenter"></button>
                                     </td>
                                 </tr>
                             </tbody>

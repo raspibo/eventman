@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Event Man(ager)
+"""EventMan(ager)
 
 Your friendly manager of attendees at an event.
 
@@ -46,9 +46,12 @@ API_VERSION = '1.0'
 re_env_key = re.compile('[^A-Z_]+')
 re_slashes = re.compile(r'//+')
 
+# Keep track of WebSocket connections.
+_ws_clients = {}
+
 
 def authenticated(method):
-    """Decorator to handle authentication."""
+    """Decorator to handle forced authentication."""
     original_wrapper = tornado.web.authenticated(method)
     @tornado.web.functools.wraps(method)
     def my_wrapper(self, *args, **kwargs):
@@ -85,10 +88,11 @@ class BaseHandler(tornado.web.RequestHandler):
     """Base class for request handlers."""
     permissions = {
         'event|read': True,
-        'event:tickets|all': True,
+        'event:tickets|read': True,
+        'event:tickets|create': True,
+        'event:tickets|update': True,
         'event:tickets-all|create': True,
         'events|read': True,
-        'persons|create': True,
         'users|create': True
     }
 
@@ -123,6 +127,8 @@ class BaseHandler(tornado.web.RequestHandler):
         'yes': True,
         'true': True
     }
+
+    _re_split_salt = re.compile(r'\$(?P<salt>.+)\$(?P<hash>.+)')
 
     def write_error(self, status_code, **kwargs):
         """Default error handler."""
@@ -200,8 +206,40 @@ class BaseHandler(tornado.web.RequestHandler):
             return collection_permission(permission)
         return False
 
+    def user_authorized(self, username, password):
+        """Check if a combination of username/password is valid.
+
+        :param username: username or email
+        :type username: str
+        :param password: password
+        :type password: str
+
+        :returns: tuple like (bool_user_is_authorized, dict_user_info)
+        :rtype: dict"""
+        query = [{'username': username}, {'email': username}]
+        res = self.db.query('users', query)
+        if not res:
+            return (False, {})
+        user = res[0]
+        db_password = user.get('password') or ''
+        if not db_password:
+            return (False, {})
+        match = self._re_split_salt.match(db_password)
+        if not match:
+            return (False, {})
+        salt = match.group('salt')
+        if utils.hash_password(password, salt=salt) == db_password:
+            return (True, user)
+        return (False, {})
+
     def build_error(self, message='', status=400):
-        """Build and write an error message."""
+        """Build and write an error message.
+
+        :param message: textual message
+        :type message: str
+        :param status: HTTP status code
+        :type status: int
+        """
         self.set_status(status)
         self.write({'error': True, 'message': message})
 
@@ -217,15 +255,11 @@ class RootHandler(BaseHandler):
     angular_app_path = os.path.join(os.path.dirname(__file__), "angular_app")
 
     @gen.coroutine
-    @authenticated
     def get(self, *args, **kwargs):
         # serve the ./angular_app/index.html file
         with open(self.angular_app_path + "/index.html", 'r') as fd:
             self.write(fd.read())
 
-
-# Keep track of WebSocket connections.
-_ws_clients = {}
 
 class CollectionHandler(BaseHandler):
     """Base class for handlers that need to interact with the database backend.
@@ -297,7 +331,7 @@ class CollectionHandler(BaseHandler):
         return filtered
 
     def _clean_dict(self, data):
-        """Filter a dictionary (in place) to remove unwanted keywords.
+        """Filter a dictionary (in place) to remove unwanted keywords in db queries.
 
         :param data: dictionary to clean
         :type data: dict"""
@@ -399,6 +433,7 @@ class CollectionHandler(BaseHandler):
                 output = self.apply_filter(output, 'get_%s' % resource)
                 self.write(output)
                 return
+            return self.build_error(status=404, message='unable to access resource: %s' % resource)
         if id_ is not None:
             permission = '%s|%s' % (self.document, crud_method)
             if not self.has_permission(permission):
@@ -415,7 +450,8 @@ class CollectionHandler(BaseHandler):
             newData = self.apply_filter(newData, '%s_all' % method)
         self.write(newData)
 
-    # PUT (update an existing document) is handled by the POST (create a new document) method
+    # PUT (update an existing document) is handled by the POST (create a new document) method;
+    # in subclasses you can always separate sub-resources handlers like handle_post_tickets and handle_put_tickets
     put = post
 
     @gen.coroutine
@@ -430,6 +466,7 @@ class CollectionHandler(BaseHandler):
             if method and callable(method):
                 self.write(method(id_, resource_id, **kwargs))
                 return
+            return self.build_error(status=404, message='unable to access resource: %s' % resource)
         if id_:
             permission = '%s|delete' % self.document
             if not self.has_permission(permission):
@@ -503,7 +540,11 @@ class CollectionHandler(BaseHandler):
 
     def build_ws_url(self, path, proto='ws', host=None):
         """Return a WebSocket url from a path."""
-        return 'ws://127.0.0.1:%s/ws/%s' % (self.listen_port + 1, path)
+        try:
+            args = '?uuid=%s' % self.get_argument('uuid')
+        except:
+            args = ''
+        return 'ws://127.0.0.1:%s/ws/%s%s' % (self.listen_port + 1, path, args)
 
     @gen.coroutine
     def send_ws_message(self, path, message):
@@ -522,61 +563,35 @@ class CollectionHandler(BaseHandler):
             self.logger.error('Error yielding WebSocket message: %s', e)
 
 
-class PersonsHandler(CollectionHandler):
-    """Handle requests for Persons."""
-    document = 'person'
-    collection = 'persons'
-
-    def handle_get_events(self, id_, resource_id=None, **kwargs):
-        # Get a list of events attended by this person.
-        # Inside the data of each event, a 'person_data' dictionary is
-        # created, duplicating the entry for the current person (so that
-        # there's no need to parse the 'persons' list on the client).
-        #
-        # If resource_id is given, only the specified event is considered.
-        #
-        # If the 'all' parameter is given, every event (also unattended ones) is returned.
-        args = self.request.arguments
-        query = {}
-        if id_ and not self.tobool(args.get('all')):
-            query = {'persons.person_id': id_}
-        if resource_id:
-            query['_id'] = resource_id
-
-        events = self.db.query('events', query)
-        for event in events:
-            person_data = {}
-            for persons in event.get('persons') or []:
-                if str(persons.get('person_id')) == id_:
-                    person_data = persons
-                    break
-            if 'persons' in event:
-                del event['persons']
-            event['person_data'] = person_data
-        if resource_id and events:
-            return events[0]
-        return {'events': events}
-
-
 class EventsHandler(CollectionHandler):
     """Handle requests for Events."""
     document = 'event'
     collection = 'events'
 
     def filter_get(self, output):
-        if not self.has_permission('persons-all|read'):
-            if 'persons' in output:
-                output['persons'] = []
+        if not self.has_permission('tickets-all|read'):
+            if 'tickets' in output:
+                output['tickets'] = []
         return output
 
     def filter_get_all(self, output):
-        if not self.has_permission('persons-all|read'):
+        if not self.has_permission('tickets-all|read'):
             for event in output.get('events') or []:
-                if 'persons' in event:
-                    event['persons'] = []
+                if 'tickets' in event:
+                    event['tickets'] = []
         return output
 
+    def filter_input_post(self, data):
+        # Auto-generate the group_id, if missing.
+        if 'group_id' not in data:
+            data['group_id'] = self.gen_id()
+        return data
+
+    filter_input_post_all = filter_input_post
+    filter_input_put = filter_input_post
+
     def filter_input_post_tickets(self, data):
+        # Avoid users to be able to auto-update their 'attendee' status.
         if not self.has_permission('event|update'):
             if 'attended' in data:
                 del data['attended']
@@ -584,133 +599,179 @@ class EventsHandler(CollectionHandler):
 
     filter_input_put_tickets = filter_input_post_tickets
 
-    def _get_person_data(self, person_id_or_query, persons):
-        """Filter a list of persons returning the first item with a given person_id
-        or which set of keys specified in a dictionary match their respective values."""
-        for person in persons:
-            if isinstance(person_id_or_query, dict):
-                if all(person.get(k) == v for k, v in person_id_or_query.iteritems()):
-                    return person
-            else:
-                if str(person.get('person_id')) == person_id_or_query:
-                    return person
-        return {}
-
-    def handle_get_persons(self, id_, resource_id=None, match_query=None):
-        # Return every person registered at this event, or the information
-        # about a specific person.
-        query = {'_id': id_}
-        event = self.db.query('events', query)[0]
-        if match_query is None:
-            match_query = resource_id
-        if resource_id:
-            return {'person': self._get_person_data(match_query, event.get('persons') or [])}
-        persons = self._filter_results(event.get('persons') or [], self.arguments)
+    def handle_get_group_persons(self, id_, resource_id=None):
+        persons = []
+        this_query = {'_id': id_}
+        this_event = self.db.query('events', this_query)[0]
+        group_id = this_event.get('group_id')
+        if group_id is None:
+            return {'persons': persons}
+        this_persons = [p for p in (this_event.get('tickets') or []) if not p.get('cancelled')]
+        this_emails = filter(None, [p.get('email') for p in this_persons])
+        all_query = {'group_id': group_id}
+        events = self.db.query('events', all_query)
+        for event in events:
+            if id_ is not None and  str(event.get('_id')) == id_:
+                continue
+            persons += [p for p in (event.get('tickets') or []) if p.get('email') and p.get('email') not in this_emails]
         return {'persons': persons}
 
-    def handle_get_tickets(self, id_, resource_id=None):
-        if resource_id is None and not self.has_permission('event:tickets|all'):
-            return self.build_error(status=401, message='insufficient permissions: event:tickets|all')
-        return self.handle_get_persons(id_, resource_id, {'_id': resource_id})
+    def _get_ticket_data(self, ticket_id_or_query, tickets):
+        """Filter a list of tickets returning the first item with a given _id
+        or which set of keys specified in a dictionary match their respective values."""
+        for ticket in tickets:
+            if isinstance(ticket_id_or_query, dict):
+                if all(ticket.get(k) == v for k, v in ticket_id_or_query.iteritems()):
+                    return ticket
+            else:
+                if str(ticket.get('_id')) == ticket_id_or_query:
+                    return ticket
+        return {}
 
-    def handle_post_persons(self, id_, person_id, data):
-        # Add a person to the list of persons registered at this event.
+    def handle_get_tickets(self, id_, resource_id=None):
+        # Return every ticket registered at this event, or the information
+        # about a specific ticket.
+        query = {'_id': id_}
+        event = self.db.query('events', query)[0]
+        if resource_id:
+            return {'ticket': self._get_ticket_data(resource_id, event.get('tickets') or [])}
+        tickets = self._filter_results(event.get('tickets') or [], self.arguments)
+        return {'tickets': tickets}
+
+    def handle_post_tickets(self, id_, resource_id, data):
         uuid, arguments = self.uuid_arguments
         self._clean_dict(data)
-        data['seq'] = self.get_next_seq('event_%s_persons' % id_)
+        data['seq'] = self.get_next_seq('event_%s_tickets' % id_)
         data['seq_hex'] = '%06X' % data['seq']
-        if person_id is None:
-            doc = {}
-        else:
-            doc = self.db.query('events', {'_id': id_, 'persons.person_id': person_id})
-        ret = {'action': 'add', 'person_id': person_id, 'person': data, 'uuid': uuid}
-        if '_id' in data:
-            del data['_id']
+        data['_id'] = ticket_id = self.gen_id()
+        ret = {'action': 'add', 'ticket': data, 'uuid': uuid}
+        merged, doc = self.db.update('events',
+                {'_id': id_},
+                {'tickets': data},
+                operation='appendUnique',
+                create=False)
+        if doc:
             self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(ret))
-        if not doc:
-            data['_id'] = self.gen_id()
-            merged, doc = self.db.update('events',
-                    {'_id': id_},
-                    {'persons': data},
-                    operation='appendUnique',
-                    create=False)
+            ticket = self._get_ticket_data(ticket_id, doc.get('tickets') or [])
+            env = self._dict2env(ticket)
+            env.update({'PERSON_ID': ticket_id, 'TICKED_ID': ticket_id, 'EVENT_ID': id_,
+                'EVENT_TITLE': doc.get('title', ''), 'WEB_USER': self.current_user,
+                'WEB_REMOTE_IP': self.request.remote_ip})
+            stdin_data = {'new': ticket,
+                'event': doc,
+                'merged': merged
+            }
+            self.run_triggers('create_ticket_in_event', stdin_data=stdin_data, env=env)
         return ret
 
-    handle_post_tickets = handle_post_persons
-
-    def handle_put_persons(self, id_, person_id, data, ticket=False):
-        # Update an existing entry for a person registered at this event.
+    def handle_put_tickets(self, id_, ticket_id, data):
+        # Update an existing entry for a ticket registered at this event.
         self._clean_dict(data)
         uuid, arguments = self.uuid_arguments
-        query = dict([('persons.%s' % k, v) for k, v in arguments.iteritems()])
+        query = dict([('tickets.%s' % k, v) for k, v in arguments.iteritems()])
         query['_id'] = id_
-        if ticket:
-            query['persons._id'] = person_id
-            person_query = {'_id': person_id}
-        elif person_id is not None:
-            query['persons.person_id'] = person_id
-            person_query = person_id
+        if ticket_id is not None:
+            query['tickets._id'] = ticket_id
+            ticket_query = {'_id': ticket_id}
         else:
-            person_query = self.arguments
-        old_person_data = {}
+            ticket_query = self.arguments
+        old_ticket_data = {}
         current_event = self.db.query(self.collection, query)
         if current_event:
             current_event = current_event[0]
         else:
             current_event = {}
-        old_person_data = self._get_person_data(person_query,
-                current_event.get('persons') or [])
+        old_ticket_data = self._get_ticket_data(ticket_query,
+                current_event.get('tickets') or [])
         merged, doc = self.db.update('events', query,
-                data, updateList='persons', create=False)
-        new_person_data = self._get_person_data(person_query,
-                doc.get('persons') or [])
-        env = self._dict2env(new_person_data)
-        # always takes the person_id from the new person (it may have
-        # been a ticket_id).
-        person_id = str(new_person_data.get('person_id'))
-        env.update({'PERSON_ID': person_id, 'EVENT_ID': id_,
+                data, updateList='tickets', create=False)
+        new_ticket_data = self._get_ticket_data(ticket_query,
+                doc.get('tickets') or [])
+        env = self._dict2env(new_ticket_data)
+        # always takes the ticket_id from the new ticket
+        ticket_id = str(new_ticket_data.get('_id'))
+        env.update({'PERSON_ID': ticket_id, 'TICKED_ID': ticket_id, 'EVENT_ID': id_,
             'EVENT_TITLE': doc.get('title', ''), 'WEB_USER': self.current_user,
             'WEB_REMOTE_IP': self.request.remote_ip})
-        stdin_data = {'old': old_person_data,
-            'new': new_person_data,
+        stdin_data = {'old': old_ticket_data,
+            'new': new_ticket_data,
             'event': doc,
             'merged': merged
         }
-        self.run_triggers('update_person_in_event', stdin_data=stdin_data, env=env)
-        if old_person_data and old_person_data.get('attended') != new_person_data.get('attended'):
-            if new_person_data.get('attended'):
+        self.run_triggers('update_ticket_in_event', stdin_data=stdin_data, env=env)
+        if old_ticket_data and old_ticket_data.get('attended') != new_ticket_data.get('attended'):
+            if new_ticket_data.get('attended'):
                 self.run_triggers('attends', stdin_data=stdin_data, env=env)
 
-        ret = {'action': 'update', 'person_id': person_id, 'person': new_person_data, 'uuid': uuid}
-        if old_person_data != new_person_data:
+        ret = {'action': 'update', '_id': ticket_id, 'ticket': new_ticket_data, 'uuid': uuid}
+        if old_ticket_data != new_ticket_data:
             self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(ret))
         return ret
 
-    def handle_put_tickets(self, id_, person_id, data):
-        return self.handle_put_persons(id_, person_id, data, True)
-
-    def handle_delete_persons(self, id_, person_id):
-        # Remove a specific person from the list of persons registered at this event.
+    def handle_delete_tickets(self, id_, ticket_id):
+        # Remove a specific ticket from the list of tickets registered at this event.
         uuid, arguments = self.uuid_arguments
         doc = self.db.query('events',
-                {'_id': id_, 'persons.person_id': person_id})
-        ret = {'action': 'delete', 'person_id': person_id, 'uuid': uuid}
+                {'_id': id_, 'tickets._id': ticket_id})
+        ret = {'action': 'delete', '_id': ticket_id, 'uuid': uuid}
         if doc:
-            merged, doc = self.db.update('events',
+            ticket = self._get_ticket_data(ticket_id, doc[0].get('tickets') or [])
+            merged, rdoc = self.db.update('events',
                     {'_id': id_},
-                    {'persons': {'person_id': person_id}},
+                    {'tickets': {'_id': ticket_id}},
                     operation='delete',
                     create=False)
             self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(ret))
+            env = self._dict2env(ticket)
+            env.update({'PERSON_ID': ticket_id, 'TICKED_ID': ticket_id, 'EVENT_ID': id_,
+                'EVENT_TITLE': rdoc.get('title', ''), 'WEB_USER': self.current_user,
+                'WEB_REMOTE_IP': self.request.remote_ip})
+            stdin_data = {'old': ticket,
+                'event': rdoc,
+                'merged': merged
+            }
+            self.run_triggers('delete_ticket_in_event', stdin_data=stdin_data, env=env)
         return ret
-
-    handle_delete_tickets = handle_delete_persons
 
 
 class UsersHandler(CollectionHandler):
     """Handle requests for Users."""
     document = 'user'
     collection = 'users'
+
+    def filter_get(self, data):
+        if 'password' in data:
+            del data['password']
+        if '_id' in data:
+            # Also add a 'tickets' list with all the tickets created by this user
+            tickets = []
+            events = self.db.query('events', {'tickets.created_by': data['_id']})
+            for event in events:
+                event_title = event.get('title') or ''
+                event_id = str(event.get('_id'))
+                evt_tickets = self._filter_results(event.get('tickets') or [], {'created_by': data['_id']})
+                for evt_ticket in evt_tickets:
+                    evt_ticket['event_title'] = event_title
+                    evt_ticket['event_id'] = event_id
+                tickets.extend(evt_tickets)
+            data['tickets'] = tickets
+        return data
+
+    def filter_get_all(self, data):
+        if 'users' not in data:
+            return data
+        for user in data['users']:
+            if 'password' in user:
+                del user['password']
+        return data
+
+    @gen.coroutine
+    @authenticated
+    def get(self, id_=None, resource=None, resource_id=None, acl=True, **kwargs):
+        if id_ is not None:
+            if (self.has_permission('user|read') or str(self.current_user_info.get('_id')) == id_):
+                acl = False
+        super(UsersHandler, self).get(id_, resource, resource_id, acl=acl, **kwargs)
 
     def filter_input_post_all(self, data):
         username = (data.get('username') or '').strip()
@@ -724,9 +785,34 @@ class UsersHandler(CollectionHandler):
         return {'username': username, 'password': utils.hash_password(password),
                 'email': email, '_id': self.gen_id()}
 
+    def filter_input_put(self, data):
+        old_pwd = data.get('old_password')
+        new_pwd = data.get('new_password')
+        if old_pwd is not None:
+            del data['old_password']
+        if new_pwd is not None:
+            del data['new_password']
+            authorized, user = self.user_authorized(data['username'], old_pwd)
+            if not (self.has_permission('user|update') or (authorized and self.current_user == data['username'])):
+                raise InputException('not authorized to change password')
+            data['password'] = utils.hash_password(new_pwd)
+        if '_id' in data:
+            # Avoid overriding _id
+            del data['_id']
+        return data
+
+    @gen.coroutine
+    @authenticated
+    def put(self, id_=None, resource=None, resource_id=None, **kwargs):
+        if id_ is None:
+            return self.build_error(status=404, message='unable to access the resource')
+        if not (self.has_permission('user|update') or str(self.current_user_info.get('_id')) == id_):
+            return self.build_error(status=401, message='insufficient permissions: user|update or current user')
+        super(UsersHandler, self).put(id_, resource, resource_id, **kwargs)
+
 
 class EbCSVImportPersonsHandler(BaseHandler):
-    """Importer for CSV files exported from eventbrite."""
+    """Importer for CSV files exported from Eventbrite."""
     csvRemap = {
         'Nome evento': 'event_title',
         'ID evento': 'event_id',
@@ -756,11 +842,8 @@ class EbCSVImportPersonsHandler(BaseHandler):
         'Email': 'email',
         'Attendee #': 'attendee_nr',
         'Barcode #': 'ebqrcode',
-        'Company': 'company',
+        'Company': 'company'
     }
-    # Only these information are stored in the person collection.
-    keepPersonData = ('name', 'surname', 'email', 'name_title', 'name_suffix',
-            'company', 'job_title')
 
     @gen.coroutine
     @authenticated
@@ -768,11 +851,13 @@ class EbCSVImportPersonsHandler(BaseHandler):
         # import a CSV list of persons
         event_handler = EventsHandler(self.application, self.request)
         event_handler.db = self.db
-        targetEvent = None
+        event_id = None
         try:
-            targetEvent = self.get_body_argument('targetEvent')
+            event_id = self.get_body_argument('targetEvent')
         except:
             pass
+        if event_id is None:
+            return self.build_error('invalid event')
         reply = dict(total=0, valid=0, merged=0, new_in_event=0)
         for fieldname, contents in self.request.files.iteritems():
             for content in contents:
@@ -781,25 +866,10 @@ class EbCSVImportPersonsHandler(BaseHandler):
                 reply['total'] += parseStats['total']
                 reply['valid'] += parseStats['valid']
                 for person in persons:
-                    person_data = dict([(k, person[k]) for k in self.keepPersonData
-                        if k in person])
-                    merged, stored_person = self.db.update('persons',
-                            [('email', 'name', 'surname')],
-                            person_data)
-                    if merged:
-                        reply['merged'] += 1
-                    if targetEvent and stored_person:
-                        event_id = targetEvent
-                        person_id = stored_person['_id']
-                        registered_data = {
-                                'person_id': person_id,
-                                'attended': False,
-                                'from_file': filename}
-                        person.update(registered_data)
-                        if not self.db.query('events',
-                                {'_id': event_id, 'persons.person_id': person_id}):
-                            event_handler.handle_post_persons(event_id, person_id, person)
-                            reply['new_in_event'] += 1
+                    person['attended'] = False
+                    person['from_file'] = filename
+                    event_handler.handle_post_persons(event_id, None, person)
+                    reply['new_in_event'] += 1
         self.write(reply)
 
 
@@ -807,87 +877,72 @@ class SettingsHandler(BaseHandler):
     """Handle requests for Settings."""
     @gen.coroutine
     @authenticated
-    def get(self, **kwds):
+    def get(self, **kwargs):
         query = self.arguments_tobool()
         settings = self.db.query('settings', query)
         self.write({'settings': settings})
 
 
 class InfoHandler(BaseHandler):
-    """Handle requests for Info."""
+    """Handle requests for information about the logged in user."""
     @gen.coroutine
-    @authenticated
-    def get(self, **kwds):
+    def get(self, **kwargs):
         info = {}
         user_info = self.current_user_info
         if user_info:
             info['user'] = user_info
+        info['authentication_required'] = self.authentication
         self.write({'info': info})
 
 
 class WebSocketEventUpdatesHandler(tornado.websocket.WebSocketHandler):
-    """Manage websockets."""
+    """Manage WebSockets."""
     def _clean_url(self, url):
-        return re_slashes.sub('/', url)
+        url = re_slashes.sub('/', url)
+        ridx = url.rfind('?')
+        if ridx != -1:
+            url = url[:ridx]
+        return url
 
-    def open(self, event_id, *args, **kwds):
-        logging.debug('WebSocketEventUpdatesHandler.on_open event_id:%s' % event_id)
-        _ws_clients.setdefault(self._clean_url(self.request.uri), set()).add(self)
-        logging.debug('WebSocketEventUpdatesHandler.on_open %s clients connected' % len(_ws_clients))
+    def open(self, event_id, *args, **kwargs):
+        self.uuid = self.get_argument('uuid')
+        url = self._clean_url(self.request.uri)
+        logging.debug('WebSocketEventUpdatesHandler.on_open event_id:%s url:%s' % (event_id, url))
+        _ws_clients.setdefault(url, {})
+        if self.uuid not in _ws_clients[url]:
+            _ws_clients[url][self.uuid] = self
+        logging.debug('WebSocketEventUpdatesHandler.on_open %s clients connected' % len(_ws_clients[url]))
 
     def on_message(self, message):
-        logging.debug('WebSocketEventUpdatesHandler.on_message')
+        url = self._clean_url(self.request.uri)
+        logging.debug('WebSocketEventUpdatesHandler.on_message url:%s' % url)
         count = 0
-        for client in _ws_clients.get(self._clean_url(self.request.uri), []):
-            if client == self:
+        _to_delete = set()
+        for uuid, client in _ws_clients.get(url, {}).iteritems():
+            try:
+                client.write_message(message)
+            except:
+                _to_delete.add(uuid)
                 continue
-            client.write_message(message)
             count += 1
+        for uuid in _to_delete:
+            try:
+                del _ws_clients[url][uuid]
+            except KeyError:
+                pass
         logging.debug('WebSocketEventUpdatesHandler.on_message sent message to %d clients' % count)
 
-    def on_close(self):
-        logging.debug('WebSocketEventUpdatesHandler.on_close')
-        try:
-            if self in _ws_clients.get(self._clean_url(self.request.uri), []):
-                _ws_clients[self._clean_url(self.request.uri)].remove(self)
-        except Exception as e:
-            logging.warn('WebSocketEventUpdatesHandler.on_close error closing websocket: %s', str(e))
 
-
-class LoginHandler(BaseHandler):
+class LoginHandler(RootHandler):
     """Handle user authentication requests."""
-    re_split_salt = re.compile(r'\$(?P<salt>.+)\$(?P<hash>.+)')
 
     @gen.coroutine
-    def get(self, **kwds):
+    def get(self, **kwargs):
         # show the login page
         if self.is_api():
             self.set_status(401)
             self.write({'error': True,
                 'message': 'authentication required'})
-        else:
-            with open(self.angular_app_path + "/login.html", 'r') as fd:
-                self.write(fd.read())
-
-    def _authorize(self, username, password, email=None):
-        """Return True is this username/password is valid."""
-        query = [{'username': username}]
-        if email is not None:
-            query.append({'email': email})
-        res = self.db.query('users', query)
-        if not res:
-            return False
-        user = res[0]
-        db_password = user.get('password') or ''
-        if not db_password:
-            return False
-        match = self.re_split_salt.match(db_password)
-        if not match:
-            return False
-        salt = match.group('salt')
-        if utils.hash_password(password, salt=salt) == db_password:
-            return True
-        return False
 
     @gen.coroutine
     def post(self, *args, **kwargs):
@@ -903,7 +958,9 @@ class LoginHandler(BaseHandler):
             self.set_status(401)
             self.write({'error': True, 'message': 'missing username or password'})
             return
-        if self._authorize(username, password):
+        authorized, user = self.user_authorized(username, password)
+        if authorized and user.get('username'):
+            username = user['username']
             logging.info('successful login for user %s' % username)
             self.set_secure_cookie("user", username)
             self.write({'error': False, 'message': 'successful login'})
@@ -916,7 +973,7 @@ class LoginHandler(BaseHandler):
 class LogoutHandler(BaseHandler):
     """Handle user logout requests."""
     @gen.coroutine
-    def get(self, **kwds):
+    def get(self, **kwargs):
         # log the user out
         logging.info('logout')
         self.logout()
@@ -950,10 +1007,14 @@ def run():
     if options.debug:
         logger.setLevel(logging.DEBUG)
 
+    ssl_options = {}
+    if os.path.isfile(options.ssl_key) and os.path.isfile(options.ssl_cert):
+        ssl_options = dict(certfile=options.ssl_cert, keyfile=options.ssl_key)
+
     # database backend connector
     db_connector = backend.EventManDB(url=options.mongo_url, dbName=options.db_name)
     init_params = dict(db=db_connector, data_dir=options.data_dir, listen_port=options.port,
-            authentication=options.authentication, logger=logger)
+            authentication=options.authentication, logger=logger, ssl_options=ssl_options)
 
     # If not present, we store a user 'admin' with password 'eventman' into the database.
     if not db_connector.query('users', {'username': 'admin'}):
@@ -972,12 +1033,9 @@ def run():
                 {'setting': 'server_cookie_secret', 'cookie_secret': cookie_secret})
 
     _ws_handler = (r"/ws/+event/+(?P<event_id>[\w\d_-]+)/+tickets/+updates/?", WebSocketEventUpdatesHandler)
-    _persons_path = r"/persons/?(?P<id_>[\w\d_-]+)?/?(?P<resource>[\w\d_-]+)?/?(?P<resource_id>[\w\d_-]+)?"
     _events_path = r"/events/?(?P<id_>[\w\d_-]+)?/?(?P<resource>[\w\d_-]+)?/?(?P<resource_id>[\w\d_-]+)?"
     _users_path = r"/users/?(?P<id_>[\w\d_-]+)?/?(?P<resource>[\w\d_-]+)?/?(?P<resource_id>[\w\d_-]+)?"
     application = tornado.web.Application([
-            (_persons_path, PersonsHandler, init_params),
-            (r'/v%s%s' % (API_VERSION, _persons_path), PersonsHandler, init_params),
             (_events_path, EventsHandler, init_params),
             (r'/v%s%s' % (API_VERSION, _events_path), EventsHandler, init_params),
             (_users_path, UsersHandler, init_params),
@@ -998,9 +1056,6 @@ def run():
         cookie_secret='__COOKIE_SECRET__',
         login_url='/login',
         debug=options.debug)
-    ssl_options = {}
-    if os.path.isfile(options.ssl_key) and os.path.isfile(options.ssl_cert):
-        ssl_options = dict(certfile=options.ssl_cert, keyfile=options.ssl_key)
     http_server = tornado.httpserver.HTTPServer(application, ssl_options=ssl_options or None)
     logger.info('Start serving on %s://%s:%d', 'https' if ssl_options else 'http',
                                                  options.address if options.address else '127.0.0.1',
@@ -1011,9 +1066,12 @@ def run():
     ws_application = tornado.web.Application([_ws_handler], debug=options.debug)
     ws_http_server = tornado.httpserver.HTTPServer(ws_application)
     ws_http_server.listen(options.port+1, address='127.0.0.1')
-    logger.debug('Starting WebSocket on ws://127.0.0.1:%d', options.port+1)
+    logger.debug('Starting WebSocket on %s://127.0.0.1:%d', 'wss' if ssl_options else 'ws', options.port+1)
     tornado.ioloop.IOLoop.instance().start()
 
 
 if __name__ == '__main__':
-    run()
+    try:
+        run()
+    except KeyboardInterrupt:
+        print('Stop server')

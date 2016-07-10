@@ -7,8 +7,8 @@ var eventManControllers = angular.module('eventManControllers', []);
 
 
 /* A controller that can be used to navigate. */
-eventManControllers.controller('NavigationCtrl', ['$scope', '$rootScope', '$location', 'Setting', 'Info',
-    function ($scope, $rootScope, $location, Setting, Info) {
+eventManControllers.controller('NavigationCtrl', ['$scope', '$rootScope', '$location', 'Setting', '$state',
+    function ($scope, $rootScope, $location, Setting, $state) {
         $scope.logo = {};
 
         $scope.getLocation = function() {
@@ -51,26 +51,38 @@ eventManControllers.controller('DatetimePickerCtrl', ['$scope',
 
 
 /* Controller for modals. */
-eventManControllers.controller('ModalConfirmInstanceCtrl', ['$scope', '$modalInstance', 'message',
-    function ($scope, $modalInstance, message) {
+eventManControllers.controller('ModalConfirmInstanceCtrl', ['$scope', '$uibModalInstance', 'message',
+    function ($scope, $uibModalInstance, message) {
         $scope.message = message;
 
         $scope.ok = function () {
-            $modalInstance.close($scope);
+            $uibModalInstance.close($scope);
         };
 
         $scope.cancel = function () {
-            $modalInstance.dismiss('cancel');
+            $uibModalInstance.dismiss('cancel');
         };
     }]
 );
 
 
-eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$modal', '$log', '$translate', '$rootScope',
-    function ($scope, Event, $modal, $log, $translate, $rootScope) {
-        $scope.events = Event.all();
-        $scope.personsOrderProp = 'name';
+eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$uibModal', '$log', '$translate', '$rootScope', '$state',
+    function ($scope, Event, $uibModal, $log, $translate, $rootScope, $state) {
+        $scope.tickets = [];
+        $scope.events = Event.all(function(events) {
+            if (events && $state.is('tickets')) {
+                angular.forEach(events, function(evt, idx) {
+                    var evt_tickets = (evt.tickets || []).slice(0);
+                    angular.forEach(evt_tickets, function(obj, obj_idx) {
+                        obj.event_title = evt.title;
+                        obj.event_id = evt._id;
+                    });
+                    $scope.tickets.push.apply($scope.tickets, evt_tickets || []);
+                });
+            }
+        });
         $scope.eventsOrderProp = "-begin_date";
+        $scope.ticketsOrderProp = ["name", "surname"];
 
         $scope.confirm_delete = 'Do you really want to delete this event?';
         $rootScope.$on('$translateChangeSuccess', function () {
@@ -79,8 +91,8 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$modal', '
             });
         });
 
-        $scope.remove = function(_id) {
-            var modalInstance = $modal.open({
+        $scope.deleteEvent = function(_id) {
+            var modalInstance = $uibModal.open({
                 scope: $scope,
                 templateUrl: 'modal-confirm-action.html',
                 controller: 'ModalConfirmInstanceCtrl',
@@ -89,82 +101,11 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$modal', '
                 }
             });
             modalInstance.result.then(function() {
-                Event.remove({'id': _id}, function() {
+                Event.delete({'id': _id}, function() {
                     $scope.events = Event.all();
-                    }
-                );
+                });
             });
         };
-    }]
-);
-
-
-eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event', 'Person', 'EventUpdates', '$stateParams', 'Setting', '$log', '$translate', '$rootScope', 'easyFormSteWayConfig',
-    function ($scope, $state, Event, Person, EventUpdates, $stateParams, Setting, $log, $translate, $rootScope, easyFormSteWayConfig) {
-        $scope.personsOrder = ["name", "surname"];
-        $scope.countAttendees = 0;
-        $scope.message = {};
-        $scope.event = {};
-        $scope.event.persons = [];
-        $scope.event.formSchema = {};
-        $scope.eventFormDisabled = false;
-        $scope.customFields = Setting.query({setting: 'person_custom_field', in_event_details: true});
-
-        if ($stateParams.id) {
-            $scope.event = Event.get($stateParams, function() {
-                $scope.$watchCollection(function() {
-                        return $scope.event.persons;
-                    }, function(prev, old) {
-                        $scope.calcAttendees();
-                    }
-                );
-            });
-
-            if ($state.is('event.view') || !$rootScope.hasPermission('event|update')) {
-                $scope.eventFormDisabled = true;
-            }
-
-            if ($state.is('event.tickets')) {
-                $scope.allPersons = Person.all();
-
-                // Handle WebSocket connection used to update the list of persons.
-                $scope.EventUpdates = EventUpdates;
-                $scope.EventUpdates.open();
-                $scope.$watchCollection(function() {
-                        return $scope.EventUpdates.data;
-                    }, function(prev, old) {
-                        if (!($scope.EventUpdates.data && $scope.EventUpdates.data.update)) {
-                            return;
-                        }
-                        var data = $scope.EventUpdates.data.update;
-                        $log.debug('received ' + data.action + ' action from websocket source ' + data.uuid);
-                        if ($rootScope.app_uuid == data.uuid) {
-                            $log.debug('do not process our own message');
-                            return false;
-                        }
-                        if (!$scope.event.persons) {
-                            $scope.event.persons = [];
-                        }
-                        var person_idx = $scope.event.persons.findIndex(function(el, idx, array) {
-                                return data.person_id == el.person_id;
-                        });
-                        if (person_idx != -1) {
-                            $log.debug('person_id ' + data.person_id + ' found');
-                        } else {
-                            $log.debug('person_id ' + data.person_id + ' not found');
-                        }
-
-                        if (data.action == 'update' && person_idx != -1 && $scope.event.persons[person_idx] != data.person) {
-                            $scope.event.persons[person_idx] = data.person;
-                        } else if (data.action == 'add' && person_idx == -1) {
-                            $scope._localAddAttendee(data.person, true);
-                        } else if (data.action == 'delete' && person_idx != -1) {
-                            $scope._localRemoveAttendee({person_id: data.person_id});
-                        }
-                    }
-                );
-            }
-        }
 
         $scope.updateOrded = function(key) {
             var new_order = [key];
@@ -174,22 +115,40 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
             } else {
                 inv_key = '-' + key;
             }
-            angular.forEach($scope.personsOrder,
+            angular.forEach($scope.ticketsOrderProp,
                 function(value, idx) {
                     if (value !== key && value !== inv_key) {
                         new_order.push(value);
                     }
                 }
             );
-            $scope.personsOrder = new_order;
+            $scope.ticketsOrderProp = new_order;
         };
+
+    }]
+);
+
+
+eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event', '$log', '$translate', '$rootScope',
+    function ($scope, $state, Event, $log, $translate, $rootScope) {
+        $scope.event = {};
+        $scope.event.tickets = [];
+        $scope.event.formSchema = {};
+        $scope.eventFormDisabled = false;
+
+        if ($state.params.id) {
+            $scope.event = Event.get($state.params);
+            if ($state.is('event.view') || !$rootScope.hasPermission('event|update')) {
+                $scope.eventFormDisabled = true;
+            }
+        }
 
         // store a new Event or update an existing one
         $scope.save = function() {
-                // avoid override of event.persons list.
+                // avoid override of event.tickets list.
                 var this_event = angular.copy($scope.event);
-                if (this_event.persons) {
-                    delete this_event.persons;
+                if (this_event.tickets) {
+                    delete this_event.tickets;
                 }
                 if (this_event._id === undefined) {
                     $scope.event = Event.save(this_event);
@@ -199,190 +158,48 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
                 $scope.eventForm.$setPristine(false);
         };
 
-        $scope.calcAttendees = function() {
-            if (!($scope.event && $scope.event.persons)) {
-                $scope.countAttendees = 0;
-                return;
-            }
-            var attendees = 0;
-            angular.forEach($scope.event.persons, function(value, key) {
-                if (value.attended && !value.cancelled) {
-                    attendees += 1;
-                }
-            });
-            $scope.countAttendees = attendees;
-        };
-
-        /* Stuff to do when an attendee is added locally. */
-        $scope._localAddAttendee = function(person, hideMessage) {
-            if (!$scope.event.persons) {
-                $scope.event.persons = [];
-            }
-            var person_idx = $scope.event.persons.findIndex(function(el, idx, array) {
-                    return person.person_id == el.person_id;
-            });
-            if (person_idx != -1) {
-                $log.debug('person already present: not added');
-                return false;
-            }
-            $scope.event.persons.push(person);
-        };
-
-        $scope._addAttendee = function(person) {
-            person.person_id = person._id;
-            person._id = $stateParams.id; // that's the id of the event, not the person.
-            Event.addPerson(person, function() {
-                $scope._localAddAttendee(person);
-            });
-            $scope.query = '';
-            return person;
-        };
-
-        $scope._setAttended = function(person) {
-            $scope.setPersonAttribute(person, 'attended', true, function() {
-                var all_person_idx = $scope.allPersons.findIndex(function(el, idx, array) {
-                    return person.person_id == el.person_id;
-                });
-                if (all_person_idx != -1) {
-                    $scope.allPersons.splice(all_person_idx, 1);
-                }
-            }, true);
-        };
-
-        $scope.fastAddAttendee = function(person, isNew) {
-            $log.debug('EventDetailsCtrl.fastAddAttendee.person:');
-            $log.debug(person);
-            if (isNew) {
-                var personObj = new Person(person);
-                personObj.$save(function(p) {
-                    person = $scope._addAttendee(angular.copy(p));
-                    $scope._setAttended(person);
-                    $scope.newPerson = {};
-                });
-            } else {
-                person = $scope._addAttendee(angular.copy(person));
-                $scope._setAttended(person);
-            }
-        };
-
-        $scope.addRegisteredPerson = function(person) {
-            $scope.fastAddAttendee(person, true);
-        };
-
-        $scope.setPersonAttribute = function(person, key, value, callback, hideMessage) {
-            $log.debug('EventDetailsCtrl.setPersonAttribute.event_id: ' + $stateParams.id);
-            $log.debug('EventDetailsCtrl.setPersonAttribute.person_id: ' + person.person_id);
-            $log.debug('EventDetailsCtrl.setPersonAttribute.key: ' + key + ' value: ' + value);
-            var data = {_id: $stateParams.id, person_id: person.person_id};
-            data[key] = value;
-            Event.updatePerson(data,
-                function(data) {
-                    if (!(data && data.person_id && data.person)) {
-                        return;
-                    }
-                    var person_idx = $scope.event.persons.findIndex(function(el, idx, array) {
-                        return data.person_id == el.person_id;
-                    });
-                    if (person_idx == -1) {
-                        $log.warn('unable to find person_id ' + person_id);
-                        return;
-                    }
-                    if ($scope.event.persons[person_idx] != data.person) {
-                        $scope.event.persons[person_idx] = data.person;
-                    }
-                    if (callback) {
-                        callback(data);
-                    }
-                    if (key === 'attended' && !hideMessage) {
-                        var msg = {};
-                        if (value) {
-                            msg.message = '' + person.name + ' ' + person.surname + ' successfully added to event ' + $scope.event.title;
-                        } else {
-                            msg.message = '' + person.name + ' ' + person.surname + ' successfully removed from event ' + $scope.event.title;
-                            msg.isError = true;
-                        }
-                        $scope.showMessage(msg);
-                    }
-            });
-        };
-
-        $scope.setPersonAttributeAndRefocus = function(person, key, value) {
-            $scope.setPersonAttribute(person, key, value);
-            $scope.query = '';
-        };
-
-        /* Stuff to do when an attendee is removed locally. */
-        $scope._localRemoveAttendee = function(person) {
-            $log.debug('_localRemoveAttendee');
-            $log.debug(person);
-            if (!(person && person.person_id && $scope.event.persons)) {
-                return;
-            }
-            var person_idx = $scope.event.persons.findIndex(function(el, idx, array) {
-                return person.person_id == el.person_id;
-            });
-            if (person_idx == -1) {
-                $log.warn('unable to find and delete person_id ' + person.person_id);
-                return;
-            }
-            var removed_person = $scope.event.persons.splice(person_idx, 1);
-            // to be used to populate allPersons, if needed.
-            if (removed_person.length) {
-                person = removed_person[0];
-            }
-            var all_person_idx = $scope.allPersons.findIndex(function(el, idx, array) {
-                return person.person_id == el._id;
-            });
-            if (all_person_idx == -1 && person.person_id) {
-                $scope.allPersons.push(person);
-            }
-        };
-
-        $scope.removeAttendee = function(person) {
-            Event.deletePerson({
-                    _id: $stateParams.id,
-                    person_id: person.person_id
-                }, function() {
-                    $scope._localRemoveAttendee(person);
-            });
-        };
-
         $scope.saveForm = function(easyFormGeneratorModel) {
             $scope.event.formSchema = easyFormGeneratorModel;
             $scope.save();
         };
-
-        $scope.showMessage = function(cfg) {
-            $scope.message.show(cfg);
-        };
-
-        $scope.$on('$destroy', function() {
-            $scope.EventUpdates && $scope.EventUpdates.close();
-        });
     }]
 );
 
 
-eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event', 'EventTicket', 'Person', 'Setting', '$log', '$translate', '$rootScope',
-    function ($scope, $state, Event, EventTicket, Person, Setting, $log, $translate, $rootScope) {
+eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event', 'EventTicket', 'Setting', '$log', '$translate', '$rootScope', 'EventUpdates', '$uibModal',
+    function ($scope, $state, Event, EventTicket, Setting, $log, $translate, $rootScope, EventUpdates, $uibModal) {
+        $scope.ticketsOrder = ["name", "surname"];
+        $scope.countAttendees = 0;
         $scope.message = {};
         $scope.event = {};
-        $scope.ticket = {};
+        $scope.event.tickets = [];
+        $scope.ticket = {}; // current ticket, for the event.ticket.* states
+        $scope.tickets = []; // list of all tickets, for the 'tickets' state
         $scope.formSchema = {};
         $scope.formData = {};
-        $scope.dangerousActionsEnabled = false;
+        $scope.guiOptions = {dangerousActionsEnabled: false};
+        $scope.customFields = Setting.query({setting: 'ticket_custom_field', in_event_details: true});
+        $scope.registeredFilterOptions = {all: false};
 
         $scope.formFieldsMap = {};
         $scope.formFieldsMapRev = {};
 
         if ($state.params.id) {
             $scope.event = Event.get({id: $state.params.id}, function(data) {
+                $scope.$watchCollection(function() {
+                        return $scope.event.tickets;
+                    }, function(new_collection, old_collection) {
+                        $scope.calcAttendees();
+                    }
+                );
+
                 if (!(data && data.formSchema)) {
                     return;
                 }
                 $scope.formSchema = data.formSchema.edaFieldsModel;
                 $scope.extractFormFields(data.formSchema.formlyFieldsModel);
 
+                // Editing an existing ticket
                 if ($state.params.ticket_id) {
                     EventTicket.get({id: $state.params.id, ticket_id: $state.params.ticket_id}, function(data) {
                         $scope.ticket = data;
@@ -394,9 +211,333 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                         });
                     });
                 }
-
             });
+
+            // Managing the list of tickets.
+            if ($state.is('event.tickets')) {
+                $scope.allPersons = Event.group_persons({id: $state.params.id});
+
+                // Handle WebSocket connection used to update the list of tickets.
+                $scope.EventUpdates = EventUpdates;
+                $scope.EventUpdates.open();
+                $scope.$watchCollection(function() {
+                        return $scope.EventUpdates.data;
+                    }, function(new_collection, old_collection) {
+                        if (!($scope.EventUpdates.data && $scope.EventUpdates.data.update)) {
+                            $log.debug('no data received from the WebSocket');
+                            return;
+                        }
+                        var data = $scope.EventUpdates.data.update;
+                        $log.debug('received ' + data.action + ' action from websocket source ' + data.uuid + ' . Full data:');
+                        $log.debug(data);
+                        if ($rootScope.app_uuid == data.uuid) {
+                            $log.debug('do not process our own message');
+                            return false;
+                        }
+                        if (!$scope.event.tickets) {
+                            $scope.event.tickets = [];
+                        }
+                        var ticket_id = data._id || (data.ticket && data.ticket._id);
+                        var ticket_idx = $scope.event.tickets.findIndex(function(el, idx, array) {
+                            return ticket_id && (ticket_id == el._id);
+                        });
+                        if (ticket_idx != -1) {
+                            $log.debug('_id ' + data._id + ' found');
+                        } else {
+                            $log.debug('_id ' + data._id + ' not found');
+                        }
+
+                        if (data.action == 'update' && ticket_idx != -1 && $scope.event.tickets[ticket_idx] != data.ticket) {
+                            $scope.event.tickets[ticket_idx] = data.ticket;
+                        } else if (data.action == 'add' && ticket_idx == -1) {
+                            $scope._localAddTicket(data.ticket);
+                        } else if (data.action == 'delete' && ticket_idx != -1) {
+                            $scope._localRemoveTicket({_id: data._id});
+                        }
+                    }
+                );
+            }
+        } else if ($state.is('tickets')) {
+            $scope.tickets = EventTicket.all();
         }
+
+        $scope.calcAttendees = function() {
+            if (!($scope.event && $scope.event.tickets)) {
+                $scope.countAttendees = 0;
+                return;
+            }
+            var attendees = 0;
+            angular.forEach($scope.event.tickets, function(value, key) {
+                if (value.attended && !value.cancelled) {
+                    attendees += 1;
+                }
+            });
+            $scope.countAttendees = attendees;
+        };
+
+        /* Stuff to do when a ticket is added, modified or removed locally. */
+
+        $scope._localAddTicket = function(ticket, original_ticket) {
+            if (!$state.is('event.tickets')) {
+                return true;
+            }
+            var ret = true;
+            if (!$scope.event.tickets) {
+                $scope.event.tickets = [];
+            }
+            var ticket_idx = $scope.event.tickets.findIndex(function(el, idx, array) {
+                return ticket._id == el._id;
+            });
+            if (ticket_idx != -1) {
+                $log.warn('ticket already present: not added');
+                ret = false;
+            } else {
+                $scope.event.tickets.push(ticket);
+            }
+
+            // Try to remove this person from the allPersons list using ID of the original entry or email.
+            var field = null;
+            var field_value = null;
+            if (original_ticket && original_ticket._id) {
+                field = '_id';
+                field_value = original_ticket._id;
+            } else if (ticket.email) {
+                field = 'email';
+                field_value = ticket.email;
+            }
+            if (field) {
+                var all_person_idx = $scope.allPersons.findIndex(function(el, idx, array) {
+                    return field_value == el[field];
+                });
+                if (all_person_idx != -1) {
+                    $scope.allPersons.splice(all_person_idx, 1);
+                }
+            }
+            return ret;
+        };
+
+        $scope._localUpdateTicket = function(ticket) {
+            if (!$state.is('event.tickets')) {
+                return;
+            }
+            if (!$scope.event.tickets) {
+                $scope.event.tickets = [];
+            }
+            var ticket_idx = $scope.event.tickets.findIndex(function(el, idx, array) {
+                return ticket._id == el._id;
+            });
+            if (ticket_idx == -1) {
+                $log.warn('ticket not present: not updated');
+                return false;
+            }
+            $scope.event.tickets[ticket_idx] = ticket;
+        };
+
+        $scope._localRemoveTicket = function(ticket) {
+            if (!(ticket && ticket._id && $scope.event.tickets)) {
+                return;
+            }
+            var ticket_idx = $scope.event.tickets.findIndex(function(el, idx, array) {
+                return ticket._id == el._id;
+            });
+            if (ticket_idx == -1) {
+                $log.warn('unable to find and delete ticket _id ' + ticket._id);
+                return;
+            }
+            var removed_person = $scope.event.tickets.splice(ticket_idx, 1);
+            // to be used to populate allPersons, if needed.
+            var person = null;
+            if (removed_person.length) {
+                person = removed_person[0];
+            } else {
+                return;
+            }
+            if (!$scope.allPersons) {
+                $scope.allPersons = [];
+            }
+            var all_person_idx = $scope.allPersons.findIndex(function(el, idx, array) {
+                return person._id == el._id;
+            });
+            if (all_person_idx == -1 && person._id) {
+                $scope.allPersons.push(person);
+            }
+        };
+
+        $scope.buildTicketLabel = function(ticket) {
+            var name = ticket.name || '';
+            if (ticket.surname) {
+                if (name) {
+                    name = name + ' ';
+                }
+                name = name + ticket.surname;
+            }
+            if (!name && ticket.email) {
+                name = ticket.email;
+            }
+            if (!name) {
+                name = 'ticket';
+            }
+            return name;
+        };
+
+        $scope.setTicketAttribute = function(ticket, key, value, callback, hideMessage) {
+            $log.debug('setTicketAttribute for _id ' + ticket._id + ' key: ' + key + ' value: ' + value);
+            var newData = {event_id: $state.params.id, _id: ticket._id};
+            newData[key] = value;
+            EventTicket.update(newData, function(data) {
+                if (!(data && data._id && data.ticket)) {
+                    return;
+                }
+                if (callback) {
+                    callback(data);
+                }
+                if (!$state.is('event.tickets')) {
+                    return;
+                }
+                var ticket_idx = $scope.event.tickets.findIndex(function(el, idx, array) {
+                    return data._id == el._id;
+                });
+                if (ticket_idx == -1) {
+                    $log.warn('unable to find ticket _id ' + data._id);
+                    return;
+                }
+                if ($scope.event.tickets[ticket_idx] != data.ticket) {
+                    $scope.event.tickets[ticket_idx] = data.ticket;
+                }
+
+                if (key === 'attended' && !hideMessage) {
+                    var msg = {};
+                    var name = $scope.buildTicketLabel(data.ticket);
+
+                    if (value) {
+                        msg.message = name + ' successfully added to event ' + $scope.event.title;
+                    } else {
+                        msg.message = name + ' successfully removed from event ' + $scope.event.title;
+                        msg.isError = true;
+                    }
+                    $scope.showMessage(msg);
+                }
+            });
+        };
+
+        $scope.setTicketAttributeAndRefocus = function(ticket, key, value) {
+            $scope.setTicketAttribute(ticket, key, value);
+            $scope.query = '';
+        };
+
+        $scope._setAttended = function(ticket) {
+            $scope.setTicketAttribute(ticket, 'attended', true, null, true);
+        };
+
+        $scope.deleteTicket = function(ticket) {
+            EventTicket.delete({
+                    event_id: $state.params.id,
+                    ticket_id: ticket._id
+                }, function() {
+                    $scope._localRemoveTicket(ticket);
+            });
+        };
+
+        /* event listners; needed because otherwise, adding a ticket with the Quick add form,
+         * we'd be changing the $scope outside of the AngularJS's $digest. */
+
+        $rootScope.$on('event:ticket:new', function(evt, ticket, callback) {
+            $scope._localAddTicket(ticket);
+            if (callback) {
+                callback(ticket);
+            }
+        });
+
+        $rootScope.$on('event:ticket:update', function(evt, ticket) {
+            if (!$scope.event.tickets) {
+                $scope.event.tickets = [];
+            }
+            var ticket_idx = $scope.event.tickets.findIndex(function(el, idx, array) {
+                    return ticket._id == el._id;
+            });
+            if (ticket_idx == -1) {
+                $log.debug('ticket not present: not updated');
+                return false;
+            }
+            $scope.event.tickets[ticket_idx] = ticket;
+        });
+
+        $rootScope.$on('event:ticket:set-attr', function(evt, ticket, key, value, callback, hideMessage) {
+            $scope.setTicketAttribute(ticket, key, value, callback, hideMessage);
+        });
+
+        $scope.addTicket = function(ticket, cb) {
+            ticket.event_id = $state.params.id;
+            EventTicket.add(ticket, function(ret_ticket) {
+                $log.debug('addTicket');
+                $log.debug(ret_ticket);
+                $rootScope.$emit('event:ticket:new', ret_ticket, function() {
+                    $rootScope.$emit('event:ticket:set-attr', ret_ticket, 'attended', true, null, false);
+                });
+                if (cb) {
+                    cb(ticket);
+                }
+                if (!$state.is('event.tickets')) {
+                    $state.go('event.ticket.edit', {id: $scope.event._id, ticket_id: ret_ticket._id});
+                } else {
+                    $scope.query = '';
+                    if ($scope.$close) {
+                        // Close the Quick ticket modal.
+                        $scope.$close();
+                    }
+                }
+            });
+        };
+
+        $scope.updateTicket = function(ticket, cb) {
+            ticket.event_id = $state.params.id;
+            EventTicket.update(ticket, function(t) {
+                $rootScope.$emit('event:ticket:update', t.ticket);
+                if (cb) {
+                    cb(t);
+                }
+            });
+        };
+
+        $scope.toggleCancelledTicket = function() {
+            if (!$scope.ticket._id) {
+                return;
+            }
+            $scope.ticket.cancelled = !$scope.ticket.cancelled;
+            $scope.setTicketAttribute($scope.ticket, 'cancelled', $scope.ticket.cancelled, function() {
+                $scope.guiOptions.dangerousActionsEnabled = false;
+            });
+        };
+
+        $scope.openQuickAddTicket = function(_id) {
+            var modalInstance = $uibModal.open({
+                templateUrl: 'modal-quick-add-ticket.html',
+                controller: 'EventTicketsCtrl'
+            });
+            modalInstance.result.then(function() {});
+        };
+
+        $scope.submitForm = function(dataModelSubmitted) {
+            angular.forEach(dataModelSubmitted, function(value, key) {
+                key = $scope.formFieldsMap[key] || key;
+                $scope.ticket[key] = value;
+            });
+            if ($state.is('event.ticket.edit')) {
+                $scope.updateTicket($scope.ticket, function() {
+                    $scope.showMessage({message: 'ticket successfully updated'});
+                });
+            } else {
+                $scope.addTicket($scope.ticket);
+            }
+        };
+
+        $scope.cancelForm = function() {
+            if (!$state.is('event.tickets')) {
+                $state.go('events');
+            } else if ($scope.$close) {
+                $scope.$close();
+            }
+        };
 
         $scope.extractFormFields = function(formlyFieldsModel) {
             if (!formlyFieldsModel) {
@@ -418,72 +559,6 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
             });
         };
 
-        $scope.addTicket = function(person) {
-            var personObj = new Person(person);
-            personObj.$save(function(p) {
-                person.person_id = p._id;
-                person._id = $state.params.id; // that's the id of the event, not the person.
-                EventTicket.add(person, function(ticket) {
-                    $log.debug(ticket);
-                    $state.go('event.ticket.edit', {id: $scope.event._id, ticket_id: ticket._id});
-                });
-            });
-        };
-
-        $scope.updateTicket = function(ticket, cb) {
-            var data = angular.copy(ticket);
-            data.ticket_id = data._id;
-            data._id = $state.params.id;
-            EventTicket.update(data, function(t) {
-                if (cb) {
-                    cb(t);
-                }
-            });
-        };
-
-        $scope.submitForm = function(dataModelSubmitted) {
-            angular.forEach(dataModelSubmitted, function(value, key) {
-                key = $scope.formFieldsMap[key] || key;
-                $scope.ticket[key] = value;
-            });
-            if (!$state.params.ticket_id) {
-                $scope.addTicket($scope.ticket);
-            } else {
-                $scope.updateTicket($scope.ticket);
-            }
-        };
-
-        $scope.toggleTicket = function() {
-            if (!$scope.ticket._id) {
-                return;
-            }
-            $scope.ticket.cancelled = !$scope.ticket.cancelled;
-            $scope.updateTicket($scope.ticket, function() {
-                $scope.dangerousActionsEnabled = false;
-            });
-        };
-
-        $scope.cancelForm = function() {
-            $state.go('events');
-        };
-    }]
-);
-
-
-eventManControllers.controller('PersonsListCtrl', ['$scope', 'Person', 'Setting', '$modal', '$translate', '$rootScope',
-    function ($scope, Person, Setting, $modal, $translate, $rootScope) {
-        $scope.persons = Person.all();
-        $scope.personsOrder = ["name", "surname"];
-        $scope.customFields = Setting.query({setting: 'person_custom_field',
-            in_persons_list: true});
-
-        $scope.confirm_delete = 'Do you really want to delete this person?';
-        $rootScope.$on('$translateChangeSuccess', function () {
-            $translate('Do you really want to delete this person?').then(function (translation) {
-                $scope.confirm_delete = translation;
-            });
-        });
-
         $scope.updateOrded = function(key) {
             var new_order = [key];
             var inv_key;
@@ -492,26 +567,63 @@ eventManControllers.controller('PersonsListCtrl', ['$scope', 'Person', 'Setting'
             } else {
                 inv_key = '-' + key;
             }
-            angular.forEach($scope.personsOrder,
+            angular.forEach($scope.ticketsOrder,
                 function(value, idx) {
                     if (value !== key && value !== inv_key) {
                         new_order.push(value);
                     }
                 }
             );
-            $scope.personsOrder = new_order;
+            $scope.ticketsOrder = new_order;
         };
 
-        $scope.setAttribute = function(person, key, value) {
-            var data = {_id: person._id};
-            data[key] = value;
-            Person.update(data, function() {
-                $scope.persons = Person.all();
+        $scope.showMessage = function(cfg) {
+            $scope.message && $scope.message.show && $scope.message.show(cfg);
+        };
+
+        $scope.$on('$destroy', function() {
+            $scope.EventUpdates && $scope.EventUpdates.close();
+        });
+    }]
+);
+
+
+eventManControllers.controller('UsersCtrl', ['$scope', '$rootScope', '$state', '$log', 'User', '$uibModal',
+    function ($scope, $rootScope, $state, $log, User, $uibModal) {
+        $scope.loginData = {};
+        $scope.user = {};
+        $scope.updateUserInfo = {};
+        $scope.users = [];
+        $scope.usersOrderProp = 'username';
+        $scope.ticketsOrderProp = 'title';
+
+        $scope.confirm_delete = 'Do you really want to delete this user?';
+        $rootScope.$on('$translateChangeSuccess', function () {
+            $translate('Do you really want to delete this user?').then(function (translation) {
+                $scope.confirm_delete = translation;
             });
+        });
+
+        $scope.updateUsersList = function() {
+            if ($state.is('users')) {
+                $scope.users = User.all();
+            }
         };
 
-        $scope.remove = function(_id) {
-            var modalInstance = $modal.open({
+        $scope.updateUsersList();
+
+        if ($state.is('user.edit') && $state.params.id) {
+            $scope.user = User.get({id: $state.params.id}, function() {
+                $scope.updateUserInfo = $scope.user;
+            });
+        }
+
+        $scope.updateUser = function() {
+            User.update($scope.updateUserInfo);
+        };
+
+        $scope.deleteUser = function(user_id) {
+            var modalInstance = $uibModal.open({
                 scope: $scope,
                 templateUrl: 'modal-confirm-action.html',
                 controller: 'ModalConfirmInstanceCtrl',
@@ -520,96 +632,9 @@ eventManControllers.controller('PersonsListCtrl', ['$scope', 'Person', 'Setting'
                 }
             });
             modalInstance.result.then(function() {
-                Person.remove({'id': _id}, function() {
-                    $scope.persons = Person.all();
-                    }
-                );
+                User.delete({id: user_id}, $scope.updateUsersList);
             });
         };
-    }]
-);
-
-
-eventManControllers.controller('PersonDetailsCtrl', ['$scope', '$stateParams', 'Person', 'Event', 'Setting', '$log',
-    function ($scope, $stateParams, Person, Event, Setting, $log) {
-        $scope.personsOrderProp = 'name';
-        $scope.eventsOrderProp = '-begin_date';
-        $scope.addToEvent = '';
-        $scope.customFields = Setting.query({setting: 'person_custom_field',
-            in_persons_list: true});
-
-        if ($stateParams.id) {
-            $scope.person = Person.get($stateParams);
-            $scope.events = Person.getEvents({_id: $stateParams.id, all: true});
-        } else {
-            $scope.events = Event.all();
-        }
-
-        // store a new Person or update an existing one
-        $scope.save = function() {
-            if ($scope.person._id === undefined) {
-                $scope.person = new Person($scope.person);
-                $scope.person.$save(function(person) {
-                    if ($scope.addToEvent) {
-                        var data = angular.copy(person);
-                        data.person_id = data._id;
-                        data._id = $scope.addToEvent;
-                        data.attended = false;
-                        Event.addPerson(data);
-                    }
-                });
-            } else {
-                $scope.person = Person.update($scope.person, function(data) {
-                    if ($scope.addToEvent) {
-                        var data = angular.copy($scope.person);
-                        data._id = $scope.addToEvent;
-                        data.person_id = $scope.person._id;
-                        data.attended = false;
-                        Event.addPerson(data);
-                    }
-                });
-            }
-            $scope.personForm.$setPristine(false);
-        };
-
-        $scope.setPersonAttributeAtEvent = function(evnt, key, value) {
-            var attrs = {_id: evnt._id, person_id: $stateParams.id};
-            attrs[key] = value;
-            Event.updatePerson(attrs,
-                function(data) {
-                    $scope.events = Person.getEvents({_id: $stateParams.id, all: true});
-                }
-            );
-        };
-
-        $scope.switchRegistered = function(evnt, person, add) {
-            $log.debug('PersonDetailsCtrl.switchRegistered.event_id: ' + evnt._id);
-            $log.debug('PersonDetailsCtrl.switchRegistered.person_id: ' + person._id);
-            $log.debug('PersonDetailsCtrl.switchRegistered.add: ' + add);
-            if (add) {
-                var data = angular.copy(person);
-                data._id = evnt._id;
-                data.person_id = person._id;
-                data.attended = false;
-                Event.addPerson(data,
-                    function(data) {
-                        $scope.events = Person.getEvents({_id: $stateParams.id, all: true});
-                    }
-                );
-            } else {
-                Event.deletePerson({_id: evnt._id, person_id: person._id},
-                    function(data) {
-                        $scope.events = Person.getEvents({_id: $stateParams.id, all: true});
-                    }
-                );
-            }
-        };
-    }]
-);
-
-eventManControllers.controller('LoginCtrl', ['$scope', '$rootScope', '$state', '$log', 'User',
-    function ($scope, $rootScope, $state, $log, User) {
-        $scope.loginData = {};
 
         $scope.register = function() {
             User.add($scope.newUser, function(data) {
@@ -623,7 +648,8 @@ eventManControllers.controller('LoginCtrl', ['$scope', '$rootScope', '$state', '
             }
             User.login(loginData, function(data) {
                 if (!data.error) {
-                    $rootScope.readInfo(function() {
+                    $rootScope.readInfo(function(info) {
+                        $log.debug('logged in user: ' + info.user.username);
                         $rootScope.clearError();
                         $state.go('events');
                     });
@@ -635,13 +661,15 @@ eventManControllers.controller('LoginCtrl', ['$scope', '$rootScope', '$state', '
             User.logout({}, function(data) {
                 if (!data.error) {
                     $rootScope.readInfo(function() {
-                        $state.go('events');
+                        $log.debug('logged out user');
+                        $state.go('login');
                     });
                 }
             });
         };
     }]
 );
+
 
 eventManControllers.controller('FileUploadCtrl', ['$scope', '$log', '$upload', 'Event',
     function ($scope, $log, $upload, Event) {

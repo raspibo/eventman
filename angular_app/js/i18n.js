@@ -1,6 +1,5 @@
 /* i18n for Event(man) */
-
-
+'use strict';
 
 eventManApp.config(['$translateProvider', function ($translateProvider) {
     $translateProvider.useStaticFilesLoader({

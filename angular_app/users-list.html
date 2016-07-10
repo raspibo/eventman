@@ -1,0 +1,56 @@
+<!-- show the list of Users -->
+<div class="container">
+    <div class="panel panel-primary table-striped top5">
+        <div class="panel-heading">
+            <h1>
+                {{'Users' | translate}}
+                <button ng-click="$state.go('login')" class="btn btn-success">
+                    <span class="fa fa-plus-circle vcenter"></span>
+                    {{'Add user' | translate}}
+                </button>
+            </h1>
+        </div>
+        <div class="panel-body">
+            <form class="form-inline">
+                <div class="form-group">
+                    <label for="query-users">{{'Search:' | translate}}</label>
+                    <input userman-focus type="text" id="query-users" class="form-control" placeholder="{{'Username or email' | translate}}" ng-model="query" ng-model-options="{debounce: 600}">
+                </div>
+                <div class="form-group">
+                    <label for="users-order">Sort by:</label>
+                    <select id="users-order" class="form-control" ng-model="usersOrderProp">
+                        <option value="username">{{'Username' | translate}}</option>
+                        <option value="-username">{{'Username (descending)' | translate}}</option>
+                        <option value="email">{{'Email' | translate}}</option>
+                        <option value="-email">{{'Email (descending)' | translate}}</option>
+                    </select>
+                </div>
+            </form>
+
+            <div ng-include=" 'modal-confirm-action.html' " class="hidden"></div>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th><strong>{{'User' | translate}}</strong></th>
+                        <th><strong>{{'Actions' | translate}}</strong></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="user in users | splittedFilter:query | orderBy:usersOrderProp">
+                        <td>
+                            <span>
+                                <strong>
+                                    <a ui-sref="user.edit({id: user._id})">{{user.username}}</a><span ng-if="user.email && user.email != user.username"> &lt;{{user.email}}&gt;</a>
+                                </strong>
+                            </span>
+                        </td>
+                        <td>
+                            <button ng-if="hasPermission('user|delete')" ng-click="deleteUser(user._id)" type="button" class="btn btn-link fa fa-trash fa-lg" title="{{'Delete' | translate}}"></button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+

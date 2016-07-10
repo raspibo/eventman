@@ -33,6 +33,7 @@ var eventManApp = angular.module('eventManApp', [
 eventManApp.run(['$rootScope', '$state', '$stateParams', '$log', 'Info',
     function($rootScope, $state, $stateParams, $log, Info) {
         $rootScope.app_uuid = guid();
+        $rootScope.info = {};
         $log.debug('App UUID: ' + $rootScope.app_uuid);
         $rootScope.$state = $state;
         $rootScope.$stateParams = $stateParams;
@@ -42,8 +43,10 @@ eventManApp.run(['$rootScope', '$state', '$stateParams', '$log', 'Info',
         $rootScope.readInfo = function(callback) {
             Info.get({}, function(data) {
                 $rootScope.info = data || {};
-                if (callback) {
-                    callback();
+                if (data.authentication_required && !(data.user && data.user._id)) {
+                    $state.go('login');
+                } else if (callback) {
+                    callback(data);
                 }
             });
         };
@@ -129,7 +132,7 @@ eventManApp.config(['$stateProvider', '$urlRouterProvider',
             .state('event.tickets', {
                 url: '/:id/tickets',
                 templateUrl: 'event-tickets.html',
-                controller: 'EventDetailsCtrl'
+                controller: 'EventTicketsCtrl'
             })
             .state('event.ticket', {
                 url: '/:id/ticket',
@@ -145,29 +148,10 @@ eventManApp.config(['$stateProvider', '$urlRouterProvider',
                 templateUrl: 'ticket-edit.html',
                 controller: 'EventTicketsCtrl'
             })
-            .state('persons', {
-                url: '/persons',
-                templateUrl: 'persons-list.html',
-                controller: 'PersonsListCtrl'
-            })
-            .state('person', {
-                url: '/person',
-                templateUrl: 'person-main.html'
-            })
-            .state('person.new', {
-                url: '/new',
-                templateUrl: 'person-edit.html',
-                controller: 'PersonDetailsCtrl'
-            })
-            .state('person.edit', {
-                url: '/:id/edit',
-                templateUrl: 'person-edit.html',
-                controller: 'PersonDetailsCtrl'
-            })
-            .state('person.info', {
-                url: '/:id',
-                templateUrl: 'person-info.html',
-                controller: 'PersonDetailsCtrl'
+            .state('tickets', {
+                url: '/tickets',
+                templateUrl: 'tickets-list.html',
+                controller: 'EventsListCtrl'
             })
             .state('import', {
                 url: '/import',
@@ -178,10 +162,24 @@ eventManApp.config(['$stateProvider', '$urlRouterProvider',
                 templateUrl: 'import-persons.html',
                 controller: 'FileUploadCtrl'
             })
+            .state('users', {
+                url: '/users',
+                templateUrl: 'users-list.html',
+                controller: 'UsersCtrl'
+            })
+            .state('user', {
+                url: '/user',
+                templateUrl: 'user-main.html'
+            })
+            .state('user.edit', {
+                url: ':id/edit',
+                templateUrl: 'user-edit.html',
+                controller: 'UsersCtrl'
+            })
             .state('login', {
                 url: '/login',
                 templateUrl: 'login.html',
-                controller: 'LoginCtrl'
+                controller: 'UsersCtrl'
             });
     }
 ]);

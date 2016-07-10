@@ -1,7 +1,7 @@
 <!doctype html>
 <html ng-app="eventManApp">
     <head>
-        <title>Event Man(ager)</title>
+        <title>EventMan(ager)</title>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -73,15 +73,17 @@
                     <div ng-if="logo.imgURL" class="navbar-brand"><a ng-if="logo.link" href="{{logo.link}}" target="_blank"><img src="{{logo.imgURL}}" /></a></div>
                     <ul class="nav navbar-nav">
                         <li ng-class="{active: isActive('/events') || isActive('/event')}"><a ui-sref="events">{{'Events' | translate}}</a></li>
-                        <li ng-if="hasPermission('persons|read')" ng-class="{active: isActive('/persons') ||  isActive('/person') || isActive('/import/persons')}"><a ui-sref="persons">{{'Persons' | translate}}</a></li>
+                        <li ng-if="hasPermission('admin|all')" ng-class="{active: isActive('/users') || isActive('/user')}"><a ui-sref="users">{{'Users' | translate}}</a></li>
+                        <li ng-if="hasPermission('admin|all')" ng-class="{active: isActive('/tickets')}"><a ui-sref="tickets">{{'All tickets' | translate}}</a></li>
+                        <li ng-if="hasPermission('admin|all')" ng-class="{active: isActive('/import/persons')}"><a ui-sref="import.persons">{{'Import tickets' | translate}}</a></li>
                     </ul>
                 </div>
                 <div class="collapse navbar-collapse">
                     <ul class="nav navbar-nav navbar-right">
-                        <li ng-if="info.user.username">
-                            <span class="btn">{{info.user.username}}</span>
+                        <li ng-if="info && info.user && info.user.username && info.user._id">
+                            <span class="btn"><a ui-sref="user.edit({id: info.user._id})">{{info.user.username}}</a></span>
                             <span class="btn btn-link">
-                                <a ng-controller="LoginCtrl" ng-click="logout()"><span class="fa fa-sign-out vcenter"></span>&nbsp;{{'logout' | translate}}</a>
+                                <a ng-controller="UsersCtrl" ng-click="logout()"><span class="fa fa-sign-out vcenter"></span>&nbsp;{{'logout' | translate}}</a>
                             </span>
                         </li>
                         <li ng-if="!info.user.username">
@@ -109,7 +111,7 @@
 
         <nav class="navbar navbar-default navbar-fixed-bottom">
             <div class="main-footer">
-                <a href="https://github.com/raspibo/eventman/" target="_blank">Event Man(ager)</a> by RaspiBO: <a href="http://raspibo.org">wiki</a> | <a href="http://social.raspibo.org">social network</a> | <a href="http://liste.raspibo.org/wws/">mailing lists</a> | <a href="mailto:info@raspibo.org">contact</a>
+                <a href="https://github.com/raspibo/eventman/" target="_blank">EventMan(ager)</a> by RaspiBO: <a href="http://raspibo.org">wiki</a> | <a href="http://social.raspibo.org">social network</a> | <a href="http://liste.raspibo.org/wws/">mailing lists</a> | <a href="mailto:info@raspibo.org">contact</a>
             </div>
         </nav>
     </body>

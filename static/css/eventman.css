@@ -8,11 +8,7 @@ body { padding-top: 70px; }
     padding-bottom: 0px;
 }
 
-a:focus a:hover {
-    color: #23527c;
-}
-
-a:hover {
+a:focus, a:hover {
     color: #23527c;
 }
 

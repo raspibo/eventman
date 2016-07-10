@@ -18,7 +18,7 @@ function convert_dates(obj) {
 
 eventManServices.factory('Event', ['$resource', '$rootScope',
     function($resource, $rootScope) {
-        return $resource('events/:id', {id: '@_id', person_id: '@person_id'}, {
+        return $resource('events/:id', {id: '@_id'}, {
 
             all: {
                 method: 'GET',
@@ -44,10 +44,10 @@ eventManServices.factory('Event', ['$resource', '$rootScope',
                     data = angular.fromJson(data);
                     convert_dates(data);
                     // strip empty keys.
-                    angular.forEach(data.persons || [], function(person, person_idx) {
-                        angular.forEach(person, function(value, key) {
+                    angular.forEach(data.tickets || [], function(ticket, ticket_idx) {
+                        angular.forEach(ticket, function(value, key) {
                             if (value === "") {
-                                delete person[key];
+                                delete ticket[key];
                             }
                         });
                     });
@@ -60,36 +60,13 @@ eventManServices.factory('Event', ['$resource', '$rootScope',
                 interceptor : {responseError: $rootScope.errorHandler}
             },
 
-            updatePerson: {
-                method: 'PUT',
-                interceptor : {responseError: $rootScope.errorHandler},
-                isArray: false,
-                url: 'events/:id/persons/:person_id',
-                params: {uuid: $rootScope.app_uuid},
+            group_persons: {
+                method: 'GET',
+                url: 'events/:id/group_persons',
+                isArray: true,
                 transformResponse: function(data, headers) {
-                    return angular.fromJson(data);
-                }
-            },
-
-            addPerson: {
-                method: 'POST',
-                interceptor : {responseError: $rootScope.errorHandler},
-                isArray: false,
-                url: 'events/:id/persons/:person_id',
-                params: {uuid: $rootScope.app_uuid},
-                transformResponse: function(data, headers) {
-                    return angular.fromJson(data);
-                }
-            },
-
-            deletePerson: {
-                method: 'DELETE',
-                interceptor : {responseError: $rootScope.errorHandler},
-                isArray: false,
-                url: 'events/:_id/persons/:person_id',
-                params: {uuid: $rootScope.app_uuid},
-                transformResponse: function(data, headers) {
-                    return angular.fromJson(data);
+                    data = angular.fromJson(data);
+                    return data.persons || [];
                 }
             }
         });
@@ -99,7 +76,17 @@ eventManServices.factory('Event', ['$resource', '$rootScope',
 
 eventManServices.factory('EventTicket', ['$resource', '$rootScope',
     function($resource, $rootScope) {
-        return $resource('events/:id/tickets', {id: '@_id', ticket_id: '@ticket_id'}, {
+        return $resource('events/:id/tickets', {event_id: '@event_id', ticket_id: '@_id'}, {
+            all: {
+                method: 'GET',
+                url: '/tickets',
+                interceptor : {responseError: $rootScope.errorHandler},
+                isArray: true,
+                transformResponse: function(data, headers) {
+                    data = angular.fromJson(data);
+                    return data.tickets;
+                }
+            },
 
             get: {
                 method: 'GET',
@@ -107,7 +94,10 @@ eventManServices.factory('EventTicket', ['$resource', '$rootScope',
                 interceptor : {responseError: $rootScope.errorHandler},
                 transformResponse: function(data, headers) {
                     data = angular.fromJson(data);
-                    return data.person;
+                    if (data.error) {
+                        return data;
+                    }
+                    return data.ticket;
                 }
             },
 
@@ -115,11 +105,14 @@ eventManServices.factory('EventTicket', ['$resource', '$rootScope',
                 method: 'POST',
                 interceptor : {responseError: $rootScope.errorHandler},
                 isArray: false,
-                url: 'events/:id/tickets/:ticket_id',
+                url: 'events/:event_id/tickets',
                 params: {uuid: $rootScope.app_uuid},
                 transformResponse: function(data, headers) {
                     data = angular.fromJson(data);
-                    return data.person;
+                    if (data.error) {
+                        return data;
+                    }
+                    return data.ticket;
                 }
             },
 
@@ -127,64 +120,24 @@ eventManServices.factory('EventTicket', ['$resource', '$rootScope',
                 method: 'PUT',
                 interceptor : {responseError: $rootScope.errorHandler},
                 isArray: false,
-                url: 'events/:id/tickets/:ticket_id',
+                url: 'events/:event_id/tickets/:ticket_id',
                 params: {uuid: $rootScope.app_uuid},
                 transformResponse: function(data, headers) {
+                    if (data.error) {
+                        return data;
+                    }
                     return angular.fromJson(data);
                 }
             },
 
-            deleteTicket: {
+            'delete': {
                 method: 'DELETE',
                 interceptor : {responseError: $rootScope.errorHandler},
                 isArray: false,
-                url: 'events/:_id/tickets/:ticket_id',
+                url: 'events/:event_id/tickets/:ticket_id',
                 params: {uuid: $rootScope.app_uuid},
                 transformResponse: function(data, headers) {
                     return angular.fromJson(data);
-                }
-            }
-        });
-    }]
-);
-
-
-eventManServices.factory('Person', ['$resource', '$rootScope',
-    function($resource, $rootScope) {
-        return $resource('persons/:id', {id: '@_id'}, {
-
-            all: {
-                method: 'GET',
-                interceptor : {responseError: $rootScope.errorHandler},
-                isArray: true,
-                transformResponse: function(data, headers) {
-                    data = angular.fromJson(data);
-                    if (data.error) {
-                        return data;
-                    }
-                    return data.persons;
-                }
-            },
-
-            update: {
-                method: 'PUT',
-                interceptor : {responseError: $rootScope.errorHandler}
-            },
-
-            getEvents: {
-                method: 'GET',
-                interceptor : {responseError: $rootScope.errorHandler},
-                url: 'persons/:_id/events',
-                isArray: true,
-                transformResponse: function(data, headers) {
-                    data = angular.fromJson(data);
-                    if (data.error) {
-                        return data;
-                    }
-                    angular.forEach(data.events || [], function(event_, event_idx) {
-                        convert_dates(event_);
-                    });
-                    return data.events;
                 }
             }
         });
@@ -195,7 +148,6 @@ eventManServices.factory('Person', ['$resource', '$rootScope',
 eventManServices.factory('Setting', ['$resource', '$rootScope',
     function($resource, $rootScope) {
         return $resource('settings/', {}, {
-
             query: {
                 method: 'GET',
                 interceptor : {responseError: $rootScope.errorHandler},
@@ -241,20 +193,34 @@ eventManServices.factory('Info', ['$resource', '$rootScope',
 eventManServices.factory('User', ['$resource', '$rootScope',
     function($resource, $rootScope) {
         return $resource('users/:id', {id: '@_id'}, {
-            get: {
+            all: {
                 method: 'GET',
                 interceptor : {responseError: $rootScope.errorHandler},
+                isArray: true,
                 transformResponse: function(data, headers) {
                     data = angular.fromJson(data);
                     if (data.error) {
                         return data;
                     }
-                    return data.user || {};
+                    return data.users;
+                }
+            },
+
+            get: {
+                method: 'GET',
+                interceptor : {responseError: $rootScope.errorHandler},
+                transformResponse: function(data, headers) {
+                    return angular.fromJson(data);
                 }
             },
 
             add: {
                 method: 'POST',
+                interceptor : {responseError: $rootScope.errorHandler}
+            },
+
+            update: {
+                method: 'PUT',
                 interceptor : {responseError: $rootScope.errorHandler}
             },
 
@@ -274,12 +240,10 @@ eventManServices.factory('User', ['$resource', '$rootScope',
 );
 
 
-/* WebSocket collection used to update the list of persons of an Event. */
-eventManApp.factory('EventUpdates', ['$websocket', '$location', '$log',
-    function($websocket, $location, $log) {
-
+/* WebSocket collection used to update the list of tickets of an Event. */
+eventManApp.factory('EventUpdates', ['$websocket', '$location', '$log', '$rootScope',
+    function($websocket, $location, $log, $rootScope) {
         var dataStream = null;
-
         var data = {};
 
         var methods = {
@@ -289,18 +253,19 @@ eventManApp.factory('EventUpdates', ['$websocket', '$location', '$log',
                 dataStream.close();
             },
             open: function() {
-                $log.debug('open WebSocket connection');
-                dataStream && dataStream.close();
                 var proto = $location.protocol() == 'https' ? 'wss' : 'ws';
-                dataStream = $websocket(proto + '://' + $location.host() + ':' + $location.port() +
-                                    '/ws/' + $location.path() + '/updates');
+                var url = proto + '://' + $location.host() + ':' + $location.port() +
+                          '/ws/' + $location.path() + '/updates?uuid=' + $rootScope.app_uuid;
+                $log.debug('open WebSocket connection to ' + url);
+                //dataStream && dataStream.close();
+                dataStream = $websocket(url);
+
                 dataStream.onMessage(function(message) {
                     $log.debug('EventUpdates message received');
                     data.update = angular.fromJson(message.data);
                 });
             }
         };
-
         return methods;
     }]
 );

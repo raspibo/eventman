@@ -1,0 +1,74 @@
+<!-- show details of a User -->
+<div class="container">
+    <div class="panel panel-primary table-striped">
+        <div class="panel-heading">
+            <h1>
+                {{user.username}}
+                <span ng-if="user.email">&nbsp;&lt;{{user.email}}&gt;</span>
+                &nbsp;-&nbsp;{{'update user information' | translate}}
+            </h1>
+        </div>
+        <div class="panel-body">
+            <form method="POST">
+                <div class="input-group input-group-lg top10">
+                    <span class="input-group-addon min150">{{'Email' | translate}}</span>
+                    <input type="email" id="new-email" name="new-email" ng-model="updateUserInfo.email" class="form-control">
+                </div>
+                <div class="input-group input-group-lg top10">
+                    <span class="input-group-addon min150">{{'Old password' | translate}}</span>
+                    <input type="password" id="old-password" name="old-password" ng-model="updateUserInfo.old_password" class="form-control">
+                    <span class="input-group-addon min150">{{'New password' | translate}}</span>
+                    <input type="password" id="new-password" name="new-password" ng-model="updateUserInfo.new_password" class="form-control">
+                </div>
+                <button type="submit" ng-click="updateUser()" class="btn btn-success top10">{{'update' | translate}}</button>
+            </form>
+        </div>
+    </div>
+    <div class="panel panel-primary table-striped top5">
+        <div class="panel-heading"><h1>{{'Tickets' | translate}}</h1></div>
+        <div class="panel-body">
+
+            <form class="form-inline">
+                <div class="form-group">
+                    <label for="query-tickets">{{'Search:' | translate}}</label>
+                    <input eventman-focus type="text" id="query-tickets" class="form-control" placeholder="{{'Event title' | translate}}" ng-model="query" ng-model-options="{debounce: 600}">
+                </div>
+                <div class="form-group">
+                    <label for="tickets-order">{{'Sort by:' | translate}}</label>
+                    <select id="tickets-order" class="form-control" ng-model="ticketsOrderProp">
+                        <option value="title">{{'Title' | translate}}</option>
+                        <option value="-title">{{'Title (descending)' | translate}}</option>
+                    </select>
+                </div>
+            </form>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>{{'Ticket' | translate}}</th>
+                        <th>{{'Event' | translate}}</th>
+                        <th class="text-center">{{'Attended' | translate}}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="ticket in (user.tickets || []) | splittedFilter:query | orderBy:ticketsOrderProp">
+                        <td>
+                            <strong>
+                                <a ui-sref="event.ticket.edit({id: ticket.event_id, ticket_id: ticket._id})">
+                                    <span ng-if="ticket.name || ticket.surname || ticket.email">
+                                        {{ticket.name}} {{ticket.surname}}<span ng-if="ticket.email">&nbsp;&lt;{{ticket.email}}&gt;</span>
+                                    </span>
+                                    <span ng-if="!(ticket.name || ticket.surname || ticket.email)">{{ticket.event_title}}</span>
+                                </a>
+                            </strong>
+                        </td>
+                        <td><strong>{{ticket.event_title}}</strong></td>
+                        <td class="text-center">
+                            <span class="fa fa-lg {{(ticket.attended) && 'fa-check-circle text-success' || 'fa-times-circle text-danger'}}"></span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
