@@ -363,6 +363,23 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
             }
         };
 
+        $scope.buildTicketLabel = function(ticket) {
+            var name = ticket.name || '';
+            if (ticket.surname) {
+                if (name) {
+                    name = name + ' ';
+                }
+                name = name + ticket.surname;
+            }
+            if (!name && ticket.email) {
+                name = ticket.email;
+            }
+            if (!name) {
+                name = 'ticket';
+            }
+            return name;
+        };
+
         $scope.setTicketAttribute = function(ticket, key, value, callback, hideMessage) {
             $log.debug('setTicketAttribute for _id ' + ticket._id + ' key: ' + key + ' value: ' + value);
             var newData = {event_id: $state.params.id, _id: ticket._id};
@@ -387,12 +404,15 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                 if ($scope.event.tickets[ticket_idx] != data.ticket) {
                     $scope.event.tickets[ticket_idx] = data.ticket;
                 }
+
                 if (key === 'attended' && !hideMessage) {
                     var msg = {};
+                    var name = $scope.buildTicketLabel(data.ticket);
+
                     if (value) {
-                        msg.message = '' + ticket.name + ' ' + ticket.surname + ' successfully added to event ' + $scope.event.title;
+                        msg.message = name + ' successfully added to event ' + $scope.event.title;
                     } else {
-                        msg.message = '' + ticket.name + ' ' + ticket.surname + ' successfully removed from event ' + $scope.event.title;
+                        msg.message = name + ' successfully removed from event ' + $scope.event.title;
                         msg.isError = true;
                     }
                     $scope.showMessage(msg);
@@ -446,14 +466,17 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
             $scope.setTicketAttribute(ticket, key, value, callback, hideMessage);
         });
 
-        $scope.addTicket = function(ticket) {
+        $scope.addTicket = function(ticket, cb) {
             ticket.event_id = $state.params.id;
             EventTicket.add(ticket, function(ret_ticket) {
                 $log.debug('addTicket');
                 $log.debug(ret_ticket);
                 $rootScope.$emit('event:ticket:new', ret_ticket, function() {
-                    $rootScope.$emit('event:ticket:set-attr', ret_ticket, 'attended', true, null, true);
+                    $rootScope.$emit('event:ticket:set-attr', ret_ticket, 'attended', true, null, false);
                 });
+                if (cb) {
+                    cb(ticket);
+                }
                 if (!$state.is('event.tickets')) {
                     $state.go('event.ticket.edit', {id: $scope.event._id, ticket_id: ret_ticket._id});
                 } else {
@@ -500,7 +523,9 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                 $scope.ticket[key] = value;
             });
             if ($state.is('event.ticket.edit')) {
-                $scope.updateTicket($scope.ticket);
+                $scope.updateTicket($scope.ticket, function() {
+                    $scope.showMessage({message: 'ticket successfully updated'});
+                });
             } else {
                 $scope.addTicket($scope.ticket);
             }
@@ -553,7 +578,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
         };
 
         $scope.showMessage = function(cfg) {
-            $scope.message.show(cfg);
+            $scope.message && $scope.message.show && $scope.message.show(cfg);
         };
 
         $scope.$on('$destroy', function() {
