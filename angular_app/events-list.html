@@ -4,7 +4,7 @@
         <div class="panel-heading">
             <h1>{{'Events' | translate}}
                 <button ng-click="$state.go('event.new')" class="btn btn-success" ng-if="hasPermission('event|create')">
-                    <span class="fa fa-plus-circle vcenter"></span>
+                    <span class="fa fa-calendar vcenter"></span>
                     {{'Add event' | translate}}
                 </button>
             </h1>
@@ -52,7 +52,7 @@
                         </td>
                         <td>
                             <button ng-if="hasPermission('event:tickets-all|create')" ng-click="$state.go('event.ticket.new', {id: event._id})" class="btn btn-link fa fa-user-plus" type="button" title="{{'Join this event' | translate}}"></button>
-                            <button ng-if="hasPermission('tickets|update')" ng-click="$state.go('event.tickets', {id: event._id})" class="btn btn-link fa fa-list" type="button" title="{{'Manage attendees' | translate}}"></button>
+                            <button ng-if="hasPermission('ticket|update')" ng-click="$state.go('event.tickets', {id: event._id})" class="btn btn-link fa fa-ticket" type="button" title="{{'Manage tickets' | translate}}"></button>
                             <button ng-if="hasPermission('event|update')" ng-click="$state.go('event.edit', {id: event._id})" type="button" class="btn btn-link fa fa-cog fa-lg" title="{{'Edit' | translate}}"></button>
                             <button ng-if="hasPermission('event|delete')" ng-click="deleteEvent(event._id)" type="button" class="btn btn-link fa fa-trash fa-lg" title="{{'Delete' | translate}}"></button>
                         </td>

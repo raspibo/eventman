@@ -823,11 +823,8 @@ class EbCSVImportPersonsHandler(BaseHandler):
         'Email': 'email',
         'Attendee #': 'attendee_nr',
         'Barcode #': 'ebqrcode',
-        'Company': 'company',
+        'Company': 'company'
     }
-    # Only these information are stored in the person collection.
-    keepPersonData = ('name', 'surname', 'email', 'name_title', 'name_suffix',
-            'company', 'job_title')
 
     @gen.coroutine
     @authenticated
@@ -840,6 +837,8 @@ class EbCSVImportPersonsHandler(BaseHandler):
             event_id = self.get_body_argument('targetEvent')
         except:
             pass
+        if event_id is None:
+            return self.build_error('invalid event')
         reply = dict(total=0, valid=0, merged=0, new_in_event=0)
         for fieldname, contents in self.request.files.iteritems():
             for content in contents:

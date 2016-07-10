@@ -84,9 +84,6 @@ eventManServices.factory('EventTicket', ['$resource', '$rootScope',
                 isArray: true,
                 transformResponse: function(data, headers) {
                     data = angular.fromJson(data);
-                    if (data.error) {
-                        return data;
-                    }
                     return data.tickets;
                 }
             },
@@ -97,6 +94,9 @@ eventManServices.factory('EventTicket', ['$resource', '$rootScope',
                 interceptor : {responseError: $rootScope.errorHandler},
                 transformResponse: function(data, headers) {
                     data = angular.fromJson(data);
+                    if (data.error) {
+                        return data;
+                    }
                     return data.ticket;
                 }
             },
@@ -109,6 +109,9 @@ eventManServices.factory('EventTicket', ['$resource', '$rootScope',
                 params: {uuid: $rootScope.app_uuid},
                 transformResponse: function(data, headers) {
                     data = angular.fromJson(data);
+                    if (data.error) {
+                        return data;
+                    }
                     return data.ticket;
                 }
             },
@@ -120,6 +123,9 @@ eventManServices.factory('EventTicket', ['$resource', '$rootScope',
                 url: 'events/:event_id/tickets/:ticket_id',
                 params: {uuid: $rootScope.app_uuid},
                 transformResponse: function(data, headers) {
+                    if (data.error) {
+                        return data;
+                    }
                     return angular.fromJson(data);
                 }
             },

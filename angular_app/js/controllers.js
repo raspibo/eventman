@@ -172,12 +172,14 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
         $scope.countAttendees = 0;
         $scope.message = {};
         $scope.event = {};
+        $scope.event.tickets = [];
         $scope.ticket = {}; // current ticket, for the event.ticket.* states
         $scope.tickets = []; // list of all tickets, for the 'tickets' state
         $scope.formSchema = {};
         $scope.formData = {};
         $scope.guiOptions = {dangerousActionsEnabled: false};
         $scope.customFields = Setting.query({setting: 'ticket_custom_field', in_event_details: true});
+        $scope.registeredFilterOptions = {all: true};
 
         $scope.formFieldsMap = {};
         $scope.formFieldsMapRev = {};
@@ -186,10 +188,11 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
             $scope.event = Event.get({id: $state.params.id}, function(data) {
                 $scope.$watchCollection(function() {
                         return $scope.event.tickets;
-                    }, function(prev, old) {
+                    }, function(new_collection, old_collection) {
                         $scope.calcAttendees();
                     }
                 );
+
                 if (!(data && data.formSchema)) {
                     return;
                 }
@@ -219,7 +222,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                 $scope.EventUpdates.open();
                 $scope.$watchCollection(function() {
                         return $scope.EventUpdates.data;
-                    }, function(prev, old) {
+                    }, function(new_collection, old_collection) {
                         if (!($scope.EventUpdates.data && $scope.EventUpdates.data.update)) {
                             return;
                         }
@@ -280,7 +283,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                 $scope.event.tickets = [];
             }
             var ticket_idx = $scope.event.tickets.findIndex(function(el, idx, array) {
-                    return ticket._id == el._id;
+                return ticket._id == el._id;
             });
             if (ticket_idx != -1) {
                 $log.warn('ticket already present: not added');
@@ -289,7 +292,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                 $scope.event.tickets.push(ticket);
             }
 
-            // Try to remove this person from the allPersons list using ID or email.
+            // Try to remove this person from the allPersons list using ID of the original entry or email.
             var field = null;
             var field_value = null;
             if (original_ticket && original_ticket._id) {
@@ -340,6 +343,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
             }
             var removed_person = $scope.event.tickets.splice(ticket_idx, 1);
             // to be used to populate allPersons, if needed.
+            var person = null;
             if (removed_person.length) {
                 person = removed_person[0];
             } else {
@@ -413,16 +417,17 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
 
         $scope.addTicket = function(ticket) {
             ticket.event_id = $state.params.id;
-            EventTicket.add(ticket, function(ticket) {
+            EventTicket.add(ticket, function(ret_ticket) {
                 $log.debug('addTicket');
-                $log.debug(ticket);
-                $scope._localAddTicket(ticket, ticket);
+                $log.debug(ret_ticket);
+                $scope._localAddTicket(ret_ticket, ticket);
                 if (!$state.is('event.tickets')) {
-                    $state.go('event.ticket.edit', {id: $scope.event._id, ticket_id: ticket._id});
+                    $state.go('event.ticket.edit', {id: $scope.event._id, ticket_id: ret_ticket._id});
                 } else {
                     $scope.query = '';
-                    $scope._setAttended(ticket);
+                    $scope._setAttended(ret_ticket);
                     if ($scope.$close) {
+                        // Close the Quick ticket modal.
                         $scope.$close();
                     }
                 }
