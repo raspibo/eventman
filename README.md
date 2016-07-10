@@ -78,12 +78,16 @@ Now persons can start joining your event:
 - click on "Join this event" in the list of events
 - compile the form and submit it
 - the user will have to keep the provided link, if they want to edit their information later
-- from this, a person can also mark a ticket as "cancelled" (not counted in the list of tickets), or they can enable it again
+- from this link, a person can also mark a ticket as "cancelled" (not counted in the list of tickets), or they can enable it again
 - if the person was a registered user, it's possible to see the list of own tickets in the personal page
 
 As an administrator, you can now go to the list of tickets of the event:
 - from there, once the event has started, you can mark persons as attendees
 - it's also possible to quickly add a new ticket or delete an existing one (the ticket is effectively deleted, it's not the same as the cancelled action)
+
+
+Notes on some special features
+------------------------------
 
 Some notes about the event registration form:
 - field names are important (case is not considered). You can use whatever you want, but "name", "surname" and "email" are internally used to show the tickets list, so please add at least one of them
