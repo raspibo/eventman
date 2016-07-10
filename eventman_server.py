@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Event Man(ager)
+"""EventMan(ager)
 
 Your friendly manager of attendees at an event.
 

@@ -1,9 +1,9 @@
-Event Man(ager)
+EventMan(ager)
 ===============
 
 Your friendly manager of attendees at an event.
 
-Event Man(ager) will help you handle your list of attendees at an event, managing the list of registered persons and marking persons as present.
+EventMan(ager) will help you handle your list of attendees at an event, managing the list of registered persons and marking persons as present.
 
 Main features:
 - an admin (in the future: anyone) can create and manage new events

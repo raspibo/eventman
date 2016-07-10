@@ -1,7 +1,7 @@
 Development
 ===========
 
-As of June 2016, Event Man(ager) is under heavy refactoring. For a list of main changes that will be introduced, see https://github.com/raspibo/eventman/issues
+As of June 2016, EventMan(ager) is under heavy refactoring. For a list of main changes that will be introduced, see https://github.com/raspibo/eventman/issues
 
 Every contribution, in form of code or ideas, is welcome.
 
@@ -14,7 +14,7 @@ Definitions
 - **registered person**: someone who said will attend at the event
 - **attendee**: a person who actually *show up* (is checked in) at the event
 - **ticket**: an entry in the list of persons registered at an event
-- **user**: a logged in user of th Event Man web interface (not the same as "person")
+- **user**: a logged in user of the EventMan(ager) web interface (not the same as "person")
 - **trigger**: an action that will run the execution of some scripts
 
 
@@ -82,7 +82,7 @@ Also, remember that most of the paths can take query parameters that will be use
 
 You have probably noticed that the /events/:event\_id/persons/\* and /events/:event\_id/tickets/\* paths seems to do the same thing. That's mostly true, and if we're talking about the data structure they are indeed the same (i.e.: a GET to /events/:event\_id/tickets/:ticket\_id will return the same {"person": {"name": "Mario", [...]}} structure as a call to /events/:event\_id/persons/:person\_id). The main difference is that the first works on the \_id property of the entry, the other on person\_id. Plus, the input and output are filtered in a different way, for example to prevent a registered person to autonomously set the attendee status or getting the complete list of registered persons.
 
-Beware that most probably the /persons and /events/:event\_id/persons paths will be removed from a future version of Event Man(mager) in an attempt to rationalize how we handle data.
+Beware that most probably the /persons and /events/:event\_id/persons paths will be removed from a future version of EventMan(mager) in an attempt to rationalize how we handle data.
 
 
 Permissions

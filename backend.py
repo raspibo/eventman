@@ -1,4 +1,4 @@
-"""Event Man(ager) database backend
+"""EventMan(ager) database backend
 
 Classes and functions used to manage events and attendees database.
 
