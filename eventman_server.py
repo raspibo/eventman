@@ -643,7 +643,7 @@ class EventsHandler(CollectionHandler):
         self._clean_dict(data)
         data['seq'] = self.get_next_seq('event_%s_tickets' % id_)
         data['seq_hex'] = '%06X' % data['seq']
-        data['_id'] = self.gen_id()
+        data['_id'] = ticket_id = self.gen_id()
         ret = {'action': 'add', 'ticket': data, 'uuid': uuid}
         merged, doc = self.db.update('events',
                 {'_id': id_},
@@ -652,6 +652,16 @@ class EventsHandler(CollectionHandler):
                 create=False)
         if doc:
             self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(ret))
+            ticket = self._get_ticket_data(ticket_id, doc.get('tickets') or [])
+            env = self._dict2env(ticket)
+            env.update({'PERSON_ID': ticket_id, 'TICKED_ID': ticket_id, 'EVENT_ID': id_,
+                'EVENT_TITLE': doc.get('title', ''), 'WEB_USER': self.current_user,
+                'WEB_REMOTE_IP': self.request.remote_ip})
+            stdin_data = {'new': ticket,
+                'event': doc,
+                'merged': merged
+            }
+            self.run_triggers('create_ticket_in_event', stdin_data=stdin_data, env=env)
         return ret
 
     def handle_put_tickets(self, id_, ticket_id, data):
@@ -705,12 +715,22 @@ class EventsHandler(CollectionHandler):
                 {'_id': id_, 'tickets._id': ticket_id})
         ret = {'action': 'delete', '_id': ticket_id, 'uuid': uuid}
         if doc:
-            merged, doc = self.db.update('events',
+            ticket = self._get_ticket_data(ticket_id, doc[0].get('tickets') or [])
+            merged, rdoc = self.db.update('events',
                     {'_id': id_},
                     {'tickets': {'_id': ticket_id}},
                     operation='delete',
                     create=False)
             self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(ret))
+            env = self._dict2env(ticket)
+            env.update({'PERSON_ID': ticket_id, 'TICKED_ID': ticket_id, 'EVENT_ID': id_,
+                'EVENT_TITLE': rdoc.get('title', ''), 'WEB_USER': self.current_user,
+                'WEB_REMOTE_IP': self.request.remote_ip})
+            stdin_data = {'old': ticket,
+                'event': rdoc,
+                'merged': merged
+            }
+            self.run_triggers('delete_ticket_in_event', stdin_data=stdin_data, env=env)
         return ret
 
 
