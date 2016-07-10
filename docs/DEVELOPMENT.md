@@ -203,11 +203,19 @@ The code is so divided:
     +- templates/ - Tornado Web templates (not used)
     +- tests/ - eeeehhhh
 
-Most of the time you have to edit something in angular\_app/js/ (for the logic; especially controllers.js and services.js), angular\_app/*.html (for the presentation) or eventman\_server.py for the backend.
+Most of the time you have to edit something in angular\_app/js/ (for the logic; especially controllers.js and services.js), angular\_app/\*.html (for the presentation) or eventman\_server.py for the backend.
 
+Dependency management and other hipster tools
+---------------------------------------------
+
+But, but, but... you don't use bower/npm/jam/CthulhuJS!
+
+Yes, exactly. I'm too old for that stuff: I just downloaded the third-party libraries that I needed and put them in static/.  Seems to work, by the way.
+
+I you're a big fan of those tools, please go ahead and send me a pull request.
 
 Coding style and conventions
-============================
+----------------------------
 
 It's enough to be consistent within the document you're editing.
 
