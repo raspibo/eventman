@@ -165,42 +165,42 @@ Code layout
 ===========
 
 The code is so divided:
-+- eventman\_server.py - the Tornado Web server
-+- backend.py - stuff to interact with MongoDB
-+- utils.py - utilities
-+- angular\_app/ - the client-side web application
-|  |
-|  +- *.html - AngularJS templates
-|  +- Gruntfile.js - Grunt file to extract i18n strings
-|  +- js/*.js - AngularJS code
-|     |
-|     +- app.js - main application and routing
-|     +- controllers.js - controllers of the templates
-|     +- services.js - interaction with the web server
-|     +- directives.js - stuff to interact with the DOM
-|     +- filters.js - filtering data
-|     +- i18n.js - i18n
-+- data/
-|  |
-|  +- triggers/
-|     |
-|     +- triggers-available/ - various trigger scripts
-|     +- triggers/ enabled trigger scripts
-|        |
-|        +- attends.d/ - scripts to be executed when a person is marked as an attendee
-|        +- create\_ticket\_in\_event.d/ - scripts that are run when a ticket is created
-|        +- update\_ticket\_in\_event.d/ - scripts that are run when a ticket is updated
-|        +- delete\_ticket\_in\_event.d/ - scripts that are run when a ticket is deleted
-+- ssl/ - put here your eventman\_cert.pem  and eventman\_key.pem certs
-+- static/
-|  |
-|  +- js/ - every third-party libraries (plus eventman.js with some small utils)
-|  +- css/ - third-party CSS (plus eventman.css)
-|  +- fonts/ - third-party fonts
-|  +- images/ - third-party images
-|  +- i18n/ - i18n files
-+- templates/ - Tornado Web templates (not used
-+- tests/ - eeeehhhh
+    +- eventman\_server.py - the Tornado Web server
+    +- backend.py - stuff to interact with MongoDB
+    +- utils.py - utilities
+    +- angular\_app/ - the client-side web application
+    |  |
+    |  +- *.html - AngularJS templates
+    |  +- Gruntfile.js - Grunt file to extract i18n strings
+    |  +- js/*.js - AngularJS code
+    |     |
+    |     +- app.js - main application and routing
+    |     +- controllers.js - controllers of the templates
+    |     +- services.js - interaction with the web server
+    |     +- directives.js - stuff to interact with the DOM
+    |     +- filters.js - filtering data
+    |     +- i18n.js - i18n
+    +- data/
+    |  |
+    |  +- triggers/
+    |     |
+    |     +- triggers-available/ - various trigger scripts
+    |     +- triggers/ enabled trigger scripts
+    |        |
+    |        +- attends.d/ - scripts to be executed when a person is marked as an attendee
+    |        +- create\_ticket\_in\_event.d/ - scripts that are run when a ticket is created
+    |        +- update\_ticket\_in\_event.d/ - scripts that are run when a ticket is updated
+    |        +- delete\_ticket\_in\_event.d/ - scripts that are run when a ticket is deleted
+    +- ssl/ - put here your eventman\_cert.pem  and eventman\_key.pem certs
+    +- static/
+    |  |
+    |  +- js/ - every third-party libraries (plus eventman.js with some small utils)
+    |  +- css/ - third-party CSS (plus eventman.css)
+    |  +- fonts/ - third-party fonts
+    |  +- images/ - third-party images
+    |  +- i18n/ - i18n files
+    +- templates/ - Tornado Web templates (not used
+    +- tests/ - eeeehhhh
 
 
 Coding style and conventions
