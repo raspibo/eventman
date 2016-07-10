@@ -3,7 +3,7 @@ EventMan(ager)
 
 Your friendly manager of attendees at an event.
 
-EventMan(ager) will help you handle your list of attendees at an event, managing the list of registered persons and marking persons as present.
+EventMan(ager) will help you handle your list of attendees at an event, managing the list of tickets and marking persons as present.
 
 Main features:
 - an admin (in the future: anyone) can create and manage new events
@@ -11,12 +11,12 @@ Main features:
 - a person can join (or leave) an event, submitting the custom forms
 - no registration is required to join/leave an event
 - quickly mark a registered person as an attendee
-- easy way to add a new person, if it's already known from a previous event or if it's a completely new person
+- easy way to add a new ticket, if it's already known from a previous event or if it's a completely new ticket
 - can import Eventbrite CSV export files
 - RESTful interface that can be called by third-party applications (see the https://github.com/raspibo/event_man/ repository for a simple script that checks people in using a barcode/QR-code reader)
 - ability to run triggers to respond to an event (e.g. when a person is marked as attending to an event)
 - can run on HTTPS
-- multiple workstations are kept in sync (i.e.: marking a person as an attendee is shown in every workstation currently viewing the list of persons registered at an event)
+- multiple workstations are kept in sync (i.e.: marking a person as an attendee is shown in every workstation currently viewing the list of tickets of an event)
 
 See the *screenshots* directory for some images.
 
@@ -60,17 +60,42 @@ Open browser and navigate to: http://localhost:5242/
 
 If you store SSL key and certificate in the *ssl* directory (default names: eventman\_key.pem and eventman\_cert.pem), HTTPS will be used: https://localhost:5242/
 
+
+Basic workflow
+==============
+
+So, you've just installed it and you have the server running.  Let's create an event:
+- login with the **admin** user (default password: **eventman**)
+- click "Add an event"
+- edit basic information about the event and save it
+- in the second panel ("Registration form"), edit the form that will be presented to the persons that want to join your event:
+  - first, define how many rows the form will have
+  - then define how many columns will be in each rows
+  - now edit every form field
+  - give a name to the form (not really meaningful) and save it
+
+Now persons can start joining your event:
+- click on "Join this event" in the list of events
+- compile the form and submit it
+- the user will have to keep the provided link, if they want to edit their information later
+- from this, a person can also mark a ticket as "cancelled" (not counted in the list of tickets), or they can enable it again
+- if the person was a registered user, it's possible to see the list of own tickets in the personal page
+
+As an administrator, you can now go to the list of tickets of the event:
+- from there, once the event has started, you can mark persons as attendees
+- it's also possible to quickly add a new ticket or delete an existing one (the ticket is effectively deleted, it's not the same as the cancelled action)
+
+Some notes about the event registration form:
+- fields name are important (case is not considered). You can use whatever you want, but "name", "surname" and "email" are internally used to show the tickets list, so please add at least one of them
+- please notice that the "Email" field type has a very silly regular expression and will create a lot of problems: please use "Text input" and names the field "Email"
+
+
 Authentication
 ==============
 
 By default, authentication is not required; unregistered and unprivileged users can see and join events, but are unable to edit or handle them. Administrator users can create ed edit events; more information about how permissions are handled can be found in the *docs/DEVELOPMENT.md* file.
 
-The default administrator username and password are **admin** and **eventman**. If you want to force authentication, run the daemon with --authentication=on
-
-Demo database
-=============
-
-In the *data/dumps/eventman\_test\_db.tar.gz* you can find a sample db with over 1000 fake persons and a couple of events to play with. Decompress it and use *mongorestore* to import it.
+The default administrator username and password are **admin** and **eventman**. If you want to force authentication (you usually don't), run the daemon with --authentication=on
 
 
 License and copyright
