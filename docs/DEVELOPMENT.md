@@ -166,10 +166,10 @@ Code layout
 
 The code is so divided:
 
-    +- eventman\_server.py - the Tornado Web server
+    +- eventman_server.py - the Tornado Web server
     +- backend.py - stuff to interact with MongoDB
     +- utils.py - utilities
-    +- angular\_app/ - the client-side web application
+    +- angular_app/ - the client-side web application
     |  |
     |  +- *.html - AngularJS templates
     |  +- Gruntfile.js - Grunt file to extract i18n strings
@@ -189,10 +189,10 @@ The code is so divided:
     |     +- triggers/ enabled trigger scripts
     |        |
     |        +- attends.d/ - scripts to be executed when a person is marked as an attendee
-    |        +- create\_ticket\_in\_event.d/ - scripts that are run when a ticket is created
-    |        +- update\_ticket\_in\_event.d/ - scripts that are run when a ticket is updated
-    |        +- delete\_ticket\_in\_event.d/ - scripts that are run when a ticket is deleted
-    +- ssl/ - put here your eventman\_cert.pem  and eventman\_key.pem certs
+    |        +- create_ticket_in_event.d/ - scripts that are run when a ticket is created
+    |        +- update_ticket_in_event.d/ - scripts that are run when a ticket is updated
+    |        +- delete_ticket_in_event.d/ - scripts that are run when a ticket is deleted
+    +- ssl/ - put here your eventman_cert.pem  and eventman_key.pem certs
     +- static/
     |  |
     |  +- js/ - every third-party libraries (plus eventman.js with some small utils)
@@ -200,8 +200,10 @@ The code is so divided:
     |  +- fonts/ - third-party fonts
     |  +- images/ - third-party images
     |  +- i18n/ - i18n files
-    +- templates/ - Tornado Web templates (not used
+    +- templates/ - Tornado Web templates (not used)
     +- tests/ - eeeehhhh
+
+Most of the time you have to edit something in angular\_app/js/ (for the logic; especially controllers.js and services.js), angular\_app/*.html (for the presentation) or eventman\_server.py for the backend.
 
 
 Coding style and conventions
