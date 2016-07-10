@@ -179,7 +179,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
         $scope.formData = {};
         $scope.guiOptions = {dangerousActionsEnabled: false};
         $scope.customFields = Setting.query({setting: 'ticket_custom_field', in_event_details: true});
-        $scope.registeredFilterOptions = {all: true};
+        $scope.registeredFilterOptions = {all: false};
 
         $scope.formFieldsMap = {};
         $scope.formFieldsMapRev = {};
@@ -224,10 +224,12 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                         return $scope.EventUpdates.data;
                     }, function(new_collection, old_collection) {
                         if (!($scope.EventUpdates.data && $scope.EventUpdates.data.update)) {
+                            $log.debug('no data received from the WebSocket');
                             return;
                         }
                         var data = $scope.EventUpdates.data.update;
-                        $log.debug('received ' + data.action + ' action from websocket source ' + data.uuid);
+                        $log.debug('received ' + data.action + ' action from websocket source ' + data.uuid + ' . Full data:');
+                        $log.debug(data);
                         if ($rootScope.app_uuid == data.uuid) {
                             $log.debug('do not process our own message');
                             return false;
@@ -235,8 +237,9 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                         if (!$scope.event.tickets) {
                             $scope.event.tickets = [];
                         }
+                        var ticket_id = data._id || (data.ticket && data.ticket._id);
                         var ticket_idx = $scope.event.tickets.findIndex(function(el, idx, array) {
-                            return data._id == el._id;
+                            return ticket_id && (ticket_id == el._id);
                         });
                         if (ticket_idx != -1) {
                             $log.debug('_id ' + data._id + ' found');
@@ -415,17 +418,46 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
             });
         };
 
+        /* event listners; needed because otherwise, adding a ticket with the Quick add form,
+         * we'd be changing the $scope outside of the AngularJS's $digest. */
+
+        $rootScope.$on('event:ticket:new', function(evt, ticket, callback) {
+            $scope._localAddTicket(ticket);
+            if (callback) {
+                callback(ticket);
+            }
+        });
+
+        $rootScope.$on('event:ticket:update', function(evt, ticket) {
+            if (!$scope.event.tickets) {
+                $scope.event.tickets = [];
+            }
+            var ticket_idx = $scope.event.tickets.findIndex(function(el, idx, array) {
+                    return ticket._id == el._id;
+            });
+            if (ticket_idx == -1) {
+                $log.debug('ticket not present: not updated');
+                return false;
+            }
+            $scope.event.tickets[ticket_idx] = ticket;
+        });
+
+        $rootScope.$on('event:ticket:set-attr', function(evt, ticket, key, value, callback, hideMessage) {
+            $scope.setTicketAttribute(ticket, key, value, callback, hideMessage);
+        });
+
         $scope.addTicket = function(ticket) {
             ticket.event_id = $state.params.id;
             EventTicket.add(ticket, function(ret_ticket) {
                 $log.debug('addTicket');
                 $log.debug(ret_ticket);
-                $scope._localAddTicket(ret_ticket, ticket);
+                $rootScope.$emit('event:ticket:new', ret_ticket, function() {
+                    $rootScope.$emit('event:ticket:set-attr', ret_ticket, 'attended', true, null, true);
+                });
                 if (!$state.is('event.tickets')) {
                     $state.go('event.ticket.edit', {id: $scope.event._id, ticket_id: ret_ticket._id});
                 } else {
                     $scope.query = '';
-                    $scope._setAttended(ret_ticket);
                     if ($scope.$close) {
                         // Close the Quick ticket modal.
                         $scope.$close();
@@ -437,7 +469,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
         $scope.updateTicket = function(ticket, cb) {
             ticket.event_id = $state.params.id;
             EventTicket.update(ticket, function(t) {
-                $scope._localUpdateTicket(t.ticket);
+                $rootScope.$emit('event:ticket:update', t.ticket);
                 if (cb) {
                     cb(t);
                 }
@@ -459,8 +491,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                 templateUrl: 'modal-quick-add-ticket.html',
                 controller: 'EventTicketsCtrl'
             });
-            modalInstance.result.then(function() {
-            });
+            modalInstance.result.then(function() {});
         };
 
         $scope.submitForm = function(dataModelSubmitted) {
@@ -468,10 +499,10 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                 key = $scope.formFieldsMap[key] || key;
                 $scope.ticket[key] = value;
             });
-            if (!$state.params.ticket_id) {
-                $scope.addTicket($scope.ticket);
-            } else {
+            if ($state.is('event.ticket.edit')) {
                 $scope.updateTicket($scope.ticket);
+            } else {
+                $scope.addTicket($scope.ticket);
             }
         };
 

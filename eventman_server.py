@@ -540,7 +540,11 @@ class CollectionHandler(BaseHandler):
 
     def build_ws_url(self, path, proto='ws', host=None):
         """Return a WebSocket url from a path."""
-        return 'ws://127.0.0.1:%s/ws/%s' % (self.listen_port + 1, path)
+        try:
+            args = '?uuid=%s' % self.get_argument('uuid')
+        except:
+            args = ''
+        return 'ws://127.0.0.1:%s/ws/%s%s' % (self.listen_port + 1, path, args)
 
     @gen.coroutine
     def send_ws_message(self, path, message):
@@ -647,12 +651,7 @@ class EventsHandler(CollectionHandler):
                 operation='appendUnique',
                 create=False)
         if doc:
-            msg_ret = ret.copy()
-            msg_ret['ticket'] = msg_ret['ticket'].copy()
-            # Do not send ticket IDs over the WebSocket.
-            if '_id' in msg_ret['ticket']:
-                del msg_ret['ticket']['_id']
-            self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(msg_ret))
+            self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(ret))
         return ret
 
     def handle_put_tickets(self, id_, ticket_id, data):
@@ -877,32 +876,41 @@ class InfoHandler(BaseHandler):
 
 
 class WebSocketEventUpdatesHandler(tornado.websocket.WebSocketHandler):
-    """Manage websockets."""
+    """Manage WebSockets."""
     def _clean_url(self, url):
-        return re_slashes.sub('/', url)
+        url = re_slashes.sub('/', url)
+        ridx = url.rfind('?')
+        if ridx != -1:
+            url = url[:ridx]
+        return url
 
     def open(self, event_id, *args, **kwargs):
-        logging.debug('WebSocketEventUpdatesHandler.on_open event_id:%s' % event_id)
-        _ws_clients.setdefault(self._clean_url(self.request.uri), set()).add(self)
-        logging.debug('WebSocketEventUpdatesHandler.on_open %s clients connected' % len(_ws_clients))
+        self.uuid = self.get_argument('uuid')
+        url = self._clean_url(self.request.uri)
+        logging.debug('WebSocketEventUpdatesHandler.on_open event_id:%s url:%s' % (event_id, url))
+        _ws_clients.setdefault(url, {})
+        if self.uuid not in _ws_clients[url]:
+            _ws_clients[url][self.uuid] = self
+        logging.debug('WebSocketEventUpdatesHandler.on_open %s clients connected' % len(_ws_clients[url]))
 
     def on_message(self, message):
-        logging.debug('WebSocketEventUpdatesHandler.on_message')
+        url = self._clean_url(self.request.uri)
+        logging.debug('WebSocketEventUpdatesHandler.on_message url:%s' % url)
         count = 0
-        for client in _ws_clients.get(self._clean_url(self.request.uri), []):
-            if client == self:
+        _to_delete = set()
+        for uuid, client in _ws_clients.get(url, {}).iteritems():
+            try:
+                client.write_message(message)
+            except:
+                _to_delete.add(uuid)
                 continue
-            client.write_message(message)
             count += 1
+        for uuid in _to_delete:
+            try:
+                del _ws_clients[url][uuid]
+            except KeyError:
+                pass
         logging.debug('WebSocketEventUpdatesHandler.on_message sent message to %d clients' % count)
-
-    def on_close(self):
-        logging.debug('WebSocketEventUpdatesHandler.on_close')
-        try:
-            if self in _ws_clients.get(self._clean_url(self.request.uri), []):
-                _ws_clients[self._clean_url(self.request.uri)].remove(self)
-        except Exception as e:
-            logging.warn('WebSocketEventUpdatesHandler.on_close error closing websocket: %s', str(e))
 
 
 class LoginHandler(RootHandler):

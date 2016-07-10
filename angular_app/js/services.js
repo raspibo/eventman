@@ -241,8 +241,8 @@ eventManServices.factory('User', ['$resource', '$rootScope',
 
 
 /* WebSocket collection used to update the list of tickets of an Event. */
-eventManApp.factory('EventUpdates', ['$websocket', '$location', '$log',
-    function($websocket, $location, $log) {
+eventManApp.factory('EventUpdates', ['$websocket', '$location', '$log', '$rootScope',
+    function($websocket, $location, $log, $rootScope) {
         var dataStream = null;
         var data = {};
 
@@ -253,18 +253,19 @@ eventManApp.factory('EventUpdates', ['$websocket', '$location', '$log',
                 dataStream.close();
             },
             open: function() {
-                $log.debug('open WebSocket connection');
-                dataStream && dataStream.close();
                 var proto = $location.protocol() == 'https' ? 'wss' : 'ws';
-                dataStream = $websocket(proto + '://' + $location.host() + ':' + $location.port() +
-                                    '/ws/' + $location.path() + '/updates');
+                var url = proto + '://' + $location.host() + ':' + $location.port() +
+                          '/ws/' + $location.path() + '/updates?uuid=' + $rootScope.app_uuid;
+                $log.debug('open WebSocket connection to ' + url);
+                //dataStream && dataStream.close();
+                dataStream = $websocket(url);
+
                 dataStream.onMessage(function(message) {
                     $log.debug('EventUpdates message received');
                     data.update = angular.fromJson(message.data);
                 });
             }
         };
-
         return methods;
     }]
 );
