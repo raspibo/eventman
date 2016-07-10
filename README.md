@@ -106,6 +106,8 @@ By default, authentication is not required; unregistered and unprivileged users 
 
 The default administrator username and password are **admin** and **eventman**. If you want to force authentication (you usually don't), run the daemon with --authentication=on
 
+Users can register, but are not forced to do so: tickets can also be issued to unregistered persons. However, if you register, you'll be able to access the list of all of your tickets (otherwise, you have to save the tickets' link, if you want to edit them later).
+
 
 License and copyright
 =====================
