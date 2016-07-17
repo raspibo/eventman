@@ -45,7 +45,7 @@
                             </span>
                         </td>
                         <td>
-                            <button ng-if="hasPermission('user|delete')" ng-click="deleteUser(user._id)" type="button" class="btn btn-link fa fa-trash fa-lg" title="{{'Delete' | translate}}"></button>
+                            <button ng-if="hasPermission('user|delete')" ng-click="deleteUser(user._id)" type="button" class="btn btn-danger" title="{{'Delete' | translate}}"><span class="fa fa-trash"></span> {{'Delete' | translate}}</button>
                         </td>
                     </tr>
                 </tbody>
