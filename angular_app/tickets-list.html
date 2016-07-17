@@ -35,7 +35,7 @@
                         <a ui-sref="event.view({id: ticket.event_id})">{{ticket.event_title}}</a>
                     </td>
                     <td class="text-center">
-                        <span class="fa fa-lg {{(ticket.attended) && 'fa-check-circle text-success' || 'fa-times-circle text-danger'}}"></span>
+                        <span class="fa {{(ticket.attended) && 'fa-check-circle text-success' || 'fa-times-circle text-danger'}}"></span>
                     </td>
                 </tr>
                 </tbody>
