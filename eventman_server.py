@@ -416,6 +416,9 @@ class CollectionHandler(BaseHandler):
         now = datetime.datetime.now()
         user_info = self.current_user_info
         user_id = user_info.get('_id')
+        env = {}
+        if id_ is not None:
+            env['%s_ID' % self.document.upper()] = id_
         if crud_method == 'create':
             data['created_by'] = user_id
             data['created_at'] = now
@@ -431,6 +434,11 @@ class CollectionHandler(BaseHandler):
                 data = self.apply_filter(data, 'input_%s_%s' % (method, resource))
                 output = handler(id_, resource_id, data, **kwargs)
                 output = self.apply_filter(output, 'get_%s' % resource)
+                env['RESOURCE'] = resource
+                if resource_id:
+                    env['%s_ID' % resource] = resource_id
+                self.run_triggers('%s_%s_%s' % ('create' if resource_id is None else 'update', self.document, resource),
+                                  stdin_data=output, env=env)
                 self.write(output)
                 return
             return self.build_error(status=404, message='unable to access resource: %s' % resource)
@@ -441,6 +449,7 @@ class CollectionHandler(BaseHandler):
             data = self.apply_filter(data, 'input_%s' % method)
             merged, newData = self.db.update(self.collection, id_, data)
             newData = self.apply_filter(newData, method)
+            self.run_triggers('update_%s' % self.document, stdin_data=newData, env=env)
         else:
             permission = '%s|%s' % (self.collection, crud_method)
             if not self.has_permission(permission):
@@ -448,6 +457,7 @@ class CollectionHandler(BaseHandler):
             data = self.apply_filter(data, 'input_%s_all' % method)
             newData = self.db.add(self.collection, data, _id=self.gen_id())
             newData = self.apply_filter(newData, '%s_all' % method)
+            self.run_triggers('create_%s' % self.document, stdin_data=newData, env=env)
         self.write(newData)
 
     # PUT (update an existing document) is handled by the POST (create a new document) method;
@@ -457,6 +467,9 @@ class CollectionHandler(BaseHandler):
     @gen.coroutine
     @authenticated
     def delete(self, id_=None, resource=None, resource_id=None, **kwargs):
+        env = {}
+        if id_ is not None:
+            env['%s_ID' % self.document.upper()] = id_
         if resource:
             # Handle access to sub-resources.
             permission = '%s:%s%s|delete' % (self.document, resource, '-all' if resource_id is None else '')
@@ -464,14 +477,21 @@ class CollectionHandler(BaseHandler):
                 return self.build_error(status=401, message='insufficient permissions: %s' % permission)
             method = getattr(self, 'handle_delete_%s' % resource, None)
             if method and callable(method):
-                self.write(method(id_, resource_id, **kwargs))
+                output = method(id_, resource_id, **kwargs)
+                env['RESOURCE'] = resource
+                if resource_id:
+                    env['%s_ID' % resource] = resource_id
+                self.run_triggers('delete_%s_%s' % (self.document, resource), stdin_data=env, env=env)
+                self.write(output)
                 return
             return self.build_error(status=404, message='unable to access resource: %s' % resource)
-        if id_:
+        if id_ is not None:
             permission = '%s|delete' % self.document
             if not self.has_permission(permission):
                 return self.build_error(status=401, message='insufficient permissions: %s' % permission)
-            self.db.delete(self.collection, id_)
+            howMany = self.db.delete(self.collection, id_)
+            env['DELETED_ITEMS'] = howMany
+            self.run_triggers('delete_%s' % self.document, stdin_data=env, env=env)
         else:
             self.write({'success': False})
         self.write({'success': True})

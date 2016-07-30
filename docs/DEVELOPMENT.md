@@ -90,7 +90,12 @@ Sometimes we have to execute one or more scripts in reaction to an action.
 
 In the **data/triggers** we have a series of directories; scripts inside of them will be executed when the related action was performed on the GUI or calling the controller.
 
-Available triggers:
+In the data/trigger directory you can create a directory named with this schema: *crudAction_document[_resource]*, where crudAction is one in "create", "update", "delete" (there're no triggers for "read"). So, for example you can create scripts in directories named:
+- create\_user
+- delete\_event
+- update\_event\_tickets
+
+We also have some special triggers, which will contain more information (for example: both the old and the new ticket, updating one):
 - **update\_ticket\_in\_event**: executed every time a ticket in a given event is updated.
 - **attends**: executed only when a person is marked as attending an event.
 
