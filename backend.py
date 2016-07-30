@@ -239,6 +239,9 @@ class EventManDB(object):
         :type _id_or_query: str or :class:`~bson.objectid.ObjectId` or dict
         :param force: force the deletion of all documents, when `_id_or_query` is empty
         :type force: bool
+
+        :returns: how many documents were removed
+        :rtype: int
         """
         if not _id_or_query and not force:
             return
@@ -246,5 +249,5 @@ class EventManDB(object):
         if not isinstance(_id_or_query, dict):
             _id_or_query = {'_id': _id_or_query}
         _id_or_query = convert(_id_or_query)
-        db[collection].remove(_id_or_query)
+        return db[collection].remove(_id_or_query)
 
