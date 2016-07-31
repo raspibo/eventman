@@ -522,8 +522,9 @@ class CollectionHandler(BaseHandler):
         :type env: dict
         """
         self.ioloop = tornado.ioloop.IOLoop.instance()
+        processed_env = self._dict2env(env)
         p = process.Subprocess(cmd, close_fds=True, stdin=process.Subprocess.STREAM,
-                stdout=process.Subprocess.STREAM, stderr=process.Subprocess.STREAM, env=env)
+                stdout=process.Subprocess.STREAM, stderr=process.Subprocess.STREAM, env=processed_env)
         p.set_exit_callback(lambda returncode: self.on_exit(returncode, cmd, p))
         self.timeout = self.ioloop.add_timeout(datetime.timedelta(seconds=PROCESS_TIMEOUT),
                 lambda: self.on_timeout(cmd, p))
@@ -673,7 +674,7 @@ class EventsHandler(CollectionHandler):
         if doc:
             self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(ret))
             ticket = self._get_ticket_data(ticket_id, doc.get('tickets') or [])
-            env = self._dict2env(ticket)
+            env = dict(ticket)
             env.update({'PERSON_ID': ticket_id, 'TICKED_ID': ticket_id, 'EVENT_ID': id_,
                 'EVENT_TITLE': doc.get('title', ''), 'WEB_USER': self.current_user,
                 'WEB_REMOTE_IP': self.request.remote_ip})
@@ -707,7 +708,7 @@ class EventsHandler(CollectionHandler):
                 data, updateList='tickets', create=False)
         new_ticket_data = self._get_ticket_data(ticket_query,
                 doc.get('tickets') or [])
-        env = self._dict2env(new_ticket_data)
+        env = dict(new_ticket_data)
         # always takes the ticket_id from the new ticket
         ticket_id = str(new_ticket_data.get('_id'))
         env.update({'PERSON_ID': ticket_id, 'TICKED_ID': ticket_id, 'EVENT_ID': id_,
@@ -742,7 +743,7 @@ class EventsHandler(CollectionHandler):
                     operation='delete',
                     create=False)
             self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(ret))
-            env = self._dict2env(ticket)
+            env = dict(ticket)
             env.update({'PERSON_ID': ticket_id, 'TICKED_ID': ticket_id, 'EVENT_ID': id_,
                 'EVENT_TITLE': rdoc.get('title', ''), 'WEB_USER': self.current_user,
                 'WEB_REMOTE_IP': self.request.remote_ip})
