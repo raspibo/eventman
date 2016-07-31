@@ -590,15 +590,17 @@ class EventsHandler(CollectionHandler):
     collection = 'events'
 
     def filter_get(self, output):
-        if not self.has_permission('tickets-all|read'):
-            if 'tickets' in output:
+        if 'tickets' in output:
+            output['tickets_sold'] = len([t for t in output['tickets'] if not t.get('cancelled')])
+            if not self.has_permission('tickets-all|read'):
                 output['tickets'] = []
         return output
 
     def filter_get_all(self, output):
-        if not self.has_permission('tickets-all|read'):
-            for event in output.get('events') or []:
-                if 'tickets' in event:
+        for event in output.get('events') or []:
+            if 'tickets' in event:
+                event['tickets_sold'] = len([t for t in event['tickets'] if not t.get('cancelled')])
+                if not self.has_permission('tickets-all|read'):
                     event['tickets'] = []
         return output
 
@@ -660,6 +662,12 @@ class EventsHandler(CollectionHandler):
         return {'tickets': tickets}
 
     def handle_post_tickets(self, id_, resource_id, data):
+        event = self.db.query('events', {'_id': id_})[0]
+        if 'number_of_tickets' in event:
+            tickets = event.get('tickets') or []
+            tickets = [t for t in tickets if not t.get('cancelled')]
+            if len(tickets) >= event['number_of_tickets']:
+                raise InputException('no more tickets available')
         uuid, arguments = self.uuid_arguments
         self._clean_dict(data)
         data['seq'] = self.get_next_seq('event_%s_tickets' % id_)
@@ -702,8 +710,15 @@ class EventsHandler(CollectionHandler):
             current_event = current_event[0]
         else:
             current_event = {}
-        old_ticket_data = self._get_ticket_data(ticket_query,
-                current_event.get('tickets') or [])
+        tickets = current_event.get('tickets') or []
+        old_ticket_data = self._get_ticket_data(ticket_query, tickets)
+
+        # We updating the "cancelled" status of a ticket; check if we still have a ticket available
+        if 'number_of_tickets' in current_event and old_ticket_data.get('cancelled') and not data.get('cancelled'):
+            active_tickets = [t for t in tickets if not t.get('cancelled')]
+            if len(active_tickets) >= current_event['number_of_tickets']:
+                raise InputException('no more tickets available')
+
         merged, doc = self.db.update('events', query,
                 data, updateList='tickets', create=False)
         new_ticket_data = self._get_ticket_data(ticket_query,
