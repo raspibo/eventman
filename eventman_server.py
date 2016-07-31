@@ -522,8 +522,9 @@ class CollectionHandler(BaseHandler):
         :type env: dict
         """
         self.ioloop = tornado.ioloop.IOLoop.instance()
+        processed_env = self._dict2env(env)
         p = process.Subprocess(cmd, close_fds=True, stdin=process.Subprocess.STREAM,
-                stdout=process.Subprocess.STREAM, stderr=process.Subprocess.STREAM, env=env)
+                stdout=process.Subprocess.STREAM, stderr=process.Subprocess.STREAM, env=processed_env)
         p.set_exit_callback(lambda returncode: self.on_exit(returncode, cmd, p))
         self.timeout = self.ioloop.add_timeout(datetime.timedelta(seconds=PROCESS_TIMEOUT),
                 lambda: self.on_timeout(cmd, p))
@@ -589,15 +590,17 @@ class EventsHandler(CollectionHandler):
     collection = 'events'
 
     def filter_get(self, output):
-        if not self.has_permission('tickets-all|read'):
-            if 'tickets' in output:
+        if 'tickets' in output:
+            output['tickets_sold'] = len([t for t in output['tickets'] if not t.get('cancelled')])
+            if not self.has_permission('tickets-all|read'):
                 output['tickets'] = []
         return output
 
     def filter_get_all(self, output):
-        if not self.has_permission('tickets-all|read'):
-            for event in output.get('events') or []:
-                if 'tickets' in event:
+        for event in output.get('events') or []:
+            if 'tickets' in event:
+                event['tickets_sold'] = len([t for t in event['tickets'] if not t.get('cancelled')])
+                if not self.has_permission('tickets-all|read'):
                     event['tickets'] = []
         return output
 
@@ -659,6 +662,12 @@ class EventsHandler(CollectionHandler):
         return {'tickets': tickets}
 
     def handle_post_tickets(self, id_, resource_id, data):
+        event = self.db.query('events', {'_id': id_})[0]
+        if 'number_of_tickets' in event:
+            tickets = event.get('tickets') or []
+            tickets = [t for t in tickets if not t.get('cancelled')]
+            if len(tickets) >= event['number_of_tickets']:
+                raise InputException('no more tickets available')
         uuid, arguments = self.uuid_arguments
         self._clean_dict(data)
         data['seq'] = self.get_next_seq('event_%s_tickets' % id_)
@@ -673,7 +682,7 @@ class EventsHandler(CollectionHandler):
         if doc:
             self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(ret))
             ticket = self._get_ticket_data(ticket_id, doc.get('tickets') or [])
-            env = self._dict2env(ticket)
+            env = dict(ticket)
             env.update({'PERSON_ID': ticket_id, 'TICKED_ID': ticket_id, 'EVENT_ID': id_,
                 'EVENT_TITLE': doc.get('title', ''), 'WEB_USER': self.current_user,
                 'WEB_REMOTE_IP': self.request.remote_ip})
@@ -701,13 +710,20 @@ class EventsHandler(CollectionHandler):
             current_event = current_event[0]
         else:
             current_event = {}
-        old_ticket_data = self._get_ticket_data(ticket_query,
-                current_event.get('tickets') or [])
+        tickets = current_event.get('tickets') or []
+        old_ticket_data = self._get_ticket_data(ticket_query, tickets)
+
+        # We updating the "cancelled" status of a ticket; check if we still have a ticket available
+        if 'number_of_tickets' in current_event and old_ticket_data.get('cancelled') and not data.get('cancelled'):
+            active_tickets = [t for t in tickets if not t.get('cancelled')]
+            if len(active_tickets) >= current_event['number_of_tickets']:
+                raise InputException('no more tickets available')
+
         merged, doc = self.db.update('events', query,
                 data, updateList='tickets', create=False)
         new_ticket_data = self._get_ticket_data(ticket_query,
                 doc.get('tickets') or [])
-        env = self._dict2env(new_ticket_data)
+        env = dict(new_ticket_data)
         # always takes the ticket_id from the new ticket
         ticket_id = str(new_ticket_data.get('_id'))
         env.update({'PERSON_ID': ticket_id, 'TICKED_ID': ticket_id, 'EVENT_ID': id_,
@@ -742,7 +758,7 @@ class EventsHandler(CollectionHandler):
                     operation='delete',
                     create=False)
             self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(ret))
-            env = self._dict2env(ticket)
+            env = dict(ticket)
             env.update({'PERSON_ID': ticket_id, 'TICKED_ID': ticket_id, 'EVENT_ID': id_,
                 'EVENT_TITLE': rdoc.get('title', ''), 'WEB_USER': self.current_user,
                 'WEB_REMOTE_IP': self.request.remote_ip})
