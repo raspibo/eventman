@@ -6,12 +6,12 @@ var eventManServices = angular.module('eventManServices', ['ngResource']);
 
 /* Modify, in place, an object to convert datetime. */
 function convert_dates(obj) {
-    if (obj['begin-date']) {
-        obj['begin-date'] = obj['begin_date'] = obj['begin-date'].getTime();
-    }
-    if (obj['end-date']) {
-        obj['end-date'] = obj['end_date'] = obj['end-date'].getTime();
-    }
+    angular.forEach(['begin_date', 'end_date', 'ticket_sales_begin_date', 'ticket_sales_end_date'], function(key, key_idx) {
+        if (!obj[key]) {
+            return;
+        }
+        obj[key] = obj[key].getTime();
+    });
     return obj;
 }
 

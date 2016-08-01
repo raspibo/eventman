@@ -26,6 +26,8 @@ import string
 import random
 import logging
 import datetime
+import dateutil.tz
+import dateutil.parser
 
 import tornado.httpserver
 import tornado.ioloop
@@ -589,19 +591,26 @@ class EventsHandler(CollectionHandler):
     document = 'event'
     collection = 'events'
 
-    def filter_get(self, output):
-        if 'tickets' in output:
-            output['tickets_sold'] = len([t for t in output['tickets'] if not t.get('cancelled')])
+    def _mangle_event(self, event):
+        # Some in-place changes to an event
+        if 'tickets' in event:
+            event['tickets_sold'] = len([t for t in event['tickets'] if not t.get('cancelled')])
+            event['no_tickets_for_sale'] = False
+            try:
+                self._check_sales_datetime(event)
+                self._check_number_of_tickets(event)
+            except InputException:
+                event['no_tickets_for_sale'] = True
             if not self.has_permission('tickets-all|read'):
-                output['tickets'] = []
-        return output
+                event['tickets'] = []
+        return event
+
+    def filter_get(self, output):
+        return self._mangle_event(output)
 
     def filter_get_all(self, output):
         for event in output.get('events') or []:
-            if 'tickets' in event:
-                event['tickets_sold'] = len([t for t in event['tickets'] if not t.get('cancelled')])
-                if not self.has_permission('tickets-all|read'):
-                    event['tickets'] = []
+            self._mangle_event(event)
         return output
 
     def filter_input_post(self, data):
@@ -661,13 +670,70 @@ class EventsHandler(CollectionHandler):
         tickets = self._filter_results(event.get('tickets') or [], self.arguments)
         return {'tickets': tickets}
 
+    def _check_number_of_tickets(self, event):
+        if self.has_permission('admin|all'):
+            return
+        number_of_tickets = event.get('number_of_tickets')
+        if number_of_tickets is None:
+            return
+        try:
+            number_of_tickets = int(number_of_tickets)
+        except ValueError:
+            return
+        tickets = event.get('tickets') or []
+        tickets = [t for t in tickets if not t.get('cancelled')]
+        if len(tickets) >= event['number_of_tickets']:
+            raise InputException('no more tickets available')
+
+    def _check_sales_datetime(self, event):
+        if self.has_permission('admin|all'):
+            return
+        begin_date = event.get('ticket_sales_begin_date')
+        begin_time = event.get('ticket_sales_begin_time')
+        end_date = event.get('ticket_sales_end_date')
+        end_time = event.get('ticket_sales_end_time')
+        utc = dateutil.tz.tzutc()
+        is_dst = time.daylight and time.localtime().tm_isdst > 0
+        utc_offset = - (time.altzone if is_dst else time.timezone)
+        if begin_date is None:
+            begin_date = datetime.datetime.now(tz=utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        else:
+            begin_date = dateutil.parser.parse(begin_date)
+            # Compensate UTC and DST offset, that otherwise would be added 2 times (one for date, one for time)
+            begin_date = begin_date + datetime.timedelta(seconds=utc_offset)
+        if begin_time is None:
+            begin_time_h = 0
+            begin_time_m = 0
+        else:
+            begin_time = dateutil.parser.parse(begin_time)
+            begin_time_h = begin_time.hour
+            begin_time_m = begin_time.minute
+        now = datetime.datetime.now(tz=utc)
+        begin_datetime = begin_date + datetime.timedelta(hours=begin_time_h, minutes=begin_time_m)
+        if now < begin_datetime:
+            raise InputException('ticket sales not yet started')
+
+        if end_date is None:
+            end_date = datetime.datetime.today().replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=utc)
+        else:
+            end_date = dateutil.parser.parse(end_date)
+            end_date = end_date + datetime.timedelta(seconds=utc_offset)
+        if end_time is None:
+            end_time = end_date
+            end_time_h = 23
+            end_time_m = 59
+        else:
+            end_time = dateutil.parser.parse(end_time, yearfirst=True)
+            end_time_h = end_time.hour
+            end_time_m = end_time.minute
+        end_datetime = end_date + datetime.timedelta(hours=end_time_h, minutes=end_time_m+1)
+        if now > end_datetime:
+            raise InputException('ticket sales has ended')
+
     def handle_post_tickets(self, id_, resource_id, data):
         event = self.db.query('events', {'_id': id_})[0]
-        if 'number_of_tickets' in event:
-            tickets = event.get('tickets') or []
-            tickets = [t for t in tickets if not t.get('cancelled')]
-            if len(tickets) >= event['number_of_tickets']:
-                raise InputException('no more tickets available')
+        self._check_sales_datetime(event)
+        self._check_number_of_tickets(event)
         uuid, arguments = self.uuid_arguments
         self._clean_dict(data)
         data['seq'] = self.get_next_seq('event_%s_tickets' % id_)
@@ -710,14 +776,13 @@ class EventsHandler(CollectionHandler):
             current_event = current_event[0]
         else:
             current_event = {}
+        self._check_sales_datetime(current_event)
         tickets = current_event.get('tickets') or []
         old_ticket_data = self._get_ticket_data(ticket_query, tickets)
 
-        # We updating the "cancelled" status of a ticket; check if we still have a ticket available
+        # We have changed the "cancelled" status of a ticket to False; check if we still have a ticket available
         if 'number_of_tickets' in current_event and old_ticket_data.get('cancelled') and not data.get('cancelled'):
-            active_tickets = [t for t in tickets if not t.get('cancelled')]
-            if len(active_tickets) >= current_event['number_of_tickets']:
-                raise InputException('no more tickets available')
+            self._check_number_of_tickets(current_event)
 
         merged, doc = self.db.update('events', query,
                 data, updateList='tickets', create=False)

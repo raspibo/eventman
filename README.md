@@ -12,6 +12,7 @@ Main features:
 - no registration is required to join/leave an event
 - quickly mark a registered person as an attendee
 - easy way to add a new ticket, if it's already known from a previous event or if it's a completely new ticket
+- set maximum number of tickets and begin/end date for sales
 - can import Eventbrite CSV export files
 - RESTful interface that can be called by third-party applications (see the https://github.com/raspibo/event_man/ repository for a simple script that checks people in using a barcode/QR-code reader)
 - ability to run triggers to respond to an event (e.g. when a person is marked as attending to an event)
@@ -50,6 +51,7 @@ Be sure to have a running MongoDB server, locally. If you want to install the de
     sudo python get-pip.py
     sudo pip install tornado # version 4.2 or later
     sudo pip install pymongo # version 3.2.2 or later
+    sudo pip install python-dateutil
     sudo pip install pycups # only needed if you want to print labels
     git clone https://github.com/raspibo/eventman
     cd eventman
