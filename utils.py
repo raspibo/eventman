@@ -77,6 +77,15 @@ def csvParse(csvStr, remap=None, merge=None):
 
 
 def hash_password(password, salt=None):
+    """Hash a password.
+
+    :param password: the cleartext password
+    :type password: str
+    :param salt: the optional salt (randomly generated, if None)
+    :type salt: str
+
+    :returns: the hashed password
+    :rtype: str"""
     if salt is None:
         salt_pool = string.ascii_letters + string.digits
         salt = ''.join(random.choice(salt_pool) for x in xrange(32))

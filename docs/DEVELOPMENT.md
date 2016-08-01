@@ -133,14 +133,19 @@ Stores information about events and tickets.
 Main field:
 
 - title
-- begin-data
-- begin-time
-- end-date
-- end-time
+- begin\_date
+- begin\_time
+- end\_date
+- end\_time
 - summary
 - description
 - where
 - group\_id
+- number\_of\_tickets
+- ticket\_sales\_begin\_date
+- ticket\_sales\_begin\_time
+- ticket\_sales\_end\_date
+- ticket\_sales\_end\_time
 - tickets - a list of information about tickets (each entry is a ticket)
   - tickets.$.\_id
   - tickets.$.ticket\_id
