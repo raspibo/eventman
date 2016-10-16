@@ -550,6 +550,8 @@ class CollectionHandler(BaseHandler):
         :param env: environment of the process
         :type stdin_data: dict
         """
+        if not hasattr(self, 'data_dir'):
+            return
         logging.debug('running triggers for action "%s"' % action)
         stdin_data = stdin_data or {}
         try:
@@ -952,6 +954,7 @@ class EbCSVImportPersonsHandler(BaseHandler):
         # import a CSV list of persons
         event_handler = EventsHandler(self.application, self.request)
         event_handler.db = self.db
+        event_handler.logger = self.logger
         event_id = None
         try:
             event_id = self.get_body_argument('targetEvent')
@@ -960,16 +963,24 @@ class EbCSVImportPersonsHandler(BaseHandler):
         if event_id is None:
             return self.build_error('invalid event')
         reply = dict(total=0, valid=0, merged=0, new_in_event=0)
+        event_details = event_handler.db.query('events', {'_id': event_id})
+        if not event_details:
+            return self.build_error('invalid event')
+        all_emails = set([x.get('email') for x in (event_details[0].get('tickets') or []) if x.get('email')])
         for fieldname, contents in self.request.files.iteritems():
             for content in contents:
                 filename = content['filename']
                 parseStats, persons = utils.csvParse(content['body'], remap=self.csvRemap)
                 reply['total'] += parseStats['total']
-                reply['valid'] += parseStats['valid']
                 for person in persons:
+                    if not person:
+                        continue
+                    reply['valid'] += 1
                     person['attended'] = False
                     person['from_file'] = filename
-                    event_handler.handle_post_persons(event_id, None, person)
+                    if 'email' in person and person['email'] in all_emails:
+                        continue
+                    event_handler.handle_post_tickets(event_id, None, person)
                     reply['new_in_event'] += 1
         self.write(reply)
 
