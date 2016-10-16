@@ -29,7 +29,7 @@
                     <td class="text-right">{{$index+1}}</td>
                     <td>
                         <span><strong><a ui-sref="event.ticket.edit({id: ticket.event_id, ticket_id: ticket._id})"><span>{{ticket.name}}</span>&nbsp;<span>{{ticket.surname}}</span></a></strong></span><span ng-if="ticket.email">&nbsp;&lt;{{ticket.email}}&gt;</span>
-                        <p ng-if="ticket.company || ticket.job_title"><i ng-if="ticket.job_title">{{ticket.job_title}}</i><span ng-if="ticket.company && ticket.job_title">&nbsp;@&nbsp;</span><i ng-if="ticket.company">{{ticket.company}}</i></p>
+                        <p ng-if="ticket.company || ticket['job title']"><i ng-if="ticket['job title']">{{ticket['job title']}}</i><span ng-if="ticket.company && ticket['job title']">&nbsp;@&nbsp;</span><i ng-if="ticket.company">{{ticket.company}}</i></p>
                     </td>
                     <td class="text-center">
                         <a ui-sref="event.view({id: ticket.event_id})">{{ticket.event_title}}</a>

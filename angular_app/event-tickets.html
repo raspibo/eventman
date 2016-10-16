@@ -52,7 +52,7 @@
                                             </strong>
                                         </span>
                                         <span ng-if="ticket.email">&nbsp;&lt;{{ticket.email}}&gt;</span><span ng-if="ticket.cancelled">&nbsp;({{'cancelled' | translate}})</span>
-                                        <p ng-if="ticket.company || ticket.job_title"><i ng-if="ticket.job_title">{{ticket.job_title}}</i><span ng-if="ticket.company && ticket.job_title">&nbsp;@&nbsp;</span><i ng-if="ticket.company">{{ticket.company}}</i></p>
+                                        <p ng-if="ticket.company || ticket['job title']"><i ng-if="ticket['job title']">{{ticket['job title']}}</i><span ng-if="ticket.company && ticket['job title']">&nbsp;@&nbsp;</span><i ng-if="ticket.company">{{ticket.company}}</i></p>
                                     </td>
                                     <td class="text-center">
                                         <button class="btn btn-link" reset-focus name="switch-attended" ng-click="setTicketAttributeAndRefocus(ticket, 'attended', !ticket.attended)"><span class="fa {{(ticket.attended) && 'fa-check-circle text-success' || 'fa-times-circle text-danger'}}"></span></button>
