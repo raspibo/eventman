@@ -22,7 +22,7 @@
                 <input type="submit" value="{{'Import' | translate}}" ng-click="upload(file, '/ebcsvpersons')" />
 
                 <div class="form-group top5">
-                    Result: total: <span>{{reply.total}}</span> valid: <span>{{reply.valid}}</span> merged: <span>{{reply.merged}}</span> new: <span>{{reply.valid - reply.merged}}</span>
+                    Result: total: <span>{{reply.total}}</span> valid: <span>{{reply.valid}}</span> new: <span>{{reply.new_in_event}}</span>
                 </div>
             </form>
         </div>
