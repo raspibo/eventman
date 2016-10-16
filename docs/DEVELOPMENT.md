@@ -154,7 +154,7 @@ Main field:
   - tickets.$.surname
   - tickets.$.email
   - tickets.$.company
-  - tickets.$.job
+  - tickets.$['job title']
   - tickets.$.ebqrcode
   - tickets.$.seq
   - tickets.$.seq\_hex
