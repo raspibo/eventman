@@ -966,7 +966,10 @@ class EbCSVImportPersonsHandler(BaseHandler):
         event_details = event_handler.db.query('events', {'_id': event_id})
         if not event_details:
             return self.build_error('invalid event')
-        all_emails = set([x.get('email') for x in (event_details[0].get('tickets') or []) if x.get('email')])
+        all_emails = set()
+        #[x.get('email') for x in (event_details[0].get('tickets') or []) if x.get('email')])
+        for ticket in (event_details[0].get('tickets') or []):
+            all_emails.add('%s_%s_%s' % (ticket.get('name'), ticket.get('surname'), ticket.get('email')))
         for fieldname, contents in self.request.files.iteritems():
             for content in contents:
                 filename = content['filename']
@@ -978,8 +981,10 @@ class EbCSVImportPersonsHandler(BaseHandler):
                     reply['valid'] += 1
                     person['attended'] = False
                     person['from_file'] = filename
-                    if 'email' in person and person['email'] in all_emails:
+                    duplicate_check = '%s_%s_%s' % (person.get('name'), person.get('surname'), person.get('email'))
+                    if duplicate_check in all_emails:
                         continue
+                    all_emails.add(duplicate_check)
                     event_handler.handle_post_tickets(event_id, None, person)
                     reply['new_in_event'] += 1
         self.write(reply)
