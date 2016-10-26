@@ -1022,11 +1022,14 @@ class WebSocketEventUpdatesHandler(tornado.websocket.WebSocketHandler):
         return url
 
     def open(self, event_id, *args, **kwargs):
-        self.uuid = self.get_argument('uuid')
+        try:
+            self.uuid = self.get_argument('uuid')
+        except:
+            self.uuid = None
         url = self._clean_url(self.request.uri)
         logging.debug('WebSocketEventUpdatesHandler.on_open event_id:%s url:%s' % (event_id, url))
         _ws_clients.setdefault(url, {})
-        if self.uuid not in _ws_clients[url]:
+        if self.uuid and self.uuid not in _ws_clients[url]:
             _ws_clients[url][self.uuid] = self
         logging.debug('WebSocketEventUpdatesHandler.on_open %s clients connected' % len(_ws_clients[url]))
 
