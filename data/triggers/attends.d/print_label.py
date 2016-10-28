@@ -36,11 +36,11 @@ REMOTES = {
         'workstation1': {
             #'host': '192.168.99.129',
             #'username': 'hackinbo',
-            'printer': 'DYMO-LabelWriter-450'
+            'printer': 'DYMO_LabelWriter_450'
         },
         'workstation2': {
             #'username': 'hackinbo',
-            'printer': 'hackinbo_2'
+            'printer': 'hackinbo_5'
         },
         'workstation3': {
             #'username': 'hackinbo',

