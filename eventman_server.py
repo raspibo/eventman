@@ -1179,7 +1179,7 @@ def run():
         ],
         template_path=os.path.join(os.path.dirname(__file__), "templates"),
         static_path=os.path.join(os.path.dirname(__file__), "static"),
-        cookie_secret='__COOKIE_SECRET__',
+        cookie_secret=cookie_secret,
         login_url='/login',
         debug=options.debug)
     http_server = tornado.httpserver.HTTPServer(application, ssl_options=ssl_options or None)
