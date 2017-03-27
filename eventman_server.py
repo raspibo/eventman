@@ -905,8 +905,12 @@ class UsersHandler(CollectionHandler):
                 raise InputException('not authorized to change password')
             data['password'] = utils.hash_password(new_pwd)
         if '_id' in data:
-            # Avoid overriding _id
             del data['_id']
+        if 'username' in data:
+            del data['username']
+        # for the moment, prevent the ability to update permissions via web
+        if 'permissions' in data:
+            del data['permissions']
         return data
 
     @gen.coroutine
