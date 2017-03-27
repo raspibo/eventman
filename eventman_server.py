@@ -181,13 +181,13 @@ class BaseHandler(tornado.web.RequestHandler):
         permissions = set([k for (k, v) in self.permissions.items() if v is True])
         user_info = {'permissions': permissions}
         if current_user:
-            user_info['username'] = current_user
-            res = self.db.query('users', {'username': current_user})
-            if res:
-                user = res[0]
+            user_info['_id'] = current_user
+            user = self.db.getOne('users', {'_id': current_user})
+            if user:
                 user_info = user
                 permissions.update(set(user.get('permissions') or []))
                 user_info['permissions'] = permissions
+                user_info['isRegistered'] = True
         self._users_cache[current_user] = user_info
         return user_info
 
@@ -756,7 +756,7 @@ class EventsHandler(CollectionHandler):
             ticket = self._get_ticket_data(ticket_id, doc.get('tickets') or [])
             env = dict(ticket)
             env.update({'PERSON_ID': ticket_id, 'TICKED_ID': ticket_id, 'EVENT_ID': id_,
-                'EVENT_TITLE': doc.get('title', ''), 'WEB_USER': self.current_user,
+                'EVENT_TITLE': doc.get('title', ''), 'WEB_USER': self.current_user_info.get('username', ''),
                 'WEB_REMOTE_IP': self.request.remote_ip})
             stdin_data = {'new': ticket,
                 'event': doc,
@@ -798,7 +798,7 @@ class EventsHandler(CollectionHandler):
         # always takes the ticket_id from the new ticket
         ticket_id = str(new_ticket_data.get('_id'))
         env.update({'PERSON_ID': ticket_id, 'TICKED_ID': ticket_id, 'EVENT_ID': id_,
-            'EVENT_TITLE': doc.get('title', ''), 'WEB_USER': self.current_user,
+            'EVENT_TITLE': doc.get('title', ''), 'WEB_USER': self.current_user_info.get('username', ''),
             'WEB_REMOTE_IP': self.request.remote_ip})
         stdin_data = {'old': old_ticket_data,
             'new': new_ticket_data,
@@ -831,7 +831,7 @@ class EventsHandler(CollectionHandler):
             self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(ret))
             env = dict(ticket)
             env.update({'PERSON_ID': ticket_id, 'TICKED_ID': ticket_id, 'EVENT_ID': id_,
-                'EVENT_TITLE': rdoc.get('title', ''), 'WEB_USER': self.current_user,
+                'EVENT_TITLE': rdoc.get('title', ''), 'WEB_USER': self.current_user_info.get('username', ''),
                 'WEB_REMOTE_IP': self.request.remote_ip})
             stdin_data = {'old': ticket,
                 'event': rdoc,
@@ -876,7 +876,7 @@ class UsersHandler(CollectionHandler):
     @authenticated
     def get(self, id_=None, resource=None, resource_id=None, acl=True, **kwargs):
         if id_ is not None:
-            if (self.has_permission('user|read') or str(self.current_user_info.get('_id')) == id_):
+            if (self.has_permission('user|read') or self.current_user == id_):
                 acl = False
         super(UsersHandler, self).get(id_, resource, resource_id, acl=acl, **kwargs)
 
@@ -900,7 +900,8 @@ class UsersHandler(CollectionHandler):
         if new_pwd is not None:
             del data['new_password']
             authorized, user = self.user_authorized(data['username'], old_pwd)
-            if not (self.has_permission('user|update') or (authorized and self.current_user == data['username'])):
+            if not (self.has_permission('user|update') or (authorized and
+                                                           self.current_user_info.get('username') == data['username'])):
                 raise InputException('not authorized to change password')
             data['password'] = utils.hash_password(new_pwd)
         if '_id' in data:
@@ -913,7 +914,7 @@ class UsersHandler(CollectionHandler):
     def put(self, id_=None, resource=None, resource_id=None, **kwargs):
         if id_ is None:
             return self.build_error(status=404, message='unable to access the resource')
-        if not (self.has_permission('user|update') or str(self.current_user_info.get('_id')) == id_):
+        if not (self.has_permission('user|update') or self.current_user == id_):
             return self.build_error(status=401, message='insufficient permissions: user|update or current user')
         super(UsersHandler, self).put(id_, resource, resource_id, **kwargs)
 
@@ -1083,10 +1084,11 @@ class LoginHandler(RootHandler):
             self.write({'error': True, 'message': 'missing username or password'})
             return
         authorized, user = self.user_authorized(username, password)
-        if authorized and user.get('username'):
+        if authorized and 'username' in user and '_id' in user:
+            id_ = str(user['_id'])
             username = user['username']
-            logging.info('successful login for user %s' % username)
-            self.set_secure_cookie("user", username)
+            logging.info('successful login for user %s (id: %s)' % (username, id_))
+            self.set_secure_cookie("user", id_)
             self.write({'error': False, 'message': 'successful login'})
             return
         logging.info('login failed for user %s' % username)
