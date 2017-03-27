@@ -22,7 +22,7 @@ import string
 import random
 import hashlib
 import datetime
-import StringIO
+import io
 from bson.objectid import ObjectId
 
 
@@ -39,7 +39,9 @@ def csvParse(csvStr, remap=None, merge=None):
     :returns: tuple with a dict of total and valid lines and the data
     :rtype: tuple
     """
-    fd = StringIO.StringIO(csvStr)
+    if isinstance(csvStr, bytes):
+        csvStr = csvStr.decode('utf-8')
+    fd = io.StringIO(csvStr)
     reader = csv.reader(fd)
     remap = remap or {}
     merge = merge or {}
@@ -47,7 +49,7 @@ def csvParse(csvStr, remap=None, merge=None):
     reply = dict(total=0, valid=0)
     results = []
     try:
-        headers = reader.next()
+        headers = next(reader)
         fields = len(headers)
     except (StopIteration, csv.Error):
         return reply, {}
@@ -63,8 +65,7 @@ def csvParse(csvStr, remap=None, merge=None):
                 reply['total'] += 1
                 if len(row) != fields:
                     continue
-                row = [unicode(cell, 'utf-8', 'replace') for cell in row]
-                values = dict(map(None, headers, row))
+                values = dict(zip(headers, row))
                 values.update(merge)
                 results.append(values)
                 reply['valid'] += 1
@@ -88,19 +89,25 @@ def hash_password(password, salt=None):
     :rtype: str"""
     if salt is None:
         salt_pool = string.ascii_letters + string.digits
-        salt = ''.join(random.choice(salt_pool) for x in xrange(32))
-    hash_ = hashlib.sha512('%s%s' % (salt, password))
+        salt = ''.join(random.choice(salt_pool) for x in range(32))
+    pwd = '%s%s' % (salt, password)
+    hash_ = hashlib.sha512(pwd.encode('utf-8'))
     return '$%s$%s' % (salt, hash_.hexdigest())
 
 
 class ImprovedEncoder(json.JSONEncoder):
     """Enhance the default JSON encoder to serialize datetime and ObjectId instances."""
     def default(self, o):
-        if isinstance(o, (datetime.datetime, datetime.date,
+        if isinstance(o, bytes):
+            try:
+                return o.decode('utf-8')
+            except:
+                pass
+        elif isinstance(o, (datetime.datetime, datetime.date,
                 datetime.time, datetime.timedelta, ObjectId)):
             try:
                 return str(o)
-            except Exception, e:
+            except Exception as e:
                 pass
         elif isinstance(o, set):
             return list(o)

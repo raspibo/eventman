@@ -1,9 +1,9 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """EventMan(ager)
 
 Your friendly manager of attendees at an event.
 
-Copyright 2015-2016 Davide Alberani <da@erlug.linux.it>
+Copyright 2015-2017 Davide Alberani <da@erlug.linux.it>
                     RaspiBO <info@raspibo.org>
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,7 +38,8 @@ import tornado.websocket
 from tornado import gen, escape, process
 
 import utils
-import backend
+import monco
+import collections
 
 ENCODING = 'utf-8'
 PROCESS_TIMEOUT = 60
@@ -102,8 +103,8 @@ class BaseHandler(tornado.web.RequestHandler):
     _users_cache = {}
 
     # A property to access the first value of each argument.
-    arguments = property(lambda self: dict([(k, v[0])
-        for k, v in self.request.arguments.iteritems()]))
+    arguments = property(lambda self: dict([(k, v[0].decode('utf-8'))
+        for k, v in self.request.arguments.items()]))
 
     # A property to access both the UUID and the clean arguments.
     @property
@@ -150,23 +151,26 @@ class BaseHandler(tornado.web.RequestHandler):
         """Convert some textual values to boolean."""
         if isinstance(obj, (list, tuple)):
             obj = obj[0]
-        if isinstance(obj, (str, unicode)):
+        if isinstance(obj, str):
             obj = obj.lower()
         return self._bool_convert.get(obj, obj)
 
     def arguments_tobool(self):
         """Return a dictionary of arguments, converted to booleans where possible."""
-        return dict([(k, self.tobool(v)) for k, v in self.arguments.iteritems()])
+        return dict([(k, self.tobool(v)) for k, v in self.arguments.items()])
 
     def initialize(self, **kwargs):
         """Add every passed (key, value) as attributes of the instance."""
-        for key, value in kwargs.iteritems():
+        for key, value in kwargs.items():
             setattr(self, key, value)
 
     @property
     def current_user(self):
         """Retrieve current user name from the secure cookie."""
-        return self.get_secure_cookie("user")
+        current_user = self.get_secure_cookie("user")
+        if isinstance(current_user, bytes):
+            current_user = current_user.decode('utf-8')
+        return current_user
 
     @property
     def current_user_info(self):
@@ -174,7 +178,7 @@ class BaseHandler(tornado.web.RequestHandler):
         current_user = self.current_user
         if current_user in self._users_cache:
             return self._users_cache[current_user]
-        permissions = set([k for (k, v) in self.permissions.iteritems() if v is True])
+        permissions = set([k for (k, v) in self.permissions.items() if v is True])
         user_info = {'permissions': permissions}
         if current_user:
             user_info['username'] = current_user
@@ -204,7 +208,7 @@ class BaseHandler(tornado.web.RequestHandler):
         collection_permission = self.permissions.get(permission)
         if isinstance(collection_permission, bool):
             return collection_permission
-        if callable(collection_permission):
+        if isinstance(collection_permission, collections.Callable):
             return collection_permission(permission)
         return False
 
@@ -305,7 +309,7 @@ class CollectionHandler(BaseHandler):
         :rtype: str"""
         t = str(time.time()).replace('.', '_')
         seq = str(self.get_next_seq(seq))
-        rand = ''.join([random.choice(self._id_chars) for x in xrange(random_alpha)])
+        rand = ''.join([random.choice(self._id_chars) for x in range(random_alpha)])
         return '-'.join((t, seq, rand))
 
     def _filter_results(self, results, params):
@@ -320,11 +324,11 @@ class CollectionHandler(BaseHandler):
         :rtype: list"""
         if not params:
             return results
-        params = backend.convert(params)
+        params = monco.convert(params)
         filtered = []
         for result in results:
             add = True
-            for key, value in params.iteritems():
+            for key, value in params.items():
                 if key not in result or result[key] != value:
                     add = False
                     break
@@ -338,8 +342,8 @@ class CollectionHandler(BaseHandler):
         :param data: dictionary to clean
         :type data: dict"""
         if isinstance(data, dict):
-            for key in data.keys():
-                if isinstance(key, (str, unicode)) and key.startswith('$'):
+            for key in list(data.keys()):
+                if isinstance(key, str) and key.startswith('$'):
                     del data[key]
         return data
 
@@ -349,7 +353,7 @@ class CollectionHandler(BaseHandler):
         :param data: dictionary to convert
         :type data: dict"""
         ret = {}
-        for key, value in data.iteritems():
+        for key, value in data.items():
             if isinstance(value, (list, tuple, dict)):
                 continue
             try:
@@ -357,7 +361,7 @@ class CollectionHandler(BaseHandler):
                 key = re_env_key.sub('', key)
                 if not key:
                     continue
-                ret[key] = unicode(value).encode(ENCODING)
+                ret[key] = str(value).encode(ENCODING)
             except:
                 continue
         return ret
@@ -382,7 +386,7 @@ class CollectionHandler(BaseHandler):
             if acl and not self.has_permission(permission):
                 return self.build_error(status=401, message='insufficient permissions: %s' % permission)
             handler = getattr(self, 'handle_get_%s' % resource, None)
-            if handler and callable(handler):
+            if handler and isinstance(handler, collections.Callable):
                 output = handler(id_, resource_id, **kwargs) or {}
                 output = self.apply_filter(output, 'get_%s' % resource)
                 self.write(output)
@@ -432,7 +436,7 @@ class CollectionHandler(BaseHandler):
                 return self.build_error(status=401, message='insufficient permissions: %s' % permission)
             # Handle access to sub-resources.
             handler = getattr(self, 'handle_%s_%s' % (method, resource), None)
-            if handler and callable(handler):
+            if handler and isinstance(handler, collections.Callable):
                 data = self.apply_filter(data, 'input_%s_%s' % (method, resource))
                 output = handler(id_, resource_id, data, **kwargs)
                 output = self.apply_filter(output, 'get_%s' % resource)
@@ -478,7 +482,7 @@ class CollectionHandler(BaseHandler):
             if not self.has_permission(permission):
                 return self.build_error(status=401, message='insufficient permissions: %s' % permission)
             method = getattr(self, 'handle_delete_%s' % resource, None)
-            if method and callable(method):
+            if method and isinstance(method, collections.Callable):
                 output = method(id_, resource_id, **kwargs)
                 env['RESOURCE'] = resource
                 if resource_id:
@@ -584,7 +588,7 @@ class CollectionHandler(BaseHandler):
             ws = yield tornado.websocket.websocket_connect(self.build_ws_url(path))
             ws.write_message(message)
             ws.close()
-        except Exception, e:
+        except Exception as e:
             self.logger.error('Error yielding WebSocket message: %s', e)
 
 
@@ -641,7 +645,7 @@ class EventsHandler(CollectionHandler):
         if group_id is None:
             return {'persons': persons}
         this_persons = [p for p in (this_event.get('tickets') or []) if not p.get('cancelled')]
-        this_emails = filter(None, [p.get('email') for p in this_persons])
+        this_emails = [_f for _f in [p.get('email') for p in this_persons] if _f]
         all_query = {'group_id': group_id}
         events = self.db.query('events', all_query)
         for event in events:
@@ -655,7 +659,7 @@ class EventsHandler(CollectionHandler):
         or which set of keys specified in a dictionary match their respective values."""
         for ticket in tickets:
             if isinstance(ticket_id_or_query, dict):
-                if all(ticket.get(k) == v for k, v in ticket_id_or_query.iteritems()):
+                if all(ticket.get(k) == v for k, v in ticket_id_or_query.items()):
                     return ticket
             else:
                 if str(ticket.get('_id')) == ticket_id_or_query:
@@ -765,7 +769,7 @@ class EventsHandler(CollectionHandler):
         # Update an existing entry for a ticket registered at this event.
         self._clean_dict(data)
         uuid, arguments = self.uuid_arguments
-        query = dict([('tickets.%s' % k, v) for k, v in arguments.iteritems()])
+        query = dict([('tickets.%s' % k, v) for k, v in arguments.items()])
         query['_id'] = id_
         if ticket_id is not None:
             query['tickets._id'] = ticket_id
@@ -970,7 +974,7 @@ class EbCSVImportPersonsHandler(BaseHandler):
         #[x.get('email') for x in (event_details[0].get('tickets') or []) if x.get('email')])
         for ticket in (event_details[0].get('tickets') or []):
             all_emails.add('%s_%s_%s' % (ticket.get('name'), ticket.get('surname'), ticket.get('email')))
-        for fieldname, contents in self.request.files.iteritems():
+        for fieldname, contents in self.request.files.items():
             for content in contents:
                 filename = content['filename']
                 parseStats, persons = utils.csvParse(content['body'], remap=self.csvRemap)
@@ -1038,7 +1042,7 @@ class WebSocketEventUpdatesHandler(tornado.websocket.WebSocketHandler):
         logging.debug('WebSocketEventUpdatesHandler.on_message url:%s' % url)
         count = 0
         _to_delete = set()
-        for uuid, client in _ws_clients.get(url, {}).iteritems():
+        for uuid, client in _ws_clients.get(url, {}).items():
             try:
                 client.write_message(message)
             except:
@@ -1132,7 +1136,7 @@ def run():
         ssl_options = dict(certfile=options.ssl_cert, keyfile=options.ssl_key)
 
     # database backend connector
-    db_connector = backend.EventManDB(url=options.mongo_url, dbName=options.db_name)
+    db_connector = monco.Monco(url=options.mongo_url, dbName=options.db_name)
     init_params = dict(db=db_connector, data_dir=options.data_dir, listen_port=options.port,
             authentication=options.authentication, logger=logger, ssl_options=ssl_options)
 

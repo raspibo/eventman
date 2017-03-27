@@ -1,8 +1,8 @@
-"""EventMan(ager) database backend
+"""Monco: a MongoDB database backend
 
-Classes and functions used to manage events and attendees database.
+Classes and functions used to issue queries to a MongoDB database.
 
-Copyright 2015-2016 Davide Alberani <da@erlug.linux.it>
+Copyright 2016-2017 Davide Alberani <da@erlug.linux.it>
                     RaspiBO <info@raspibo.org>
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +23,7 @@ from bson.objectid import ObjectId
 re_objectid = re.compile(r'[0-9a-f]{24}')
 
 _force_conversion = {
+    '_id': ObjectId,
     'seq_hex': str,
     'tickets.seq_hex': str
 }
@@ -40,7 +41,8 @@ def convert_obj(obj):
     if isinstance(obj, bool):
         return obj
     try:
-        return ObjectId(obj)
+        if re_objectid.match(obj):
+            return ObjectId(obj)
     except:
         pass
     return obj
@@ -56,9 +58,12 @@ def convert(seq):
     """
     if isinstance(seq, dict):
         d = {}
-        for key, item in seq.iteritems():
+        for key, item in seq.items():
             if key in _force_conversion:
-                d[key] = _force_conversion[key](item)
+                try:
+                    d[key] = _force_conversion[key](item)
+                except:
+                    d[key] = item
             else:
                 d[key] = convert(item)
         return d
@@ -67,23 +72,35 @@ def convert(seq):
     return convert_obj(seq)
 
 
-class EventManDB(object):
+class MoncoError(Exception):
+    """Base class for Monco exceptions."""
+    pass
+
+
+class MoncoConnectionError(MoncoError):
+    """Monco exceptions raise when a connection problem occurs."""
+    pass
+
+
+class Monco(object):
     """MongoDB connector."""
     db = None
     connection = None
 
     # map operations on lists of items.
     _operations = {
-            'update': '$set',
-            'append': '$push',
-            'appendUnique': '$addToSet',
-            'delete': '$pull',
-            'increment': '$inc'
+        'update': '$set',
+        'append': '$push',
+        'appendUnique': '$addToSet',
+        'delete': '$pull',
+        'increment': '$inc'
     }
 
-    def __init__(self, url=None, dbName='eventman'):
+    def __init__(self, dbName, url=None):
         """Initialize the instance, connecting to the database.
 
+        :param dbName: name of the database
+        :type dbName: str (or None to use the dbName passed at initialization)
         :param url: URL of the database
         :type url: str (or None to connect to localhost)
         """
@@ -91,9 +108,11 @@ class EventManDB(object):
         self._dbName = dbName
         self.connect(url)
 
-    def connect(self, url=None, dbName=None):
+    def connect(self, dbName=None, url=None):
         """Connect to the database.
 
+        :param dbName: name of the database
+        :type dbName: str (or None to use the dbName passed at initialization)
         :param url: URL of the database
         :type url: str (or None to connect to localhost)
 
@@ -106,9 +125,25 @@ class EventManDB(object):
             self._url = url
         if dbName:
             self._dbName = dbName
+        if not self._dbName:
+            raise MoncoConnectionError('no database name specified')
         self.connection = pymongo.MongoClient(self._url)
         self.db = self.connection[self._dbName]
         return self.db
+
+    def getOne(self, collection, query=None):
+        """Get a single document with the specified `query`.
+
+        :param collection: search the document in this collection
+        :type collection: str
+        :param query: query to filter the documents
+        :type query: dict or None
+
+        :returns: the first document matching the query
+        :rtype: dict
+        """
+        results = self.query(collection, convert(query))
+        return results and results[0] or {}
 
     def get(self, collection, _id):
         """Get a single document with the specified `_id`.
@@ -121,8 +156,7 @@ class EventManDB(object):
         :returns: the document with the given `_id`
         :rtype: dict
         """
-        results = self.query(collection, convert({'_id': _id}))
-        return results and results[0] or {}
+        return self.getOne(collection, {'_id': _id})
 
     def query(self, collection, query=None, condition='or'):
         """Get multiple documents matching a query.
@@ -130,7 +164,7 @@ class EventManDB(object):
         :param collection: search for documents in this collection
         :type collection: str
         :param query: search for documents with those attributes
-        :type query: dict or None
+        :type query: dict, list or None
 
         :returns: list of matching documents
         :rtype: list
@@ -222,13 +256,37 @@ class EventManDB(object):
         operator = self._operations.get(operation)
         if updateList:
             newData = {}
-            for key, value in data.iteritems():
+            for key, value in data.items():
                 newData['%s.$.%s' % (updateList, key)] = value
             data = newData
         res = db[collection].find_and_modify(query=_id_or_query,
                 update={operator: data}, full_response=True, new=True, upsert=create)
         lastErrorObject = res.get('lastErrorObject') or {}
         return lastErrorObject.get('updatedExisting', False), res.get('value') or {}
+
+    def updateMany(self, collection, query, data):
+        """Update multiple existing documents.
+
+        query can be an ID or a dict representing a query.
+
+        :param collection: update documents in this collection
+        :type collection: str
+        :param query: a query or a list of attributes in the data that must match
+        :type query: str or :class:`~bson.objectid.ObjectId` or iterable
+        :param data: the updated information to store
+        :type data: dict
+
+        :returns: a dict with the success state and number of updated items
+        :rtype: dict
+        """
+        db = self.connect()
+        data = convert(data or {})
+        query = convert(query)
+        if not isinstance(query, dict):
+            query = {'_id': query}
+        if '_id' in data:
+            del data['_id']
+        return db[collection].update(query, {'$set': data}, multi=True)
 
     def delete(self, collection, _id_or_query=None, force=False):
         """Remove one or more documents from a collection.
@@ -240,8 +298,8 @@ class EventManDB(object):
         :param force: force the deletion of all documents, when `_id_or_query` is empty
         :type force: bool
 
-        :returns: how many documents were removed
-        :rtype: int
+        :returns: dictionary with the number or removed documents
+        :rtype: dict
         """
         if not _id_or_query and not force:
             return
@@ -250,4 +308,3 @@ class EventManDB(object):
             _id_or_query = {'_id': _id_or_query}
         _id_or_query = convert(_id_or_query)
         return db[collection].remove(_id_or_query)
-
