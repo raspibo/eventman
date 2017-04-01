@@ -248,6 +248,12 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                         }
 
                         if (data.action == 'update' && ticket_idx != -1 && $scope.event.tickets[ticket_idx] != data.ticket) {
+                            // if we're updating the 'attended' key and the action came from us (same user, possibly on
+                            // a different station), also show a message.
+                            if (data.ticket.attended != $scope.event.tickets[ticket_idx].attended &&
+                                    $scope.info.user.username == data.username) {
+                                $scope.showAttendedMessage(data.ticket, data.ticket.attended);
+                            }
                             $scope.event.tickets[ticket_idx] = data.ticket;
                         } else if (data.action == 'add' && ticket_idx == -1) {
                             $scope._localAddTicket(data.ticket);
@@ -406,18 +412,22 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                 }
 
                 if (key === 'attended' && !hideMessage) {
-                    var msg = {};
-                    var name = $scope.buildTicketLabel(data.ticket);
-
-                    if (value) {
-                        msg.message = name + ' successfully added to event ' + $scope.event.title;
-                    } else {
-                        msg.message = name + ' successfully removed from event ' + $scope.event.title;
-                        msg.isError = true;
-                    }
-                    $scope.showMessage(msg);
+                    $scope.showAttendedMessage(data.ticket, value);
                 }
             });
+        };
+
+        $scope.showAttendedMessage = function(ticket, attends) {
+            var msg = {};
+            var name = $scope.buildTicketLabel(ticket);
+
+            if (attends) {
+                msg.message = name + ' successfully added to event ' + $scope.event.title;
+            } else {
+                msg.message = name + ' successfully removed from event ' + $scope.event.title;
+                msg.isError = true;
+            }
+            $scope.showMessage(msg);
         };
 
         $scope.setTicketAttributeAndRefocus = function(ticket, key, value) {
@@ -649,7 +659,7 @@ eventManControllers.controller('UsersCtrl', ['$scope', '$rootScope', '$state', '
             User.login(loginData, function(data) {
                 if (!data.error) {
                     $rootScope.readInfo(function(info) {
-                        $log.debug('logged in user: ' + info.user.username);
+                        $log.debug('logged in user: ' + $scope.info.user.username);
                         $rootScope.clearError();
                         $state.go('events');
                     });

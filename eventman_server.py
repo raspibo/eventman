@@ -810,7 +810,8 @@ class EventsHandler(CollectionHandler):
             if new_ticket_data.get('attended'):
                 self.run_triggers('attends', stdin_data=stdin_data, env=env)
 
-        ret = {'action': 'update', '_id': ticket_id, 'ticket': new_ticket_data, 'uuid': uuid}
+        ret = {'action': 'update', '_id': ticket_id, 'ticket': new_ticket_data,
+               'uuid': uuid, 'username': self.current_user_info.get('username', '')}
         if old_ticket_data != new_ticket_data:
             self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(ret))
         return ret
