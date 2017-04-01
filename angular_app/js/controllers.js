@@ -166,13 +166,15 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
 );
 
 
-eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event', 'EventTicket', 'Setting', '$log', '$translate', '$rootScope', 'EventUpdates', '$uibModal',
-    function ($scope, $state, Event, EventTicket, Setting, $log, $translate, $rootScope, EventUpdates, $uibModal) {
+eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event', 'EventTicket', 'Setting', '$log', '$translate', '$rootScope', 'EventUpdates', '$uibModal', '$filter',
+    function ($scope, $state, Event, EventTicket, Setting, $log, $translate, $rootScope, EventUpdates, $uibModal, $filter) {
         $scope.ticketsOrder = ["name", "surname"];
         $scope.countAttendees = 0;
         $scope.message = {};
+        $scope.query = '';
         $scope.event = {};
         $scope.event.tickets = [];
+        $scope.shownItems = [];
         $scope.ticket = {}; // current ticket, for the event.ticket.* states
         $scope.tickets = []; // list of all tickets, for the 'tickets' state
         $scope.formSchema = {};
@@ -180,6 +182,29 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
         $scope.guiOptions = {dangerousActionsEnabled: false};
         $scope.customFields = Setting.query({setting: 'ticket_custom_field', in_event_details: true});
         $scope.registeredFilterOptions = {all: false};
+
+        $scope.currentPage = 1;
+        $scope.itemsPerPage = 20;
+        $scope.filteredLength = 0;
+        $scope.maxPaginationSize = 5;
+
+        $scope.filterTickets = function() {
+            var tickets = $scope.event.tickets || [];
+            tickets = $filter('splittedFilter')(tickets, $scope.query);
+            tickets = $filter('registeredFilter')(tickets, $scope.registeredFilterOptions);
+            tickets = $filter('orderBy')(tickets, $scope.ticketsOrder);
+            $scope.filteredLength = tickets.length;
+            tickets = $filter('pagination')(tickets, $scope.currentPage, $scope.itemsPerPage);
+            $scope.shownItems = tickets;
+        };
+
+        $scope.$watch('query', function() {
+            $scope.filterTickets();
+        });
+
+        $scope.$watch('currentPage + itemsPerPage', function() {
+            $scope.filterTickets();
+        });
 
         $scope.formFieldsMap = {};
         $scope.formFieldsMapRev = {};
@@ -190,6 +215,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                         return $scope.event.tickets;
                     }, function(new_collection, old_collection) {
                         $scope.calcAttendees();
+                        $scope.filterTickets();
                     }
                 );
 

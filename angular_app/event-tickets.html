@@ -43,7 +43,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr ng-repeat="ticket in (event.tickets || []) | splittedFilter:query | registeredFilter:registeredFilterOptions | orderBy:ticketsOrder">
+                                <tr ng-repeat="ticket in shownItems">
                                     <td class="text-right">{{$index+1}}</td>
                                     <td>
                                         <span>
@@ -71,6 +71,9 @@
                                 </tr>
                             </tbody>
                         </table>
+						<pagination ng-model="currentPage" total-items="filteredLength" items-per-page="itemsPerPage"
+                                    boundary-links="true" boundary-link-numbers="true" max-size="maxPaginationSize">
+                        </pagination>
                     </div>
                 </div>
             </div>
