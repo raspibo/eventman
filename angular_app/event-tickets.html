@@ -93,7 +93,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr ng-repeat="person in (query ? allPersons : []) | splittedFilter:query | personRegistered:{event: event, present: false} | limitTo:10>
+                                <tr ng-repeat="person in (query ? allPersons : []) | splittedFilter:query | personRegistered:{event: event, present: false} | limitTo:maxAllPersons">
                                     <td>
                                         <strong>{{person.name}} {{person.surname}}</strong>
                                         <br />

@@ -217,6 +217,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
         $scope.itemsPerPage = 10;
         $scope.filteredLength = 0;
         $scope.maxPaginationSize = 10;
+        $scope.maxAllPersons = 10;
 
         $scope.filterTickets = function() {
             var tickets = $scope.event.tickets || [];
@@ -235,7 +236,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
             $scope.filterTickets();
         });
 
-        $scope.$watch('registeredFilterOptions', function() {
+        $scope.$watchCollection('registeredFilterOptions', function() {
             $scope.filterTickets();
         });
 
