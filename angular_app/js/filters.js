@@ -68,6 +68,18 @@ eventManApp.filter('registeredFilter', ['$filter',
 );
 
 
+/* Filter that implements a generic pagination. */
+eventManApp.filter('pagination', ['$filter',
+    function($filter) {
+        return function(inputArray, page, itemsPerPage) {
+            var begin = (page - 1) * itemsPerPage;
+            var end = begin + itemsPerPage;
+            return inputArray.slice(begin, end);;
+        };
+    }]
+);
+
+
 /* Filter that returns only the attendees at an event. */
 eventManApp.filter('attendeesFilter', ['$filter',
     function($filter) {

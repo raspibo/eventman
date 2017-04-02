@@ -1,8 +1,6 @@
 Development
 ===========
 
-As of July 2016, EventMan(ager) is under heavy refactoring. For a list of main changes that will be introduced, see https://github.com/raspibo/eventman/issues
-
 Every contribution, in form of code or ideas, is welcome.
 
 
