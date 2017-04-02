@@ -88,9 +88,9 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$uibModal'
 
         $scope.shownItems = [];
         $scope.currentPage = 1;
-        $scope.itemsPerPage = 20;
+        $scope.itemsPerPage = 10;
         $scope.filteredLength = 0;
-        $scope.maxPaginationSize = 5;
+        $scope.maxPaginationSize = 10;
 
         $scope.filterTickets = function() {
             var tickets = $scope.tickets || [];
@@ -210,11 +210,13 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
         $scope.guiOptions = {dangerousActionsEnabled: false};
         $scope.customFields = Setting.query({setting: 'ticket_custom_field', in_event_details: true});
         $scope.registeredFilterOptions = {all: false};
+        $scope.formFieldsMap = {};
+        $scope.formFieldsMapRev = {};
 
         $scope.currentPage = 1;
-        $scope.itemsPerPage = 20;
+        $scope.itemsPerPage = 10;
         $scope.filteredLength = 0;
-        $scope.maxPaginationSize = 5;
+        $scope.maxPaginationSize = 10;
 
         $scope.filterTickets = function() {
             var tickets = $scope.event.tickets || [];
@@ -233,12 +235,13 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
             $scope.filterTickets();
         });
 
-        $scope.$watch('currentPage + itemsPerPage', function() {
+        $scope.$watch('registeredFilterOptions', function() {
             $scope.filterTickets();
         });
 
-        $scope.formFieldsMap = {};
-        $scope.formFieldsMapRev = {};
+        $scope.$watch('currentPage + itemsPerPage', function() {
+            $scope.filterTickets();
+        });
 
         if ($state.params.id) {
             $scope.event = Event.get({id: $state.params.id}, function(data) {
@@ -642,6 +645,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                 }
             );
             $scope.ticketsOrder = new_order;
+            $scope.filterTickets();
         };
 
         $scope.showMessage = function(cfg) {

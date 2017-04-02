@@ -16,7 +16,7 @@
             </form>
 
             <pagination ng-model="currentPage" total-items="filteredLength" items-per-page="itemsPerPage"
-                        boundary-links="true" boundary-link-numbers="true" max-size="maxPaginationSize">
+                        direction-links="false" boundary-links="true" boundary-link-numbers="true" max-size="maxPaginationSize">
             </pagination>
             <table class="table table-striped">
                 <thead>
@@ -44,7 +44,7 @@
                 </tbody>
             </table>
             <pagination ng-model="currentPage" total-items="filteredLength" items-per-page="itemsPerPage"
-                        boundary-links="true" boundary-link-numbers="true" max-size="maxPaginationSize">
+                        direction-links="false" boundary-links="true" boundary-link-numbers="true" max-size="maxPaginationSize">
             </pagination>
         </div>
     </div>

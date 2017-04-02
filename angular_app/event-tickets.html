@@ -31,7 +31,7 @@
                             </div>&nbsp;<label>&nbsp;<input type="checkbox" ng-model="registeredFilterOptions.all" /> {{'Show cancelled tickets' | translate}}</label>
                         </form>
 						<pagination ng-model="currentPage" total-items="filteredLength" items-per-page="itemsPerPage"
-                                    boundary-links="true" boundary-link-numbers="true" max-size="maxPaginationSize">
+                                    direction-links="false" boundary-links="true" boundary-link-numbers="true" max-size="maxPaginationSize">
                         </pagination>
                         <table class="table table-striped">
                             <thead>
@@ -75,7 +75,7 @@
                             </tbody>
                         </table>
 						<pagination ng-model="currentPage" total-items="filteredLength" items-per-page="itemsPerPage"
-                                    boundary-links="true" boundary-link-numbers="true" max-size="maxPaginationSize">
+                                    direction-links="false" boundary-links="true" boundary-link-numbers="true" max-size="maxPaginationSize">
                         </pagination>
                     </div>
                 </div>
@@ -93,7 +93,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr ng-repeat="person in (query ? allPersons : []) | splittedFilter:query | personRegistered:{event: event, present: false}">
+                                <tr ng-repeat="person in (query ? allPersons : []) | splittedFilter:query | personRegistered:{event: event, present: false} | limitTo:10>
                                     <td>
                                         <strong>{{person.name}} {{person.surname}}</strong>
                                         <br />
