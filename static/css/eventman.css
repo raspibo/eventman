@@ -95,3 +95,7 @@ input[type=text].form-control, input[type=search].form-control {
 .nowrap {
     white-space: nowrap;
 }
+
+.registered-counter {
+    margin-right: 5px;
+}
