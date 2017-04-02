@@ -30,9 +30,9 @@
                                 <input eventman-focus type="text" id="query-tickets" class="form-control" placeholder="{{'Name or email' | translate}}" ng-model="query" ng-model-options="{debounce: 350}">
                             </div>&nbsp;<label>&nbsp;<input type="checkbox" ng-model="registeredFilterOptions.all" /> {{'Show cancelled tickets' | translate}}</label>
                         </form>
-						<pagination ng-model="currentPage" total-items="filteredLength" items-per-page="itemsPerPage"
+						<uib-pagination ng-model="currentPage" total-items="filteredLength" items-per-page="itemsPerPage"
                                     direction-links="false" boundary-links="true" boundary-link-numbers="true" max-size="maxPaginationSize">
-                        </pagination>
+                        </uib-pagination>
                         <table class="table table-striped">
                             <thead>
                                 <tr>
@@ -74,9 +74,9 @@
                                 </tr>
                             </tbody>
                         </table>
-						<pagination ng-model="currentPage" total-items="filteredLength" items-per-page="itemsPerPage"
+						<uib-pagination ng-model="currentPage" total-items="filteredLength" items-per-page="itemsPerPage"
                                     direction-links="false" boundary-links="true" boundary-link-numbers="true" max-size="maxPaginationSize">
-                        </pagination>
+                        </uib-pagination>
                     </div>
                 </div>
             </div>
