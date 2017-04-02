@@ -68,6 +68,7 @@ eventManControllers.controller('ModalConfirmInstanceCtrl', ['$scope', '$uibModal
 
 eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$uibModal', '$log', '$translate', '$rootScope', '$state', '$filter',
     function ($scope, Event, $uibModal, $log, $translate, $rootScope, $state, $filter) {
+        $scope.query = '';
         $scope.tickets = [];
         $scope.events = Event.all(function(events) {
             if (events && $state.is('tickets')) {
@@ -93,14 +94,17 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$uibModal'
 
         $scope.filterTickets = function() {
             var tickets = $scope.tickets || [];
-            tickets = $filter('splittedFilter')(tickets, $scope['query-tickets']);
+            tickets = $filter('splittedFilter')(tickets, $scope.query);
             tickets = $filter('orderBy')(tickets, $scope.ticketsOrderProp);
             $scope.filteredLength = tickets.length;
             tickets = $filter('pagination')(tickets, $scope.currentPage, $scope.itemsPerPage);
             $scope.shownItems = tickets;
         };
 
-        $scope.$watch('query-tickets', function() {
+        $scope.$watch('query', function() {
+            if (!$scope.query) {
+                $scope.currentPage = 1;
+            }
             $scope.filterTickets();
         });
 
@@ -223,6 +227,9 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
         };
 
         $scope.$watch('query', function() {
+            if (!$scope.query) {
+                $scope.currentPage = 1;
+            }
             $scope.filterTickets();
         });
 
