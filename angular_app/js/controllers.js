@@ -66,8 +66,8 @@ eventManControllers.controller('ModalConfirmInstanceCtrl', ['$scope', '$uibModal
 );
 
 
-eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$uibModal', '$log', '$translate', '$rootScope', '$state',
-    function ($scope, Event, $uibModal, $log, $translate, $rootScope, $state) {
+eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$uibModal', '$log', '$translate', '$rootScope', '$state', '$filter',
+    function ($scope, Event, $uibModal, $log, $translate, $rootScope, $state, $filter) {
         $scope.tickets = [];
         $scope.events = Event.all(function(events) {
             if (events && $state.is('tickets')) {
@@ -79,10 +79,34 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$uibModal'
                     });
                     $scope.tickets.push.apply($scope.tickets, evt_tickets || []);
                 });
+                $scope.filterTickets();
             }
         });
         $scope.eventsOrderProp = "-begin_date";
         $scope.ticketsOrderProp = ["name", "surname"];
+
+        $scope.shownItems = [];
+        $scope.currentPage = 1;
+        $scope.itemsPerPage = 20;
+        $scope.filteredLength = 0;
+        $scope.maxPaginationSize = 5;
+
+        $scope.filterTickets = function() {
+            var tickets = $scope.tickets || [];
+            tickets = $filter('splittedFilter')(tickets, $scope['query-tickets']);
+            tickets = $filter('orderBy')(tickets, $scope.ticketsOrderProp);
+            $scope.filteredLength = tickets.length;
+            tickets = $filter('pagination')(tickets, $scope.currentPage, $scope.itemsPerPage);
+            $scope.shownItems = tickets;
+        };
+
+        $scope.$watch('query-tickets', function() {
+            $scope.filterTickets();
+        });
+
+        $scope.$watch('currentPage + itemsPerPage', function() {
+            $scope.filterTickets();
+        });
 
         $scope.confirm_delete = 'Do you really want to delete this event?';
         $rootScope.$on('$translateChangeSuccess', function () {
@@ -123,8 +147,8 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$uibModal'
                 }
             );
             $scope.ticketsOrderProp = new_order;
+            $scope.filterTickets();
         };
-
     }]
 );
 
