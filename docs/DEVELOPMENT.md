@@ -222,6 +222,11 @@ Yes, exactly. I'm too old for that stuff: I just downloaded the third-party libr
 
 I you're a big fan of those tools, please go ahead and send me a pull request.
 
+i18n
+----
+
+In the angular\_app/ directory there is a Gruntfile.js; run grunt here to update the files in static/i18n/; right now to set a language you have to edit angular\_app/js/i18n.js
+
 Coding style and conventions
 ----------------------------
 
