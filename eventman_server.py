@@ -191,6 +191,23 @@ class BaseHandler(tornado.web.RequestHandler):
         self._users_cache[current_user] = user_info
         return user_info
 
+    def add_access_info(self, doc):
+        """Add created/updated by/at to a document (modified in place and returned).
+
+        :param doc: the doc to be updated
+        :type doc: dict
+        :returns: the updated document
+        :rtype: dict"""
+        user_id = self.current_user
+        now = datetime.datetime.utcnow()
+        if 'created_by' not in doc:
+            doc['created_by'] = user_id
+        if 'created_at' not in doc:
+            doc['created_at'] = now
+        doc['updated_by'] = user_id
+        doc['updated_at'] = now
+        return doc
+
     def has_permission(self, permission):
         """Check permissions of the current user.
 
@@ -343,7 +360,8 @@ class CollectionHandler(BaseHandler):
         :type data: dict"""
         if isinstance(data, dict):
             for key in list(data.keys()):
-                if isinstance(key, str) and key.startswith('$'):
+                if (isinstance(key, str) and key.startswith('$')) or key in ('_id', 'created_by', 'created_at',
+                                                                    'updated_by', 'updated_at', 'isRegistered'):
                     del data[key]
         return data
 
@@ -419,17 +437,12 @@ class CollectionHandler(BaseHandler):
         self._clean_dict(data)
         method = self.request.method.lower()
         crud_method = 'create' if method == 'post' else 'update'
-        now = datetime.datetime.now()
         user_info = self.current_user_info
         user_id = user_info.get('_id')
         env = {}
         if id_ is not None:
             env['%s_ID' % self.document.upper()] = id_
-        if crud_method == 'create':
-            data['created_by'] = user_id
-            data['created_at'] = now
-        data['updated_by'] = user_id
-        data['updated_at'] = now
+        self.add_access_info(data)
         if resource:
             permission = '%s:%s%s|%s' % (self.document, resource, '-all' if resource_id is None else '', crud_method)
             if not self.has_permission(permission):
@@ -633,6 +646,7 @@ class EventsHandler(CollectionHandler):
         if not self.has_permission('event|update'):
             if 'attended' in data:
                 del data['attended']
+        self.add_access_info(data)
         return data
 
     filter_input_put_tickets = filter_input_post_tickets
@@ -745,6 +759,7 @@ class EventsHandler(CollectionHandler):
         data['seq'] = self.get_next_seq('event_%s_tickets' % id_)
         data['seq_hex'] = '%06X' % data['seq']
         data['_id'] = ticket_id = self.gen_id()
+        self.add_access_info(data)
         ret = {'action': 'add', 'ticket': data, 'uuid': uuid}
         merged, doc = self.db.update('events',
                 {'_id': id_},
@@ -790,6 +805,7 @@ class EventsHandler(CollectionHandler):
         if 'number_of_tickets' in current_event and old_ticket_data.get('cancelled') and not data.get('cancelled'):
             self._check_number_of_tickets(current_event)
 
+        self.add_access_info(data)
         merged, doc = self.db.update('events', query,
                 data, updateList='tickets', create=False)
         new_ticket_data = self._get_ticket_data(ticket_query,
@@ -909,9 +925,18 @@ class UsersHandler(CollectionHandler):
             del data['_id']
         if 'username' in data:
             del data['username']
-        # for the moment, prevent the ability to update permissions via web
-        if 'permissions' in data:
-            del data['permissions']
+        if not self.has_permission('admin|all'):
+            if 'permissions' in data:
+                del data['permissions']
+        else:
+            if 'isAdmin' in data:
+                if not 'permissions' in data:
+                    data['permissions'] = []
+                if 'admin|all' in data['permissions'] and not data['isAdmin']:
+                    data['permissions'].remove('admin|all')
+                elif 'admin|all' not in data['permissions'] and data['isAdmin']:
+                    data['permissions'].append('admin|all')
+                del data['isAdmin']
         return data
 
     @gen.coroutine
@@ -991,6 +1016,7 @@ class EbCSVImportPersonsHandler(BaseHandler):
                     reply['valid'] += 1
                     person['attended'] = False
                     person['from_file'] = filename
+                    self.add_access_info(person)
                     duplicate_check = '%s_%s_%s' % (person.get('name'), person.get('surname'), person.get('email'))
                     if duplicate_check in all_emails:
                         continue
@@ -1197,7 +1223,7 @@ def run():
     ws_application = tornado.web.Application([_ws_handler], debug=options.debug)
     ws_http_server = tornado.httpserver.HTTPServer(ws_application)
     ws_http_server.listen(options.port+1, address='127.0.0.1')
-    logger.debug('Starting WebSocket on %s://127.0.0.1:%d', 'wss' if ssl_options else 'ws', options.port+1)
+    logger.debug('Starting WebSocket on ws://127.0.0.1:%d', options.port+1)
     tornado.ioloop.IOLoop.instance().start()
 
 
