@@ -20,6 +20,11 @@
                     <span class="input-group-addon min150">{{'New password' | translate}}</span>
                     <input type="password" id="new-password" name="new-password" ng-model="updateUserInfo.new_password" class="form-control">
                 </div>
+                <div class="checkbox">
+                    <label>
+                        <input type="checkbox" ng-model="updateUserInfo.isAdmin"> Check me out
+                    </label>
+                </div>
                 <button type="submit" ng-click="updateUser()" class="btn btn-success top10">{{'update' | translate}}</button>
             </form>
         </div>

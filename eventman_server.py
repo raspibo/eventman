@@ -909,9 +909,18 @@ class UsersHandler(CollectionHandler):
             del data['_id']
         if 'username' in data:
             del data['username']
-        # for the moment, prevent the ability to update permissions via web
-        if 'permissions' in data:
-            del data['permissions']
+        if not self.has_permission('admin|all'):
+            if 'permissions' in data:
+                del data['permissions']
+        else:
+            if 'isAdmin' in data:
+                if not 'permissions' in data:
+                    data['permissions'] = []
+                if 'admin|all' in data['permissions'] and not data['isAdmin']:
+                    data['permissions'].remove('admin|all')
+                elif 'admin|all' not in data['permissions'] and data['isAdmin']:
+                    data['permissions'].append('admin|all')
+                del data['isAdmin']
         return data
 
     @gen.coroutine
@@ -1197,7 +1206,7 @@ def run():
     ws_application = tornado.web.Application([_ws_handler], debug=options.debug)
     ws_http_server = tornado.httpserver.HTTPServer(ws_application)
     ws_http_server.listen(options.port+1, address='127.0.0.1')
-    logger.debug('Starting WebSocket on %s://127.0.0.1:%d', 'wss' if ssl_options else 'ws', options.port+1)
+    logger.debug('Starting WebSocket on ws://127.0.0.1:%d', options.port+1)
     tornado.ioloop.IOLoop.instance().start()
 
 

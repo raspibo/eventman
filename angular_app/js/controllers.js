@@ -687,6 +687,7 @@ eventManControllers.controller('UsersCtrl', ['$scope', '$rootScope', '$state', '
         if ($state.is('user.edit') && $state.params.id) {
             $scope.user = User.get({id: $state.params.id}, function() {
                 $scope.updateUserInfo = $scope.user;
+                $scope.updateUserInfo.isAdmin = $rootScope.hasPermission('admin|all', $scope.updateUserInfo);
             });
         }
 
