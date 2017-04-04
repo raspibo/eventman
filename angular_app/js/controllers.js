@@ -41,9 +41,7 @@ eventManControllers.controller('NavigationCtrl', ['$scope', '$rootScope', '$loca
 /* Controller for a group of date and time pickers. */
 eventManControllers.controller('DatetimePickerCtrl', ['$scope',
     function ($scope) {
-        $scope.open = function($event) {
-            $event.preventDefault();
-            $event.stopPropagation();
+        $scope.open = function() {
             $scope.opened = true;
         };
     }]
