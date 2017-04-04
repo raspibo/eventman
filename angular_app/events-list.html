@@ -50,7 +50,7 @@
                             <div ng-if="event.begin_date || event.end_date || event.where" class="top5">
                                 <div ng-if="event.where">{{event.where}}</div>
                                 <span ng-if="event.begin_date">{{'Begins:' | translate}} {{event.begin_date | date:'fullDate'}} {{event.begin_time | date:'HH:mm'}}<br/></span>
-                                <span ng-if="event.end_date">{{'Ends:' | translate}} {{event.end_date | date:'fullDate' }} {{event.end_time | date:'HH:mm'}}</span>
+                                <span ng-if="event.end_date">{{'Ends:' | translate}} {{event.end_date | date:'fullDate'}} {{event.end_time | date:'HH:mm'}}</span>
                             </div>
                         </td>
                         <td ng-if="hasPermission('event:tickets-all|read')" class="hcenter">

@@ -44,33 +44,33 @@
 
                     <div class="input-group top5 well form-horizontal" ng-controller="DatetimePickerCtrl">
                         <div class="form-group">
-                            <label for="begin-date" class="col-sm-6 control-label">{{'begin date:' | translate}}</label>
+                            <label for="begin-date" class="col-sm-3 control-label">{{'begin date:' | translate}}</label>
                             <div id="begin-date" class="input-group col-sm-6">
-                                <input type="text" class="form-control" datepicker-popup="dd-MMMM-yyyy" ng-model="event.begin_date" is-open="opened" />
+                                <input type="text" class="form-control" uib-datepicker-popup="dd-MMMM-yyyy" ng-model="event.begin_date" is-open="opened" />
                                 <span class="input-group-btn">
-                                    <button type="button" class="btn btn-default" ng-click="open($event)"><i class="fa fa-calendar"></i></button>
+                                    <button type="button" class="btn btn-default" ng-click="open()"><i class="fa fa-calendar"></i></button>
                                 </span>
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="begin-time" class="col-sm-6 control-label">{{'begin time:' | translate}}</label>
-                            <timepicker id="begin-time" class="input-group" ng-model="event.begin_time" show-meridian="false"></timepicker>
+                            <label for="begin-time" class="col-sm-3 control-label">{{'begin time:' | translate}}</label>
+                            <div uib-timepicker id="begin-time" class="input-group" ng-model="event.begin_time" show-meridian="false"></div>
                         </div>
                     </div>
 
                     <div class="input-group top5 well form-horizontal" ng-controller="DatetimePickerCtrl">
                         <div class="form-group">
-                            <label for="end-date" class="col-sm-6 control-label">{{'end date:' | translate}}</label>
+                            <label for="end-date" class="col-sm-3 control-label">{{'end date:' | translate}}</label>
                             <div id="end-date" class="input-group col-sm-6">
-                                <input type="text" class="form-control" datepicker-popup="dd-MMMM-yyyy" ng-model="event.end_date" is-open="opened" />
+                                <input type="text" class="form-control" uib-datepicker-popup="dd-MMMM-yyyy" ng-model="event.end_date" is-open="opened" />
                                 <span class="input-group-btn">
-                                    <button type="button" class="btn btn-default" ng-click="open($event)"><i class="fa fa-calendar"></i></button>
+                                    <button type="button" class="btn btn-default" ng-click="open()"><i class="fa fa-calendar"></i></button>
                                 </span>
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="end-time" class="col-sm-6 control-label">{{'end time:' | translate}}</label>
-                            <timepicker id="end-time" class="input-group" ng-model="event.end_time" show-meridian="false"></timepicker>
+                            <label for="end-time" class="col-sm-3 control-label">{{'end time:' | translate}}</label>
+                            <div uib-timepicker id="end-time" class="input-group" ng-model="event.end_time" show-meridian="false"></div>
                         </div>
                     </div>
 
@@ -85,7 +85,7 @@
 
                     <div class="panel panel-default table-striped top30">
                         <div class="panel-heading">
-                            <h3>{{'Ticket limits'}}</h3>
+                            <h3>{{'Ticket limits' | translate}}</h3>
                         </div>
                         <div class="panel-body">
                             <div class="input-group input-group top5">
@@ -97,15 +97,15 @@
                                 <div class="form-group">
                                     <label for="sales-begin-date" class="col-sm-6 control-label">{{'ticket sales begin date:' | translate}}</label>
                                     <div id="sales-begin-date" class="input-group col-sm-6">
-                                        <input type="text" class="form-control" datepicker-popup="dd-MMMM-yyyy" ng-model="event.ticket_sales_begin_date" is-open="opened" />
+                                        <input type="text" class="form-control" uib-datepicker-popup="dd-MMMM-yyyy" ng-model="event.ticket_sales_begin_date" is-open="opened" />
                                         <span class="input-group-btn">
-                                            <button type="button" class="btn btn-default" ng-click="open($event)"><i class="fa fa-calendar"></i></button>
+                                            <button type="button" class="btn btn-default" ng-click="open()"><i class="fa fa-calendar"></i></button>
                                         </span>
                                     </div>
                                 </div>
                                 <div class="form-group">
                                     <label for="sales-begin-time" class="col-sm-6 control-label">{{'ticket sales begin time:' | translate}}</label>
-                                    <timepicker id="sales-begin-time" class="input-group" ng-model="event.ticket_sales_begin_time" show-meridian="false"></timepicker>
+                                    <div uib-timepicker id="sales-begin-time" class="input-group" ng-model="event.ticket_sales_begin_time" show-meridian="false"></div>
                                 </div>
                             </div>
 
@@ -113,15 +113,15 @@
                                 <div class="form-group">
                                     <label for="sales-end-date" class="col-sm-6 control-label">{{'ticket sales end date:' | translate}}</label>
                                     <div id="sales-end-date" class="input-group col-sm-6">
-                                        <input type="text" class="form-control" datepicker-popup="dd-MMMM-yyyy" ng-model="event.ticket_sales_end_date" is-open="opened" />
+                                        <input type="text" class="form-control" uib-datepicker-popup="dd-MMMM-yyyy" ng-model="event.ticket_sales_end_date" is-open="opened" />
                                         <span class="input-group-btn">
-                                            <button type="button" class="btn btn-default" ng-click="open($event)"><i class="fa fa-calendar"></i></button>
+                                            <button type="button" class="btn btn-default" ng-click="open()"><i class="fa fa-calendar"></i></button>
                                         </span>
                                     </div>
                                 </div>
                                 <div class="form-group">
                                     <label for="sales-end-time" class="col-sm-6 control-label">{{'ticket sales end time:' | translate}}</label>
-                                    <timepicker id="sales-end-time" class="input-group" ng-model="event.ticket_sales_end_time" show-meridian="false"></timepicker>
+                                    <div uib-timepicker id="sales-end-time" class="input-group" ng-model="event.ticket_sales_end_time" show-meridian="false"></div>
                                 </div>
                             </div>
                         </div>
