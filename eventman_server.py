@@ -793,13 +793,17 @@ class EventsHandler(CollectionHandler):
         # Update an existing entry for a ticket registered at this event.
         self._clean_dict(data)
         uuid, arguments = self.uuid_arguments
+        _errorMessage = ''
+        if '_errorMessage' in arguments:
+            _errorMessage = arguments['_errorMessage']
+            del arguments['_errorMessage']
         query = dict([('tickets.%s' % k, v) for k, v in arguments.items()])
         query['_id'] = id_
         if ticket_id is not None:
             query['tickets._id'] = ticket_id
             ticket_query = {'_id': ticket_id}
         else:
-            ticket_query = self.arguments
+            ticket_query = arguments
         old_ticket_data = {}
         current_event = self.db.query(self.collection, query)
         if current_event:
@@ -811,15 +815,19 @@ class EventsHandler(CollectionHandler):
         matching_tickets = self._get_ticket_data(ticket_query, tickets, only_one=False)
         nr_matches = len(matching_tickets)
         if nr_matches > 1:
-            ret = {'error': True, 'message': 'more than one ticket matched', 'query': query,
+            ret = {'error': True, 'message': 'more than one ticket matched. %s' % _errorMessage, 'query': query,
                    'uuid': uuid, 'username': self.current_user_info.get('username', '')}
             self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(ret))
             self.set_status(400)
             return ret
-        elif nr_matches == 1:
-            old_ticket_data = matching_tickets[0]
+        elif nr_matches == 0:
+            ret = {'error': True, 'message': 'no ticket matched. %s' % _errorMessage, 'query': query,
+                   'uuid': uuid, 'username': self.current_user_info.get('username', '')}
+            self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(ret))
+            self.set_status(400)
+            return ret
         else:
-            old_ticket_data = {}
+            old_ticket_data = matching_tickets[0]
 
         # We have changed the "cancelled" status of a ticket to False; check if we still have a ticket available
         if 'number_of_tickets' in current_event and old_ticket_data.get('cancelled') and not data.get('cancelled'):

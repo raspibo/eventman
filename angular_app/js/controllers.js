@@ -293,7 +293,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                             return false;
                         }
                         if (data.error && data.message) {
-                            toaster.pop({type: 'error', title: 'Error', body: data.message, timeout: 5000});
+                            toaster.pop({type: 'error', title: 'Error', body: data.message, timeout: 0, showCloseButton: true});
                             return;
                         }
                         if (!$scope.event.tickets) {
@@ -508,6 +508,9 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                     ticket_id: ticket._id
                 }, function() {
                     $scope._localRemoveTicket(ticket);
+                    var msg = $scope.buildTicketLabel(ticket);
+                    msg += ' successfully removed from event ' + $scope.event.title;
+                    toaster.pop({type: 'error', title: msg});
             });
         };
 
@@ -545,7 +548,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                 $log.debug('addTicket');
                 $log.debug(ret_ticket);
                 $rootScope.$emit('event:ticket:new', ret_ticket, function() {
-                    $rootScope.$emit('event:ticket:set-attr', ret_ticket, 'attended', true, null, false);
+                    $rootScope.$emit('event:ticket:set-attr', ret_ticket, 'attended', true, null, true);
                 });
                 if (cb) {
                     cb(ticket);
@@ -558,6 +561,9 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                         // Close the Quick ticket modal.
                         $scope.$close();
                     }
+                    var msg = $scope.buildTicketLabel(ret_ticket);
+                    msg += ' successfully added to event ' + $scope.event.title;
+                    toaster.pop({type: 'success', title: msg});
                 }
             });
         };

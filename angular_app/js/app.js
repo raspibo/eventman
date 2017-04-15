@@ -17,6 +17,7 @@
 /* Register our fantastic app. */
 var eventManApp = angular.module('eventManApp', [
     'ngRoute',
+    'ngAnimate',
     'eventManServices',
     'eventManControllers',
     'ui.bootstrap',
