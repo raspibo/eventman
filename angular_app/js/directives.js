@@ -51,7 +51,12 @@ eventManApp.directive('eventmanMessage', ['$timeout',
                 cfg = cfg || {};
                 scope.dControl.isVisible = true;
                 scope.dControl.message = cfg.message;
+                scope.dControl.isSuccess = true;
                 scope.dControl.isError = cfg.isError;
+                scope.dControl.isWarning = cfg.isWarning;
+                if (cfg.isError || cfg.isWarning) {
+                    scope.dControl.isSuccess = false;
+                }
                 $timeout(function () {
                     scope.dControl.isVisible = false;
                 }, cfg.timeout || 4000);
@@ -63,7 +68,7 @@ eventManApp.directive('eventmanMessage', ['$timeout',
                 control: '='
             },
             link: link,
-            template: '<div ng-if="dControl.isVisible" ng-class="{\'eventman-message\': true, clearfix: true, \'alert\': true, \'alert-success\': !dControl.isError, \'alert-danger\': dControl.isError}">{{dControl.message}}</div>'
+            template: '<div ng-if="dControl.isVisible" ng-class="{\'eventman-message\': true, clearfix: true, \'alert\': true, \'alert-success\': dControl.isSuccess, \'alert-danger\': dControl.isError, \'alert-warning\': dControl.isWarning}">{{dControl.message}}</div>'
         };
     }]
 );

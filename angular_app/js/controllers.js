@@ -293,6 +293,10 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                             $log.debug('do not process our own message');
                             return false;
                         }
+                        if (data.error && data.message) {
+                            $scope.showMessage({message: data.message, isError: true});
+                            return;
+                        }
                         if (!$scope.event.tickets) {
                             $scope.event.tickets = [];
                         }
@@ -484,7 +488,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                 msg.message = name + ' successfully added to event ' + $scope.event.title;
             } else {
                 msg.message = name + ' successfully removed from event ' + $scope.event.title;
-                msg.isError = true;
+                msg.isWarning = true;
             }
             $scope.showMessage(msg);
         };
