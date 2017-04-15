@@ -110,6 +110,11 @@ The default administrator username and password are **admin** and **eventman**. 
 
 Users can register, but are not forced to do so: tickets can also be issued to unregistered persons. However, if you register, you'll be able to access the list of all of your tickets (otherwise, you have to save the tickets' link, if you want to edit them later).
 
+Tools
+=====
+
+In the 'tools' directory there are some useful tools, to handle check-in and extract data.
+
 
 License and copyright
 =====================
