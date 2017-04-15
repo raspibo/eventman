@@ -508,6 +508,9 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                     ticket_id: ticket._id
                 }, function() {
                     $scope._localRemoveTicket(ticket);
+                    var msg = $scope.buildTicketLabel(ticket);
+                    msg += ' successfully removed from event ' + $scope.event.title;
+                    toaster.pop({type: 'error', title: msg});
             });
         };
 
@@ -558,6 +561,9 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                         // Close the Quick ticket modal.
                         $scope.$close();
                     }
+                    var msg = $scope.buildTicketLabel(ret_ticket);
+                    msg += ' successfully added to event ' + $scope.event.title;
+                    toaster.pop({type: 'success', title: msg});
                 }
             });
         };
@@ -600,9 +606,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                     toaster.pop({type: 'info', title: 'ticket successfully updated'});
                 });
             } else {
-                $scope.addTicket($scope.ticket, function() {
-                    $scope.showAttendedMessage($scope.ticket, true);
-                });
+                $scope.addTicket($scope.ticket);
             }
         };
 

@@ -60,16 +60,20 @@ class Connector():
             sys.exit(1)
 
     def checkin(self, code):
+        msg = 'scanning code %s: ' % code
         limit_field = self.cfg['event'].getint('limit_field')
         if limit_field:
             code = code[:limit_field]
-        checkin_url = self.checkin_url + '?' + urllib.parse.urlencode({cfg['event']['field']: code})
-        params = dict(self.cfg['actions'])
-        req = self.session.put(checkin_url, json=params)
+        params = {cfg['event']['field']: code, '_errorMessage': 'code: %s' % code}
+        checkin_url = self.checkin_url + '?' + urllib.parse.urlencode(params)
+        json = dict(self.cfg['actions'])
+        req = self.session.put(checkin_url, json=json)
         try:
             req.raise_for_status()
+            msg += 'ok'
         except requests.exceptions.HTTPError as ex:
-            print('error: %s' % req.json().get('message'))
+            msg += 'error: %s' % req.json().get('message')
+        print(msg)
         req.connection.close()
 
 
@@ -81,7 +85,7 @@ def scan(port):
             ser = serial.Serial(port=port, timeout=1)
             break
         except serial.serialutil.SerialException as ex:
-            if retry >= 10:
+            if retry >= 20:
                 print('unable to connect: %s' % ex)
                 sys.exit(2)
         time.sleep(1)
@@ -101,7 +105,6 @@ if __name__ == '__main__':
     connector = Connector(cfg)
     try:
         for code in scan(port=cfg['connection']['port']):
-            print('received code %s' % code)
             connector.checkin(code)
     except KeyboardInterrupt:
         print('exiting...')

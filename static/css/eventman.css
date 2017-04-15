@@ -104,7 +104,10 @@ input[type=text].form-control, input[type=search].form-control {
     margin-bottom: 4px;
 }
 
-:not(.no-enter)#toast-container > div.ng-enter
-{
+:not(.no-enter)#toast-container > div.ng-enter {
     transition-duration: .1s;
+}
+
+:not(.no-leave)#toast-container > div.ng-leave {
+    transition-duration: .2s;
 }
