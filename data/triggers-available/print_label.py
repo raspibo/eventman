@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """print_label.py - print a label with the name, the company and SEQ_HEX (in a barcode) of an attendee
 
-Copyright 2015-2016 Emiliano Mattioli <oloturia AT gmail.com>
+Copyright 2015-2013 Emiliano Mattioli <oloturia AT gmail.com>
                     Davide Alberani <da@erlug.linux.it>
                     RaspiBO <info@raspibo.org>
 
@@ -33,8 +33,8 @@ def _get_resource(filename):
 
 def build_label(w, h, barcode_text, line1, line2, font_text=FONT_TEXT, font_barcode=FONT_BARCODE):
     barcode_text = "*" + barcode_text + "*"
-    line1 = unicode(line1, 'utf-8').encode(FONT_TEXT_ENCODING, 'ignore')
-    line2 = unicode(line2, 'utf-8').encode(FONT_TEXT_ENCODING, 'ignore')
+    line1 = str(line1, 'utf-8').encode(FONT_TEXT_ENCODING, 'ignore')
+    line2 = str(line2, 'utf-8').encode(FONT_TEXT_ENCODING, 'ignore')
     fontbar = ImageFont.truetype(_get_resource(font_barcode), 2000)
     fontname = ImageFont.truetype(_get_resource(font_text), 1100)
     fontjob = ImageFont.truetype(_get_resource(font_text), 780)
@@ -75,6 +75,6 @@ def run():
 if __name__ == '__main__':
     try:
         run()
-    except Exception, e:
+    except Exception as e:
         sys.stderr.write('print_label.  Exception raised: %s\n' % e)
 
