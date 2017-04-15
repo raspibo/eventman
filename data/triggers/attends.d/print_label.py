@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 """print_label.py - print a label with the name, the company and the person_id (in a barcode) of an attendee
 
-Copyright 2015 Emiliano Mattioli <oloturia AT gmail.com>
-               Davide Alberani <da@erlug.linux.it>
-               RaspiBO <info@raspibo.org>
+Copyright 2015-2017 Emiliano Mattioli <oloturia AT gmail.com>
+                    Davide Alberani <da@erlug.linux.it>
+                    RaspiBO <info@raspibo.org>
 
 Licensed under the Apache License 2.0
 """
@@ -31,34 +31,24 @@ PRINTER_NAME = 'hackinbo_1'
 # 'remote1' is the name used by that system to login on the web GUI.
 # '192.168.99.129' is the IP of the remote host. If not set, the origin of the request is used.
 # 'hackinbo' is the name of a local user allowed to print.
-# 'DYMO_LabelWriter_450' is the name of the printer on the remote system.
+# 'DYMO-LabelWriter-450' is the name of the printer on the remote system.
 REMOTES = {
-        'workstation1': {
-            #'host': '192.168.99.129',
-            #'username': 'hackinbo',
-            'printer': 'DYMO_LabelWriter_450'
-        },
-        'workstation2': {
-            #'username': 'hackinbo',
-            'printer': 'hackinbo_5'
-        },
-        'workstation3': {
-            #'username': 'hackinbo',
-            'printer': 'hackinbo_3'
-        },
-        'pistolaqr': {
-            #'username': 'hackinbo',
+        'qrcode1': {
             'printer': 'DYMO-LabelWriter-450'
         },
-        'workstation4': {
+        'qrcode2': {
+            'printer': 'DYMO-LabelWriter-450'
+        },
+        'remote1': {
+            #'host': '192.168.99.129',
             #'username': 'hackinbo',
-            'printer': 'hackinbo_4'
+            'printer': 'DYMO-LabelWriter-450'
         }
 }
 
 
 def debug(msg):
-    print '%s: %s' % (time.time(), msg)
+    print('%s: %s' % (time.time(), msg))
 
 
 def _get_resource(filename):
@@ -133,6 +123,6 @@ def run():
 if __name__ == '__main__':
     try:
         run()
-    except Exception, e:
+    except Exception as e:
         sys.stderr.write('print_label.  Exception raised: %s\n' % e)
 
