@@ -40,31 +40,3 @@ eventManApp.directive('resetFocus', function () {
     };
 });
 
-
-eventManApp.directive('eventmanMessage', ['$timeout',
-    function($timeout) {
-        function link(scope, element, attrs) {
-            scope.dControl = scope.control || {};
-            scope.dControl.isVisible = false;
-
-            scope.dControl.show = function(cfg) {
-                cfg = cfg || {};
-                scope.dControl.isVisible = true;
-                scope.dControl.message = cfg.message;
-                scope.dControl.isError = cfg.isError;
-                $timeout(function () {
-                    scope.dControl.isVisible = false;
-                }, cfg.timeout || 4000);
-            };
-        };
-
-        return {
-            scope: {
-                control: '='
-            },
-            link: link,
-            template: '<div ng-if="dControl.isVisible" ng-class="{\'eventman-message\': true, clearfix: true, \'alert\': true, \'alert-success\': !dControl.isError, \'alert-danger\': dControl.isError}">{{dControl.message}}</div>'
-        };
-    }]
-);
-

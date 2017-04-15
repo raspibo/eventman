@@ -1,6 +1,5 @@
 <!-- show details of an Event -->
 <div class="container">
-    <div eventman-message="eventman-message" control="message"></div>
     <div class="container">
         <div class="row">
             <div class="col-md-8">
@@ -19,7 +18,7 @@
                     <span>
                     <span class="label label-info vcenter pull-right">{{'Attendees:' | translate}} {{countAttendees}}</span>
                     &nbsp;
-                    <span class="label label-warning vcenter pull-right">{{'Registered:' | translate}} {{((event.tickets || []) | registeredFilter).length}}</span>
+                    <span class="label label-warning vcenter pull-right registered-counter">{{'Registered:' | translate}} {{((event.tickets || []) | registeredFilter).length}}</span>
                     </span>
                 </h1>
                     </div>
@@ -27,9 +26,12 @@
                         <form class="form-inline">
                             <div class="form-group">
                                 <label for="query-tickets">{{'Search:' | translate}}</label>
-                                <input eventman-focus type="text" id="query-tickets" class="form-control" placeholder="{{'Name or email' | translate}}" ng-model="query" ng-model-options="{debounce: 600}">
+                                <input eventman-focus type="text" id="query-tickets" class="form-control" placeholder="{{'Name or email' | translate}}" ng-model="query" ng-model-options="{debounce: 350}">
                             </div>&nbsp;<label>&nbsp;<input type="checkbox" ng-model="registeredFilterOptions.all" /> {{'Show cancelled tickets' | translate}}</label>
                         </form>
+						<uib-pagination ng-model="currentPage" total-items="filteredLength" items-per-page="itemsPerPage"
+                                    direction-links="false" boundary-links="true" boundary-link-numbers="true" max-size="maxPaginationSize">
+                        </uib-pagination>
                         <table class="table table-striped">
                             <thead>
                                 <tr>
@@ -43,7 +45,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr ng-repeat="ticket in (event.tickets || []) | splittedFilter:query | registeredFilter:registeredFilterOptions | orderBy:ticketsOrder">
+                                <tr ng-repeat="ticket in shownItems">
                                     <td class="text-right">{{$index+1}}</td>
                                     <td>
                                         <span>
@@ -71,6 +73,9 @@
                                 </tr>
                             </tbody>
                         </table>
+						<uib-pagination ng-model="currentPage" total-items="filteredLength" items-per-page="itemsPerPage"
+                                    direction-links="false" boundary-links="true" boundary-link-numbers="true" max-size="maxPaginationSize">
+                        </uib-pagination>
                     </div>
                 </div>
             </div>
@@ -87,7 +92,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr ng-repeat="person in allPersons | splittedFilter:query | personRegistered:{event: event, present: false}">
+                                <tr ng-repeat="person in (query ? allPersons : []) | splittedFilter:query | personRegistered:{event: event, present: false} | limitTo:maxAllPersons">
                                     <td>
                                         <strong>{{person.name}} {{person.surname}}</strong>
                                         <br />

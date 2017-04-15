@@ -41,9 +41,7 @@ eventManControllers.controller('NavigationCtrl', ['$scope', '$rootScope', '$loca
 /* Controller for a group of date and time pickers. */
 eventManControllers.controller('DatetimePickerCtrl', ['$scope',
     function ($scope) {
-        $scope.open = function($event) {
-            $event.preventDefault();
-            $event.stopPropagation();
+        $scope.open = function() {
             $scope.opened = true;
         };
     }]
@@ -66,8 +64,9 @@ eventManControllers.controller('ModalConfirmInstanceCtrl', ['$scope', '$uibModal
 );
 
 
-eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$uibModal', '$log', '$translate', '$rootScope', '$state',
-    function ($scope, Event, $uibModal, $log, $translate, $rootScope, $state) {
+eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$uibModal', '$log', '$translate', '$rootScope', '$state', '$filter',
+    function ($scope, Event, $uibModal, $log, $translate, $rootScope, $state, $filter) {
+        $scope.query = '';
         $scope.tickets = [];
         $scope.events = Event.all(function(events) {
             if (events && $state.is('tickets')) {
@@ -79,10 +78,37 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$uibModal'
                     });
                     $scope.tickets.push.apply($scope.tickets, evt_tickets || []);
                 });
+                $scope.filterTickets();
             }
         });
         $scope.eventsOrderProp = "-begin_date";
         $scope.ticketsOrderProp = ["name", "surname"];
+
+        $scope.shownItems = [];
+        $scope.currentPage = 1;
+        $scope.itemsPerPage = 10;
+        $scope.filteredLength = 0;
+        $scope.maxPaginationSize = 10;
+
+        $scope.filterTickets = function() {
+            var tickets = $scope.tickets || [];
+            tickets = $filter('splittedFilter')(tickets, $scope.query);
+            tickets = $filter('orderBy')(tickets, $scope.ticketsOrderProp);
+            $scope.filteredLength = tickets.length;
+            tickets = $filter('pagination')(tickets, $scope.currentPage, $scope.itemsPerPage);
+            $scope.shownItems = tickets;
+        };
+
+        $scope.$watch('query', function() {
+            if (!$scope.query) {
+                $scope.currentPage = 1;
+            }
+            $scope.filterTickets();
+        });
+
+        $scope.$watch('currentPage + itemsPerPage', function() {
+            $scope.filterTickets();
+        });
 
         $scope.confirm_delete = 'Do you really want to delete this event?';
         $rootScope.$on('$translateChangeSuccess', function () {
@@ -123,8 +149,8 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$uibModal'
                 }
             );
             $scope.ticketsOrderProp = new_order;
+            $scope.filterTickets();
         };
-
     }]
 );
 
@@ -166,13 +192,14 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
 );
 
 
-eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event', 'EventTicket', 'Setting', '$log', '$translate', '$rootScope', 'EventUpdates', '$uibModal',
-    function ($scope, $state, Event, EventTicket, Setting, $log, $translate, $rootScope, EventUpdates, $uibModal) {
+eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event', 'EventTicket', 'Setting', '$log', '$translate', '$rootScope', 'EventUpdates', '$uibModal', '$filter', 'toaster',
+    function ($scope, $state, Event, EventTicket, Setting, $log, $translate, $rootScope, EventUpdates, $uibModal, $filter, toaster) {
         $scope.ticketsOrder = ["name", "surname"];
         $scope.countAttendees = 0;
-        $scope.message = {};
+        $scope.query = '';
         $scope.event = {};
         $scope.event.tickets = [];
+        $scope.shownItems = [];
         $scope.ticket = {}; // current ticket, for the event.ticket.* states
         $scope.tickets = []; // list of all tickets, for the 'tickets' state
         $scope.formSchema = {};
@@ -180,9 +207,39 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
         $scope.guiOptions = {dangerousActionsEnabled: false};
         $scope.customFields = Setting.query({setting: 'ticket_custom_field', in_event_details: true});
         $scope.registeredFilterOptions = {all: false};
-
         $scope.formFieldsMap = {};
         $scope.formFieldsMapRev = {};
+
+        $scope.currentPage = 1;
+        $scope.itemsPerPage = 10;
+        $scope.filteredLength = 0;
+        $scope.maxPaginationSize = 10;
+        $scope.maxAllPersons = 10;
+
+        $scope.filterTickets = function() {
+            var tickets = $scope.event.tickets || [];
+            tickets = $filter('splittedFilter')(tickets, $scope.query);
+            tickets = $filter('registeredFilter')(tickets, $scope.registeredFilterOptions);
+            tickets = $filter('orderBy')(tickets, $scope.ticketsOrder);
+            $scope.filteredLength = tickets.length;
+            tickets = $filter('pagination')(tickets, $scope.currentPage, $scope.itemsPerPage);
+            $scope.shownItems = tickets;
+        };
+
+        $scope.$watch('query', function() {
+            if (!$scope.query) {
+                $scope.currentPage = 1;
+            }
+            $scope.filterTickets();
+        });
+
+        $scope.$watchCollection('registeredFilterOptions', function() {
+            $scope.filterTickets();
+        });
+
+        $scope.$watch('currentPage + itemsPerPage', function() {
+            $scope.filterTickets();
+        });
 
         if ($state.params.id) {
             $scope.event = Event.get({id: $state.params.id}, function(data) {
@@ -190,6 +247,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                         return $scope.event.tickets;
                     }, function(new_collection, old_collection) {
                         $scope.calcAttendees();
+                        $scope.filterTickets();
                     }
                 );
 
@@ -234,6 +292,10 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                             $log.debug('do not process our own message');
                             return false;
                         }
+                        if (data.error && data.message) {
+                            toaster.pop({type: 'error', title: 'Error', body: data.message, timeout: 0, showCloseButton: true});
+                            return;
+                        }
                         if (!$scope.event.tickets) {
                             $scope.event.tickets = [];
                         }
@@ -248,6 +310,12 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                         }
 
                         if (data.action == 'update' && ticket_idx != -1 && $scope.event.tickets[ticket_idx] != data.ticket) {
+                            // if we're updating the 'attended' key and the action came from us (same user, possibly on
+                            // a different station), also show a message.
+                            if (data.ticket.attended != $scope.event.tickets[ticket_idx].attended &&
+                                    $scope.info.user.username == data.username) {
+                                $scope.showAttendedMessage(data.ticket, data.ticket.attended);
+                            }
                             $scope.event.tickets[ticket_idx] = data.ticket;
                         } else if (data.action == 'add' && ticket_idx == -1) {
                             $scope._localAddTicket(data.ticket);
@@ -406,18 +474,23 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                 }
 
                 if (key === 'attended' && !hideMessage) {
-                    var msg = {};
-                    var name = $scope.buildTicketLabel(data.ticket);
-
-                    if (value) {
-                        msg.message = name + ' successfully added to event ' + $scope.event.title;
-                    } else {
-                        msg.message = name + ' successfully removed from event ' + $scope.event.title;
-                        msg.isError = true;
-                    }
-                    $scope.showMessage(msg);
+                    $scope.showAttendedMessage(data.ticket, value);
                 }
             });
+        };
+
+        $scope.showAttendedMessage = function(ticket, attends) {
+            var msg = {};
+            var msg_type = 'success';
+            var name = $scope.buildTicketLabel(ticket);
+
+            if (attends) {
+                msg.message = name + ' successfully added to event ' + $scope.event.title;
+            } else {
+                msg.message = name + ' successfully removed from event ' + $scope.event.title;
+                msg_type = 'warning';
+            }
+            toaster.pop({type: msg_type, title: msg.message});
         };
 
         $scope.setTicketAttributeAndRefocus = function(ticket, key, value) {
@@ -435,6 +508,9 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                     ticket_id: ticket._id
                 }, function() {
                     $scope._localRemoveTicket(ticket);
+                    var msg = $scope.buildTicketLabel(ticket);
+                    msg += ' successfully removed from event ' + $scope.event.title;
+                    toaster.pop({type: 'error', title: msg});
             });
         };
 
@@ -472,7 +548,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                 $log.debug('addTicket');
                 $log.debug(ret_ticket);
                 $rootScope.$emit('event:ticket:new', ret_ticket, function() {
-                    $rootScope.$emit('event:ticket:set-attr', ret_ticket, 'attended', true, null, false);
+                    $rootScope.$emit('event:ticket:set-attr', ret_ticket, 'attended', true, null, true);
                 });
                 if (cb) {
                     cb(ticket);
@@ -485,6 +561,9 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                         // Close the Quick ticket modal.
                         $scope.$close();
                     }
+                    var msg = $scope.buildTicketLabel(ret_ticket);
+                    msg += ' successfully added to event ' + $scope.event.title;
+                    toaster.pop({type: 'success', title: msg});
                 }
             });
         };
@@ -524,7 +603,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
             });
             if ($state.is('event.ticket.edit')) {
                 $scope.updateTicket($scope.ticket, function() {
-                    $scope.showMessage({message: 'ticket successfully updated'});
+                    toaster.pop({type: 'info', title: 'ticket successfully updated'});
                 });
             } else {
                 $scope.addTicket($scope.ticket);
@@ -575,10 +654,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                 }
             );
             $scope.ticketsOrder = new_order;
-        };
-
-        $scope.showMessage = function(cfg) {
-            $scope.message && $scope.message.show && $scope.message.show(cfg);
+            $scope.filterTickets();
         };
 
         $scope.$on('$destroy', function() {
@@ -615,6 +691,7 @@ eventManControllers.controller('UsersCtrl', ['$scope', '$rootScope', '$state', '
         if ($state.is('user.edit') && $state.params.id) {
             $scope.user = User.get({id: $state.params.id}, function() {
                 $scope.updateUserInfo = $scope.user;
+                $scope.updateUserInfo.isAdmin = $rootScope.hasPermission('admin|all', $scope.updateUserInfo);
             });
         }
 
@@ -649,7 +726,7 @@ eventManControllers.controller('UsersCtrl', ['$scope', '$rootScope', '$state', '
             User.login(loginData, function(data) {
                 if (!data.error) {
                     $rootScope.readInfo(function(info) {
-                        $log.debug('logged in user: ' + info.user.username);
+                        $log.debug('logged in user: ' + $scope.info.user.username);
                         $rootScope.clearError();
                         $state.go('events');
                     });

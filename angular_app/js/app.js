@@ -1,6 +1,6 @@
 'use strict';
 /*
-    Copyright 2015-2016 Davide Alberani <da@erlug.linux.it>
+    Copyright 2015-2017 Davide Alberani <da@erlug.linux.it>
                         RaspiBO <info@raspibo.org>
 
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +17,7 @@
 /* Register our fantastic app. */
 var eventManApp = angular.module('eventManApp', [
     'ngRoute',
+    'ngAnimate',
     'eventManServices',
     'eventManControllers',
     'ui.bootstrap',
@@ -75,16 +76,19 @@ eventManApp.run(['$rootScope', '$state', '$stateParams', '$log', 'Info',
             }
         };
 
-        /* Check GUI privileges. */
-        $rootScope.hasPermission = function(permission) {
-            if (!($rootScope.info && $rootScope.info.user && $rootScope.info.user.permissions)) {
+        /* Check privileges of the currently logged in user or of the one specified with the second parameter. */
+        $rootScope.hasPermission = function(permission, user) {
+            if (!(user || ($rootScope.info && $rootScope.info.user && $rootScope.info.user.permissions))) {
                 return false;
+            }
+            if (!user) {
+                user = $rootScope.info.user;
             }
             var granted = false;
             var splitted_permission = permission.split('|');
             var global_permission = splitted_permission[0] + '|all';
 
-            angular.forEach($rootScope.info.user.permissions || [],
+            angular.forEach(user.permissions || [],
                     function(value, idx) {
                         if (value === 'admin|all' || value === global_permission || value === permission) {
                             granted = true;

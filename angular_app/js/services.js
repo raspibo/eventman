@@ -57,7 +57,12 @@ eventManServices.factory('Event', ['$resource', '$rootScope',
 
             update: {
                 method: 'PUT',
-                interceptor : {responseError: $rootScope.errorHandler}
+                interceptor : {responseError: $rootScope.errorHandler},
+                transformResponse: function(data, headers) {
+                    data = angular.fromJson(data);
+                    convert_dates(data);
+                    return data;
+                }
             },
 
             group_persons: {
