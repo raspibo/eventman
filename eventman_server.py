@@ -816,10 +816,14 @@ class EventsHandler(CollectionHandler):
             self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(ret))
             self.set_status(400)
             return ret
-        elif nr_matches == 1:
-            old_ticket_data = matching_tickets[0]
+        elif nr_matches == 0:
+            ret = {'error': True, 'message': 'no ticket matched', 'query': query,
+                   'uuid': uuid, 'username': self.current_user_info.get('username', '')}
+            self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(ret))
+            self.set_status(400)
+            return ret
         else:
-            old_ticket_data = {}
+            old_ticket_data = matching_tickets[0]
 
         # We have changed the "cancelled" status of a ticket to False; check if we still have a ticket available
         if 'number_of_tickets' in current_event and old_ticket_data.get('cancelled') and not data.get('cancelled'):
