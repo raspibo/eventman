@@ -24,8 +24,17 @@ import sys
 import time
 import serial
 import urllib
+import logging
 import requests
 import configparser
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+
+
+logger = logging.getLogger('qrcode_reader')
+logging.basicConfig(level=logging.INFO)
+logging.getLogger('requests').setLevel(logging.WARNING)
+logging.getLogger('urllib3').setLevel(logging.WARNING)
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 
 class Connector():
@@ -56,7 +65,7 @@ class Connector():
             req.raise_for_status()
             req.connection.close()
         except requests.exceptions.ConnectionError as ex:
-            print('unable to connect to %s: %s' % (self.login_url, ex))
+            logger.error('unable to connect to %s: %s' % (self.login_url, ex))
             sys.exit(1)
 
     def checkin(self, code):
@@ -68,29 +77,34 @@ class Connector():
         checkin_url = self.checkin_url + '?' + urllib.parse.urlencode(params)
         json = dict(self.cfg['actions'])
         req = self.session.put(checkin_url, json=json)
+        error = False
         try:
             req.raise_for_status()
             msg += 'ok'
         except requests.exceptions.HTTPError as ex:
+            error = True
             msg += 'error: %s' % req.json().get('message')
-        print(msg)
+        if not error:
+            logger.info(msg)
+        else:
+            logger.warning(msg)
         req.connection.close()
 
 
 def scan(port):
     retry = 1
     while True:
-        print('waiting for connection on port %s...' % port)
+        logger.debug('waiting for connection on port %s...' % port)
         try:
             ser = serial.Serial(port=port, timeout=1)
             break
         except serial.serialutil.SerialException as ex:
             if retry >= 20:
-                print('unable to connect: %s' % ex)
+                logger.error('unable to connect: %s' % ex)
                 sys.exit(2)
         time.sleep(1)
         retry += 1
-    print('connected to %s' % port)
+    logger.info('connected to %s' % port)
     ser_io = io.TextIOWrapper(io.BufferedRWPair(ser, ser, 1), newline='\r', line_buffering=True)
     while True:
         line = ser_io.readline().strip()
@@ -102,9 +116,11 @@ def scan(port):
 if __name__ == '__main__':
     cfg = configparser.ConfigParser()
     cfg.read('qrcode_reader.ini')
+    if cfg['qrcode_reader'].getboolean('debug'):
+        logging.basicConfig(level=logging.DEBUG)
     connector = Connector(cfg)
     try:
         for code in scan(port=cfg['connection']['port']):
             connector.checkin(code)
     except KeyboardInterrupt:
-        print('exiting...')
+        logger.info('exiting...')
