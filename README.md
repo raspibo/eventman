@@ -54,6 +54,8 @@ Be sure to have a running MongoDB server, locally. If you want to install the de
     sudo pip3 install pymongo # version 3.2.2 or later
     sudo pip3 install python-dateutil
     sudo pip3 install pycups # only needed if you want to print labels
+    sudo pip3 install serial # only for the qrcode_reader script
+    sudo pip3 install requests # only for the qrcode_reader script
     git clone https://github.com/raspibo/eventman
     cd eventman
     ./eventman_server.py --debug
