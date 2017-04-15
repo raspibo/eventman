@@ -25,6 +25,7 @@ import time
 import serial
 import urllib
 import logging
+import argparse
 import requests
 import configparser
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -35,6 +36,31 @@ logging.basicConfig(level=logging.INFO)
 logging.getLogger('requests').setLevel(logging.WARNING)
 logging.getLogger('urllib3').setLevel(logging.WARNING)
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+
+
+def convert_obj(obj):
+    try:
+        return int(obj)
+    except:
+        pass
+    if isinstance(obj, str):
+        obj_l = obj.lower()
+        if obj_l in ['true', 'on', 'yes']:
+            return True
+        elif obj_l in ['false', 'off', 'no']:
+            return False
+    return obj
+
+
+def convert(seq):
+    if isinstance(seq, dict):
+        d = {}
+        for key, item in seq.items():
+            d[key] = convert(item)
+        return d
+    if isinstance(seq, (list, tuple)):
+        return [convert(x) for x in seq]
+    return convert_obj(seq)
 
 
 class Connector():
@@ -75,7 +101,7 @@ class Connector():
             code = code[:limit_field]
         params = {cfg['event']['field']: code, '_errorMessage': 'code: %s' % code}
         checkin_url = self.checkin_url + '?' + urllib.parse.urlencode(params)
-        json = dict(self.cfg['actions'])
+        json = convert(dict(self.cfg['actions']))
         req = self.session.put(checkin_url, json=json)
         error = False
         try:
@@ -114,13 +140,22 @@ def scan(port):
 
 
 if __name__ == '__main__':
-    cfg = configparser.ConfigParser()
-    cfg.read('qrcode_reader.ini')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', '--code', help='specify a single code', action='store')
+    parser.add_argument('--config', help='user a different configuration file (default: qrcode_reader.ini)',
+                        action='store', default='qrcode_reader.ini')
+    args = parser.parse_args()
+
+    cfg = configparser.ConfigParser(interpolation=configparser.ExtendedInterpolation())
+    cfg.read(args.config)
     if cfg['qrcode_reader'].getboolean('debug'):
         logging.basicConfig(level=logging.DEBUG)
     connector = Connector(cfg)
-    try:
-        for code in scan(port=cfg['connection']['port']):
-            connector.checkin(code)
-    except KeyboardInterrupt:
-        logger.info('exiting...')
+    if args.code:
+        connector.checkin(args.code)
+    else:
+        try:
+            for code in scan(port=cfg['connection']['port']):
+                connector.checkin(code)
+        except KeyboardInterrupt:
+            logger.info('exiting...')
