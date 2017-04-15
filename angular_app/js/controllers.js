@@ -293,7 +293,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                             return false;
                         }
                         if (data.error && data.message) {
-                            toaster.pop({type: 'error', title: 'Error', body: data.message, timeout: 5000});
+                            toaster.pop({type: 'error', title: 'Error', body: data.message, timeout: 0, showCloseButton: true});
                             return;
                         }
                         if (!$scope.event.tickets) {
@@ -545,7 +545,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                 $log.debug('addTicket');
                 $log.debug(ret_ticket);
                 $rootScope.$emit('event:ticket:new', ret_ticket, function() {
-                    $rootScope.$emit('event:ticket:set-attr', ret_ticket, 'attended', true, null, false);
+                    $rootScope.$emit('event:ticket:set-attr', ret_ticket, 'attended', true, null, true);
                 });
                 if (cb) {
                     cb(ticket);
@@ -600,7 +600,9 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                     toaster.pop({type: 'info', title: 'ticket successfully updated'});
                 });
             } else {
-                $scope.addTicket($scope.ticket);
+                $scope.addTicket($scope.ticket, function() {
+                    $scope.showAttendedMessage($scope.ticket, true);
+                });
             }
         };
 
