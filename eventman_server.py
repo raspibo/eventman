@@ -668,17 +668,26 @@ class EventsHandler(CollectionHandler):
             persons += [p for p in (event.get('tickets') or []) if p.get('email') and p.get('email') not in this_emails]
         return {'persons': persons}
 
-    def _get_ticket_data(self, ticket_id_or_query, tickets):
+    def _get_ticket_data(self, ticket_id_or_query, tickets, only_one=True):
         """Filter a list of tickets returning the first item with a given _id
         or which set of keys specified in a dictionary match their respective values."""
+        matches = []
         for ticket in tickets:
             if isinstance(ticket_id_or_query, dict):
                 if all(ticket.get(k) == v for k, v in ticket_id_or_query.items()):
-                    return ticket
+                    matches.append(ticket)
+                    if only_one:
+                        break
             else:
                 if str(ticket.get('_id')) == ticket_id_or_query:
-                    return ticket
-        return {}
+                    matches.append(ticket)
+                    if only_one:
+                        break
+        if only_one:
+            if matches:
+                return matches[0]
+            return {}
+        return matches
 
     def handle_get_tickets(self, id_, resource_id=None):
         # Return every ticket registered at this event, or the information
@@ -799,7 +808,18 @@ class EventsHandler(CollectionHandler):
             current_event = {}
         self._check_sales_datetime(current_event)
         tickets = current_event.get('tickets') or []
-        old_ticket_data = self._get_ticket_data(ticket_query, tickets)
+        matching_tickets = self._get_ticket_data(ticket_query, tickets, only_one=False)
+        nr_matches = len(matching_tickets)
+        if nr_matches > 1:
+            ret = {'error': True, 'message': 'more than one ticket matched', 'query': query,
+                   'uuid': uuid, 'username': self.current_user_info.get('username', '')}
+            self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(ret))
+            self.set_status(400)
+            return ret
+        elif nr_matches == 1:
+            old_ticket_data = matching_tickets[0]
+        else:
+            old_ticket_data = {}
 
         # We have changed the "cancelled" status of a ticket to False; check if we still have a ticket available
         if 'number_of_tickets' in current_event and old_ticket_data.get('cancelled') and not data.get('cancelled'):

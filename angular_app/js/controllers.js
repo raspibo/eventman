@@ -192,11 +192,10 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
 );
 
 
-eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event', 'EventTicket', 'Setting', '$log', '$translate', '$rootScope', 'EventUpdates', '$uibModal', '$filter',
-    function ($scope, $state, Event, EventTicket, Setting, $log, $translate, $rootScope, EventUpdates, $uibModal, $filter) {
+eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event', 'EventTicket', 'Setting', '$log', '$translate', '$rootScope', 'EventUpdates', '$uibModal', '$filter', 'toaster',
+    function ($scope, $state, Event, EventTicket, Setting, $log, $translate, $rootScope, EventUpdates, $uibModal, $filter, toaster) {
         $scope.ticketsOrder = ["name", "surname"];
         $scope.countAttendees = 0;
-        $scope.message = {};
         $scope.query = '';
         $scope.event = {};
         $scope.event.tickets = [];
@@ -292,6 +291,10 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                         if ($rootScope.app_uuid == data.uuid) {
                             $log.debug('do not process our own message');
                             return false;
+                        }
+                        if (data.error && data.message) {
+                            toaster.pop({type: 'error', title: 'Error', body: data.message, timeout: 5000});
+                            return;
                         }
                         if (!$scope.event.tickets) {
                             $scope.event.tickets = [];
@@ -478,15 +481,16 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
 
         $scope.showAttendedMessage = function(ticket, attends) {
             var msg = {};
+            var msg_type = 'success';
             var name = $scope.buildTicketLabel(ticket);
 
             if (attends) {
                 msg.message = name + ' successfully added to event ' + $scope.event.title;
             } else {
                 msg.message = name + ' successfully removed from event ' + $scope.event.title;
-                msg.isError = true;
+                msg_type = 'warning';
             }
-            $scope.showMessage(msg);
+            toaster.pop({type: msg_type, title: msg.message});
         };
 
         $scope.setTicketAttributeAndRefocus = function(ticket, key, value) {
@@ -593,7 +597,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
             });
             if ($state.is('event.ticket.edit')) {
                 $scope.updateTicket($scope.ticket, function() {
-                    $scope.showMessage({message: 'ticket successfully updated'});
+                    toaster.pop({type: 'info', title: 'ticket successfully updated'});
                 });
             } else {
                 $scope.addTicket($scope.ticket);
@@ -645,10 +649,6 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
             );
             $scope.ticketsOrder = new_order;
             $scope.filterTickets();
-        };
-
-        $scope.showMessage = function(cfg) {
-            $scope.message && $scope.message.show && $scope.message.show(cfg);
         };
 
         $scope.$on('$destroy', function() {
