@@ -22,10 +22,12 @@ import os
 import io
 import sys
 import time
+import json
 import serial
 import urllib
 import logging
 import argparse
+import datetime
 import requests
 import configparser
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -49,6 +51,8 @@ def convert_obj(obj):
             return True
         elif obj_l in ['false', 'off', 'no']:
             return False
+        elif obj == '%NOW%':
+            return datetime.datetime.utcnow()
     return obj
 
 
@@ -61,6 +65,23 @@ def convert(seq):
     if isinstance(seq, (list, tuple)):
         return [convert(x) for x in seq]
     return convert_obj(seq)
+
+
+class ImprovedEncoder(json.JSONEncoder):
+    """Enhance the default JSON encoder to serialize datetime instances."""
+    def default(self, o):
+        if isinstance(o, (datetime.datetime, datetime.date,
+                datetime.time, datetime.timedelta)):
+            try:
+                return str(o)
+            except Exception as e:
+                pass
+        elif isinstance(o, set):
+            return list(o)
+        return json.JSONEncoder.default(self, o)
+
+# Inject our class as the default encoder.
+json._default_encoder = ImprovedEncoder()
 
 
 class Connector():
@@ -119,6 +140,7 @@ class Connector():
 
 def scan(port):
     retry = 1
+    logger.info('trying to connect to %s, please wait...' % port)
     while True:
         logger.debug('waiting for connection on port %s...' % port)
         try:
@@ -133,7 +155,11 @@ def scan(port):
     logger.info('connected to %s' % port)
     ser_io = io.TextIOWrapper(io.BufferedRWPair(ser, ser, 1), newline='\r', line_buffering=True)
     while True:
-        line = ser_io.readline().strip()
+        try:
+            line = ser_io.readline().strip()
+        except serial.serialutil.SerialException as ex:
+            logger.error('disconnected: %s' % ex)
+            sys.exit(3)
         if not line:
             continue
         yield line
