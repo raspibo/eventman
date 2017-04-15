@@ -58,8 +58,8 @@ def _get_resource(filename):
 def build_label(w, h, barcode_text, line1, line2, font_text=FONT_TEXT, font_barcode=FONT_BARCODE):
     debug('build_label start')
     barcode_text = "*" + barcode_text + "*"
-    line1 = unicode(line1, 'utf-8').encode(FONT_TEXT_ENCODING, 'ignore')
-    line2 = unicode(line2, 'utf-8').encode(FONT_TEXT_ENCODING, 'ignore')
+    line1 = str(line1, 'utf-8').encode(FONT_TEXT_ENCODING, 'ignore')
+    line2 = str(line2, 'utf-8').encode(FONT_TEXT_ENCODING, 'ignore')
     fontbar = ImageFont.truetype(_get_resource(font_barcode), 1000)
     fontname = ImageFont.truetype(_get_resource(font_text), 550)
     fontjob = ImageFont.truetype(_get_resource(font_text), 360)
