@@ -119,6 +119,7 @@ class Connector():
 
 def scan(port):
     retry = 1
+    logger.info('trying to connect to %s, please wait...' % port)
     while True:
         logger.debug('waiting for connection on port %s...' % port)
         try:
@@ -133,7 +134,11 @@ def scan(port):
     logger.info('connected to %s' % port)
     ser_io = io.TextIOWrapper(io.BufferedRWPair(ser, ser, 1), newline='\r', line_buffering=True)
     while True:
-        line = ser_io.readline().strip()
+        try:
+            line = ser_io.readline().strip()
+        except serial.serialutil.SerialException as ex:
+            logger.error('disconnected: %s' % ex)
+            sys.exit(3)
         if not line:
             continue
         yield line
