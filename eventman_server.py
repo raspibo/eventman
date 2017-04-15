@@ -803,7 +803,7 @@ class EventsHandler(CollectionHandler):
             query['tickets._id'] = ticket_id
             ticket_query = {'_id': ticket_id}
         else:
-            ticket_query = self.arguments
+            ticket_query = arguments
         old_ticket_data = {}
         current_event = self.db.query(self.collection, query)
         if current_event:
