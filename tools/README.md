@@ -10,3 +10,8 @@ Besides some standard packages, it also requires the following:
 
     sudo pip3 install serial
     sudo pip3 install requests
+
+count
+=====
+
+Just print some stats about an event.
