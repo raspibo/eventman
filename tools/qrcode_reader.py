@@ -120,7 +120,11 @@ class Connector():
 
     def checkin(self, code):
         msg = 'scanning code %s: ' % code
-        limit_field = self.cfg['event'].getint('limit_field')
+        limit_field = None
+        try:
+            limit_field = self.cfg['event'].getint('limit_field')
+        except:
+            pass
         if limit_field:
             code = code[:limit_field]
         params = {cfg['event']['field']: code, '_errorMessage': 'code: %s' % code}
