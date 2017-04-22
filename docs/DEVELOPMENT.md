@@ -169,6 +169,17 @@ To generate the hash, use:
     print utils.hash\_password('MyVerySecretPassword')
 
 
+custom fields
+-------------
+
+On the list of tickets of an event, you can display one or more custom columns.
+
+To do so, introduce into the _settings_ collection an entry like this:
+    {"setting" : "ticket_custom_field", "label" : "Afternoon", "type" : "boolean", "key" : "afternoon_attended", "in_event_details" : true}
+
+If _type_ is not 'boolean', it's assumed to be a string.
+
+
 Code layout
 ===========
 
