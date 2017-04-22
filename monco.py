@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Monco: a MongoDB database backend
 
 Classes and functions used to issue queries to a MongoDB database.
