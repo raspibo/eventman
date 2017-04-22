@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 """EventMan(ager)
 
 Your friendly manager of attendees at an event.
@@ -46,7 +48,7 @@ PROCESS_TIMEOUT = 60
 
 API_VERSION = '1.0'
 
-re_env_key = re.compile('[^A-Z_]+')
+re_env_key = re.compile('[^a-zA-Z_]+')
 re_slashes = re.compile(r'//+')
 
 # Keep track of WebSocket connections.
@@ -372,14 +374,16 @@ class CollectionHandler(BaseHandler):
         :type data: dict"""
         ret = {}
         for key, value in data.items():
-            if isinstance(value, (list, tuple, dict)):
+            if isinstance(value, (list, tuple, dict, set)):
                 continue
             try:
-                key = key.upper().encode('ascii', 'ignore')
                 key = re_env_key.sub('', key)
+                key = key.upper().encode('ascii', 'ignore')
                 if not key:
                     continue
-                ret[key] = str(value).encode(ENCODING)
+                if not isinstance(value, str):
+                    value = str(value)
+                ret[key] = value
             except:
                 continue
         return ret
@@ -437,8 +441,6 @@ class CollectionHandler(BaseHandler):
         self._clean_dict(data)
         method = self.request.method.lower()
         crud_method = 'create' if method == 'post' else 'update'
-        user_info = self.current_user_info
-        user_id = user_info.get('_id')
         env = {}
         if id_ is not None:
             env['%s_ID' % self.document.upper()] = id_
@@ -547,7 +549,7 @@ class CollectionHandler(BaseHandler):
         p.set_exit_callback(lambda returncode: self.on_exit(returncode, cmd, p))
         self.timeout = self.ioloop.add_timeout(datetime.timedelta(seconds=PROCESS_TIMEOUT),
                 lambda: self.on_timeout(cmd, p))
-        yield gen.Task(p.stdin.write, stdin_data or '')
+        yield gen.Task(p.stdin.write, stdin_data.encode(ENCODING) or b'')
         p.stdin.close()
         out, err = yield [gen.Task(p.stdout.read_until_close),
                 gen.Task(p.stderr.read_until_close)]

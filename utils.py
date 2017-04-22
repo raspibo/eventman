@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """EventMan(ager) utils
 
 Miscellaneous utilities.
@@ -107,7 +108,7 @@ class ImprovedEncoder(json.JSONEncoder):
                 datetime.time, datetime.timedelta, ObjectId)):
             try:
                 return str(o)
-            except Exception as e:
+            except Exception:
                 pass
         elif isinstance(o, set):
             return list(o)
