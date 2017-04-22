@@ -1,4 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 """print_label.py - print a label with the name, the company and the person_id (in a barcode) of an attendee
 
 Copyright 2015-2017 Emiliano Mattioli <oloturia AT gmail.com>
@@ -21,7 +23,6 @@ LABEL_HEIGHT = 1872
 
 FONT_TEXT = 'Ubuntu-C.ttf'
 #FONT_TEXT = 'CONCIBB_.TTF'
-FONT_TEXT_ENCODING = 'latin-1'
 FONT_BARCODE = 'free3of9.ttf'
 
 PRINTER_NAME = None
@@ -58,8 +59,6 @@ def _get_resource(filename):
 def build_label(w, h, barcode_text, line1, line2, font_text=FONT_TEXT, font_barcode=FONT_BARCODE):
     debug('build_label start')
     barcode_text = "*" + barcode_text + "*"
-    line1 = str(line1, 'utf-8').encode(FONT_TEXT_ENCODING, 'ignore')
-    line2 = str(line2, 'utf-8').encode(FONT_TEXT_ENCODING, 'ignore')
     fontbar = ImageFont.truetype(_get_resource(font_barcode), 1000)
     fontname = ImageFont.truetype(_get_resource(font_text), 550)
     fontjob = ImageFont.truetype(_get_resource(font_text), 360)
@@ -111,12 +110,16 @@ def run():
     debug('run start')
     # Always consume stdin.
     sys.stdin.read()
-    name = ' '.join([os.environ.get('NAME') or '', os.environ.get('SURNAME') or ''])
-    company = os.environ.get('COMPANY') or ''
+    name = os.environb.get(b'NAME') or b''
+    surname = os.environb.get(b'SURNAME') or b''
+    fullname = name + b' ' + surname
+    fullname = fullname.decode('utf-8')
+    company = os.environb.get(b'COMPANY') or b''
+    company = company.decode('utf-8')
     # Print the decimal value SEQ as an hex of at least 6 digits.
     seq = os.environ.get('SEQ_HEX', '0')
-    label_file = build_label(LABEL_WIDTH, LABEL_HEIGHT, seq, name, company)
-    print_label(label_file, name)
+    label_file = build_label(LABEL_WIDTH, LABEL_HEIGHT, seq, fullname, company)
+    print_label(label_file, fullname)
     debug('run end')
 
 
@@ -124,5 +127,5 @@ if __name__ == '__main__':
     try:
         run()
     except Exception as e:
-        sys.stderr.write('print_label.  Exception raised: %s\n' % e)
+        sys.stderr.write('print_label.  Exception raised: %s\n' % str(e).encode('utf-8'))
 
