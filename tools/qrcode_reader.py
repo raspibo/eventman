@@ -32,6 +32,7 @@ import requests
 import configparser
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
+TIMEOUT = 3
 
 logger = logging.getLogger('qrcode_reader')
 logging.basicConfig(level=logging.INFO)
@@ -96,6 +97,7 @@ class Connector():
 
     def login(self):
         try:
+            logger.debug('connecting to eventman at %s' % self.login_url)
             self.session = requests.Session()
             self.session.verify = False
             ca = cfg['eventman'].get('ca')
@@ -108,10 +110,11 @@ class Connector():
                 params['username'] = username
             if password:
                 params['password'] = password
-            req = self.session.post(self.login_url, json=params)
+            req = self.session.post(self.login_url, json=params, timeout=TIMEOUT)
             req.raise_for_status()
             req.connection.close()
-        except requests.exceptions.ConnectionError as ex:
+            logger.info('connection to eventman at %s established' % self.login_url)
+        except Exception as ex:
             logger.error('unable to connect to %s: %s' % (self.login_url, ex))
             sys.exit(1)
 
@@ -123,7 +126,7 @@ class Connector():
         params = {cfg['event']['field']: code, '_errorMessage': 'code: %s' % code}
         checkin_url = self.checkin_url + '?' + urllib.parse.urlencode(params)
         json = convert(dict(self.cfg['actions']))
-        req = self.session.put(checkin_url, json=json)
+        req = self.session.put(checkin_url, json=json, timeout=TIMEOUT)
         error = False
         try:
             req.raise_for_status()
@@ -175,7 +178,7 @@ if __name__ == '__main__':
     cfg = configparser.ConfigParser(interpolation=configparser.ExtendedInterpolation())
     cfg.read(args.config)
     if cfg['qrcode_reader'].getboolean('debug'):
-        logging.basicConfig(level=logging.DEBUG)
+        logger.setLevel(logging.DEBUG)
     connector = Connector(cfg)
     if args.code:
         connector.checkin(args.code)
