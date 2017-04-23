@@ -1,26 +1,34 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 import sys
 import monco
 
+COUNT = ('attended', 'afternoon_attended')
+GROUP = ('checked_in_by',)
+
 def info(event):
     tickets = event['tickets']
     total = 0
-    attended = 0
-    afternoon = 0
+    data = {}
     for ticket in tickets:
         if ticket.get('cancelled'):
             continue
-        email = ticket.get('email')
-        if ticket.get('attended'):
-            attended += 1
-        if ticket.get('afternoon_attended'):
-            afternoon += 1
+        for key in COUNT:
+            value = ticket.get(key)
+            if value:
+                data.setdefault(key, 0)
+                data[key] += 1
+        for key in GROUP:
+            value = ticket.get(key)
+            if value:
+                dbkey = '%s.%s' % (key, value)
+                data.setdefault(dbkey, 0)
+                data[dbkey] += 1
         total += 1
-    title = event['title']
     print('Total registered: %d' % total)
-    print('Attendees: %d' % attended)
-    print('Afternoon: %d' % afternoon)
+    for key, value in data.items():
+        print('%s: %s' % (key, value))
     print('')
 
 
