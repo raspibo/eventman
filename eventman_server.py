@@ -799,6 +799,10 @@ class EventsHandler(CollectionHandler):
         if '_errorMessage' in arguments:
             _errorMessage = arguments['_errorMessage']
             del arguments['_errorMessage']
+        _searchFor = False
+        if '_searchFor' in arguments:
+            _searchFor = arguments['_searchFor']
+            del arguments['_searchFor']
         query = dict([('tickets.%s' % k, v) for k, v in arguments.items()])
         query['_id'] = id_
         if ticket_id is not None:
@@ -818,13 +822,13 @@ class EventsHandler(CollectionHandler):
         nr_matches = len(matching_tickets)
         if nr_matches > 1:
             ret = {'error': True, 'message': 'more than one ticket matched. %s' % _errorMessage, 'query': query,
-                   'uuid': uuid, 'username': self.current_user_info.get('username', '')}
+                   'searchFor': _searchFor, 'uuid': uuid, 'username': self.current_user_info.get('username', '')}
             self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(ret))
             self.set_status(400)
             return ret
         elif nr_matches == 0:
             ret = {'error': True, 'message': 'no ticket matched. %s' % _errorMessage, 'query': query,
-                   'uuid': uuid, 'username': self.current_user_info.get('username', '')}
+                   'searchFor': _searchFor, 'uuid': uuid, 'username': self.current_user_info.get('username', '')}
             self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(ret))
             self.set_status(400)
             return ret

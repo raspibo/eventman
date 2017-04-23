@@ -293,6 +293,9 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                             return false;
                         }
                         if (data.error && data.message) {
+                            if (data.searchFor) {
+                                $scope.query = angular.copy(data.searchFor);
+                            }
                             toaster.pop({type: 'error', title: 'Error', body: data.message, timeout: 0, showCloseButton: true});
                             return;
                         }
