@@ -96,27 +96,23 @@ class Connector():
         self.login()
 
     def login(self):
-        try:
-            logger.debug('connecting to eventman at %s' % self.login_url)
-            self.session = requests.Session()
-            self.session.verify = False
-            ca = cfg['eventman'].get('ca')
-            if ca and os.path.isfile(ca):
-                self.session.verify = ca
-            username = cfg['eventman'].get('username')
-            password = cfg['eventman'].get('password')
-            params = {}
-            if username:
-                params['username'] = username
-            if password:
-                params['password'] = password
-            req = self.session.post(self.login_url, json=params, timeout=TIMEOUT)
-            req.raise_for_status()
-            req.connection.close()
-            logger.info('connection to eventman at %s established' % self.login_url)
-        except Exception as ex:
-            logger.error('unable to connect to %s: %s' % (self.login_url, ex))
-            sys.exit(1)
+        logger.debug('connecting to eventman at %s' % self.login_url)
+        self.session = requests.Session()
+        self.session.verify = False
+        ca = cfg['eventman'].get('ca')
+        if ca and os.path.isfile(ca):
+            self.session.verify = ca
+        username = cfg['eventman'].get('username')
+        password = cfg['eventman'].get('password')
+        params = {}
+        if username:
+            params['username'] = username
+        if password:
+            params['password'] = password
+        req = self.session.post(self.login_url, json=params, timeout=TIMEOUT)
+        req.raise_for_status()
+        req.connection.close()
+        logger.info('connection to eventman at %s established' % self.login_url)
 
     def checkin(self, code):
         msg = 'scanning code %s: ' % code
@@ -183,12 +179,19 @@ if __name__ == '__main__':
     cfg.read(args.config)
     if cfg['qrcode_reader'].getboolean('debug'):
         logger.setLevel(logging.DEBUG)
-    connector = Connector(cfg)
+    try:
+        connector = Connector(cfg)
+    except Exception as ex:
+        logger.error('unable to connect to %s: %s' % (cfg['eventman']['url'], ex))
+        sys.exit(1)
     if args.code:
         connector.checkin(args.code)
     else:
         try:
             for code in scan(port=cfg['connection']['port']):
-                connector.checkin(code)
+                try:
+                    connector.checkin(code)
+                except Exception as ex:
+                    logger.error('error at checkin for code %s: %s', code, ex)
         except KeyboardInterrupt:
             logger.info('exiting...')
