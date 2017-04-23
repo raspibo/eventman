@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 import operator
 import itertools
@@ -32,7 +33,6 @@ for event_name in EVENTS:
     event = db.query('events', {'title': event_name})[0]
     event_tickets = event['tickets']
     uniq = set()
-    next_event_names = set() # reset at each cycle
     for ticket in event_tickets:
         if ticket.get('cancelled'):
             continue
@@ -52,7 +52,7 @@ unique = set(values)
 
 next_event_names = set()
 if NEXT_EVENT:
-    event = db.query('events', {'title': event_name})[0]
+    event = db.query('events', {'title': NEXT_EVENT})[0]
     event_tickets = event['tickets']
     for ticket in event_tickets:
         if ticket.get('cancelled'):
@@ -97,6 +97,6 @@ if next_event_names:
     for name in sorted(next_event_names):
         if name in all_morons:
             morons_to_next_event.add(name)
-    print('Morons registered at the last event (%d morons):' % len(morons_to_next_event))
+    print('Morons registered at the next event (%d morons):' % len(morons_to_next_event))
     for m in morons_to_next_event:
         print(m)
