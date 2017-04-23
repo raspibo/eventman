@@ -554,8 +554,8 @@ class CollectionHandler(BaseHandler):
         out, err = yield [gen.Task(p.stdout.read_until_close),
                 gen.Task(p.stderr.read_until_close)]
         logging.debug('cmd: %s' % ' '.join(cmd))
-        logging.debug('cmd stdout: %s' % out)
-        logging.debug('cmd strerr: %s' % err)
+        logging.debug('cmd stdout: %s' % out.decode(ENCODING))
+        logging.debug('cmd strerr: %s' % err.decode(ENCODING))
         raise gen.Return((out, err))
 
     @gen.coroutine
