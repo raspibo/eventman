@@ -75,7 +75,7 @@ class ImprovedEncoder(json.JSONEncoder):
                 datetime.time, datetime.timedelta)):
             try:
                 return str(o)
-            except Exception as e:
+            except Exception:
                 pass
         elif isinstance(o, set):
             return list(o)
@@ -127,7 +127,7 @@ class Connector():
             pass
         if limit_field:
             code = code[:limit_field]
-        params = {cfg['event']['field']: code, '_errorMessage': 'code: %s' % code}
+        params = {cfg['event']['field']: code, '_errorMessage': 'code: %s' % code, '_searchFor': code}
         checkin_url = self.checkin_url + '?' + urllib.parse.urlencode(params)
         json = convert(dict(self.cfg['actions']))
         req = self.session.put(checkin_url, json=json, timeout=TIMEOUT)
@@ -135,7 +135,7 @@ class Connector():
         try:
             req.raise_for_status()
             msg += 'ok'
-        except requests.exceptions.HTTPError as ex:
+        except requests.exceptions.HTTPError:
             error = True
             msg += 'error: %s' % req.json().get('message')
         if not error:
