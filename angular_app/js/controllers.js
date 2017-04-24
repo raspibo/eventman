@@ -292,7 +292,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                             $log.debug('do not process our own message');
                             return false;
                         }
-                        if (data.error && data.message) {
+                        if (data.error && data.message && $scope.info.user.username == data.username) {
                             if (data.searchFor) {
                                 $scope.query = angular.copy(data.searchFor);
                             }
