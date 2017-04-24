@@ -1108,7 +1108,14 @@ class WebSocketEventUpdatesHandler(tornado.websocket.WebSocketHandler):
         logging.debug('WebSocketEventUpdatesHandler.on_message url:%s' % url)
         count = 0
         _to_delete = set()
+        current_uuid = None
+        try:
+            current_uuid = self.get_argument('uuid')
+        except:
+            pass
         for uuid, client in _ws_clients.get(url, {}).items():
+            if uuid and uuid == current_uuid:
+               continue
             try:
                 client.write_message(message)
             except:

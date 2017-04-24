@@ -319,7 +319,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                                     $scope.info.user.username == data.username) {
                                 $scope.showAttendedMessage(data.ticket, data.ticket.attended);
                             }
-                            $scope.event.tickets[ticket_idx] = data.ticket;
+                            $scope.event.tickets.splice(ticket_idx, 1, data.ticket);
                         } else if (data.action == 'add' && ticket_idx == -1) {
                             $scope._localAddTicket(data.ticket);
                         } else if (data.action == 'delete' && ticket_idx != -1) {
@@ -327,6 +327,35 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                         }
                     }
                 );
+
+                /* event listners; needed because otherwise, adding a ticket with the Quick add form,
+                 * we'd be changing the $scope outside of the AngularJS's $digest. */
+
+                $scope.$on('event:ticket:new', function(evt, ticket, callback) {
+                    $scope._localAddTicket(ticket);
+                    if (callback) {
+                        callback(ticket);
+                    }
+                });
+
+                $scope.$on('event:ticket:update', function(evt, ticket) {
+                    if (!$scope.event.tickets) {
+                        $scope.event.tickets = [];
+                    }
+                    var ticket_idx = $scope.event.tickets.findIndex(function(el, idx, array) {
+                            return ticket._id == el._id;
+                    });
+                    if (ticket_idx == -1) {
+                        $log.debug('ticket not present: not updated');
+                        return false;
+                    }
+                    $scope.event.tickets.splice(ticket_idx, 1, ticket);
+                });
+
+                $scope.$on('event:ticket:set-attr', function(evt, ticket, key, value, callback, hideMessage) {
+                    $scope.setTicketAttribute(ticket, key, value, callback, hideMessage);
+                });
+
             }
         } else if ($state.is('tickets')) {
             $scope.tickets = EventTicket.all();
@@ -401,7 +430,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                 $log.warn('ticket not present: not updated');
                 return false;
             }
-            $scope.event.tickets[ticket_idx] = ticket;
+            $scope.event.tickets.splice(ticket_idx, 1, ticket);
         };
 
         $scope._localRemoveTicket = function(ticket) {
@@ -473,7 +502,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                     return;
                 }
                 if ($scope.event.tickets[ticket_idx] != data.ticket) {
-                    $scope.event.tickets[ticket_idx] = data.ticket;
+                    $scope.event.tickets.splice(ticket_idx, 1, data.ticket);
                 }
 
                 if (key === 'attended' && !hideMessage) {
@@ -517,41 +546,16 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
             });
         };
 
-        /* event listners; needed because otherwise, adding a ticket with the Quick add form,
-         * we'd be changing the $scope outside of the AngularJS's $digest. */
-
-        $rootScope.$on('event:ticket:new', function(evt, ticket, callback) {
-            $scope._localAddTicket(ticket);
-            if (callback) {
-                callback(ticket);
-            }
-        });
-
-        $rootScope.$on('event:ticket:update', function(evt, ticket) {
-            if (!$scope.event.tickets) {
-                $scope.event.tickets = [];
-            }
-            var ticket_idx = $scope.event.tickets.findIndex(function(el, idx, array) {
-                    return ticket._id == el._id;
-            });
-            if (ticket_idx == -1) {
-                $log.debug('ticket not present: not updated');
-                return false;
-            }
-            $scope.event.tickets[ticket_idx] = ticket;
-        });
-
-        $rootScope.$on('event:ticket:set-attr', function(evt, ticket, key, value, callback, hideMessage) {
-            $scope.setTicketAttribute(ticket, key, value, callback, hideMessage);
-        });
-
         $scope.addTicket = function(ticket, cb) {
             ticket.event_id = $state.params.id;
+            if ($scope.modalInstance && $scope.modalInstance.opened) {
+                $scope.modalInstance.close();
+            }
             EventTicket.add(ticket, function(ret_ticket) {
                 $log.debug('addTicket');
                 $log.debug(ret_ticket);
-                $rootScope.$emit('event:ticket:new', ret_ticket, function() {
-                    $rootScope.$emit('event:ticket:set-attr', ret_ticket, 'attended', true, null, true);
+                $scope.$emit('event:ticket:new', ret_ticket, function() {
+                    $scope.$emit('event:ticket:set-attr', ret_ticket, 'attended', true, null, true);
                 });
                 if (cb) {
                     cb(ticket);
@@ -574,7 +578,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
         $scope.updateTicket = function(ticket, cb) {
             ticket.event_id = $state.params.id;
             EventTicket.update(ticket, function(t) {
-                $rootScope.$emit('event:ticket:update', t.ticket);
+                $scope.$emit('event:ticket:update', t.ticket);
                 if (cb) {
                     cb(t);
                 }
@@ -592,11 +596,10 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
         };
 
         $scope.openQuickAddTicket = function(_id) {
-            var modalInstance = $uibModal.open({
+            $scope.modalInstance = $uibModal.open({
                 templateUrl: 'modal-quick-add-ticket.html',
-                controller: 'EventTicketsCtrl'
+                scope: $scope
             });
-            modalInstance.result.then(function() {});
         };
 
         $scope.submitForm = function(dataModelSubmitted) {
