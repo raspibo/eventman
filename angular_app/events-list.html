@@ -56,7 +56,7 @@
                         <td ng-if="hasPermission('event:tickets-all|read')" class="hcenter">
                             <p><span ng-init="attendeesNr = ((event.tickets || []) | attendeesFilter).length">{{attendeesNr}}</span> / {{event.tickets_sold || 0}} ({{((attendeesNr / (event.tickets_sold || 0) * 100) || 0).toFixed()}}%)</p>
                         </td>
-                        <td>
+                        <td class="vtop">
                             <div ng-if="hasPermission('event:tickets-all|create')" class="top5 hcenter"><button ng-click="$state.go('event.ticket.new', {id: event._id})" ng-class="{min150: true, btn: true, 'btn-success': true, disabled: event.no_tickets_for_sale}" type="button" title="{{'Join this event' | translate}}"><span class="fa fa-user-plus vcenter"></span> {{'Join this event' | translate}}</button></div>
                             <div ng-if="hasPermission('ticket|update')" class="top5 hcenter"><button ng-click="$state.go('event.tickets', {id: event._id})" class="min150 btn btn-primary" type="button" title="{{'Manage tickets' | translate}}"><span class="fa fa-ticket"></span> {{'Manage tickets' | translate}}</button></div>
                             <div class="top5 hcenter" ng-if="event.number_of_tickets">{{event.number_of_tickets}} {{'tickets' | translate}}, {{event.number_of_tickets - (event.tickets_sold || 0)}} {{'still available' | translate}}</div>
@@ -72,7 +72,7 @@
                                 </span>
                             </div>
                         </td>
-                        <td ng-if="hasPermission('event|update') || hasPermission('event|delete')">
+                        <td ng-if="hasPermission('event|update') || hasPermission('event|delete')" class="vtop">
                             <div ng-if="hasPermission('event|update')" class="top5 hcenter"><button ng-click="$state.go('event.edit', {id: event._id})" type="button" class="min150 btn btn-warning" title="{{'Edit event' | translate}}"><span class="fa fa-cog"></span> {{'Edit event' | translate}}</button></div>
                             <div ng-if="hasPermission('event|delete')" class="top5 hcenter bottom5"><button ng-click="deleteEvent(event._id)" type="button" class="min150 btn btn-danger" title="{{'Delete event' | translate}}"><span class="fa fa-trash"></span> {{'Delete event' | translate}}</button></div>
                         </td>
