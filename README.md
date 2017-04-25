@@ -123,6 +123,12 @@ Tools
 In the 'tools' directory there are some useful tools, to handle check-in and extract data.
 
 
+Other projects
+==============
+
+Needs something simpler, that just allows you to register attendees at an event?  Try [ibt2](https://github.com/raspibo/ibt2)
+
+
 License and copyright
 =====================
 
