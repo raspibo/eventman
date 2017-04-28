@@ -588,6 +588,8 @@ class CollectionHandler(BaseHandler):
             args = '?uuid=%s' % self.get_argument('uuid')
         except:
             args = ''
+        if not hasattr(self, 'listen_port'):
+            return None
         return 'ws://127.0.0.1:%s/ws/%s%s' % (self.listen_port + 1, path, args)
 
     @gen.coroutine
@@ -600,7 +602,10 @@ class CollectionHandler(BaseHandler):
         :type message: str
         """
         try:
-            ws = yield tornado.websocket.websocket_connect(self.build_ws_url(path))
+            url = self.build_ws_url(path)
+            if not url:
+                return
+            ws = yield tornado.websocket.websocket_connect(url)
             ws.write_message(message)
             ws.close()
         except Exception as e:

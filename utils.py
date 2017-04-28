@@ -3,7 +3,7 @@
 
 Miscellaneous utilities.
 
-Copyright 2015-2016 Davide Alberani <da@erlug.linux.it>
+Copyright 2015-2017 Davide Alberani <da@erlug.linux.it>
                     RaspiBO <info@raspibo.org>
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -59,7 +59,7 @@ def csvParse(csvStr, remap=None, merge=None):
         if header in remap:
             headers[idx] = remap[header]
         else:
-            headers[idx] = header.lower().replace(' ', '_')
+            headers[idx] = header.lower().replace(' ', '_').replace('.', '_')
     try:
         for row in reader:
             try:
