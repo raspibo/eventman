@@ -966,6 +966,8 @@ class UsersHandler(CollectionHandler):
             del data['_id']
         if 'username' in data:
             del data['username']
+        if 'tickets' in data:
+            del data['tickets']
         if not self.has_permission('admin|all'):
             if 'permissions' in data:
                 del data['permissions']
