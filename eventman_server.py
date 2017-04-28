@@ -519,7 +519,7 @@ class CollectionHandler(BaseHandler):
 
     def on_timeout(self, cmd, pipe):
         """Kill a process that is taking too long to complete."""
-        logging.debug('cmd %s is taking too long: killing it' % ' '.join(cmd))
+        logging.debug('the trigger %s is taking too long: killing it' % ' '.join(cmd))
         try:
             pipe.proc.kill()
         except:
@@ -528,7 +528,7 @@ class CollectionHandler(BaseHandler):
     def on_exit(self, returncode, cmd, pipe):
         """Callback executed when a subprocess execution is over."""
         self.ioloop.remove_timeout(self.timeout)
-        logging.debug('cmd: %s returncode: %d' % (' '.join(cmd), returncode))
+        logging.debug('trigger: %s returncode: %d' % (' '.join(cmd), returncode))
 
     @gen.coroutine
     def run_subprocess(self, cmd, stdin_data=None, env=None):
@@ -553,9 +553,11 @@ class CollectionHandler(BaseHandler):
         p.stdin.close()
         out, err = yield [gen.Task(p.stdout.read_until_close),
                 gen.Task(p.stderr.read_until_close)]
-        logging.debug('cmd: %s' % ' '.join(cmd))
-        logging.debug('cmd stdout: %s' % out.decode(ENCODING))
-        logging.debug('cmd strerr: %s' % err.decode(ENCODING))
+        logging.debug('trigger: %s' % ' '.join(cmd))
+        if out:
+            logging.debug('trigger stdout: %s' % out.decode(ENCODING))
+        if err:
+            logging.debug('trigger strerr: %s' % err.decode(ENCODING))
         raise gen.Return((out, err))
 
     @gen.coroutine
