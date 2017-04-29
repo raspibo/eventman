@@ -202,6 +202,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
         $scope.shownItems = [];
         $scope.ticket = {}; // current ticket, for the event.ticket.* states
         $scope.tickets = []; // list of all tickets, for the 'tickets' state
+        $scope.filteredTickets = [];
         $scope.formSchema = {};
         $scope.formData = {};
         $scope.guiOptions = {dangerousActionsEnabled: false};
@@ -221,9 +222,11 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
             tickets = $filter('splittedFilter')(tickets, $scope.query);
             tickets = $filter('registeredFilter')(tickets, $scope.registeredFilterOptions);
             tickets = $filter('orderBy')(tickets, $scope.ticketsOrder);
-            $scope.filteredLength = tickets.length;
+            $scope.filteredTickets = angular.copy(tickets);
+            $scope.filteredLength = $scope.filteredTickets.length;
             tickets = $filter('pagination')(tickets, $scope.currentPage, $scope.itemsPerPage);
             $scope.shownItems = tickets;
+            $scope.updateCSV();
         };
 
         $scope.$watch('query', function() {
@@ -661,6 +664,17 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
             );
             $scope.ticketsOrder = new_order;
             $scope.filterTickets();
+        };
+
+        $scope.updateCSV = function() {
+            if (!$scope.filteredTickets.length) {
+                return;
+            }
+            try {
+                var csv = json2csv({data: $scope.filteredTickets});
+                var blob = new Blob([csv], {type: 'text/csv'});
+                $scope.downloadURL = (window.URL || window.webkitURL).createObjectURL(blob);
+            } catch(err) {}
         };
 
         $scope.$on('$destroy', function() {

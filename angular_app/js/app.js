@@ -105,8 +105,9 @@ eventManApp.run(['$rootScope', '$state', '$stateParams', '$log', 'Info',
 
 
 /* Configure the states. */
-eventManApp.config(['$stateProvider', '$urlRouterProvider',
-    function($stateProvider, $urlRouterProvider) {
+eventManApp.config(['$stateProvider', '$urlRouterProvider', '$compileProvider',
+    function($stateProvider, $urlRouterProvider, $compileProvider) {
+        $compileProvider.aHrefSanitizationWhitelist(/^\s*(https?|ftp|mailto|tel|file|blob):/);
         $urlRouterProvider.otherwise('/events');
         $stateProvider
             .state('events', {
