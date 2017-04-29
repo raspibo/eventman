@@ -123,7 +123,8 @@ class Connector():
             pass
         if limit_field:
             code = code[:limit_field]
-        params = {cfg['event']['field']: code, '_errorMessage': 'code: %s' % code, '_searchFor': code}
+        _searchFor = '%s:%s' % (cfg['event']['field'], code)
+        params = {cfg['event']['field']: code, '_errorMessage': 'code: %s' % code, '_searchFor': _searchFor}
         checkin_url = self.checkin_url + '?' + urllib.parse.urlencode(params)
         json = convert(dict(self.cfg['actions']))
         req = self.session.put(checkin_url, json=json, timeout=TIMEOUT)
