@@ -23,13 +23,23 @@
                 </h1>
                     </div>
                     <div class="panel-body">
-                        <form class="form-inline">
-                            <div class="form-group">
-                                <label for="query-tickets">{{'Search:' | translate}}</label>
-                                <input eventman-focus type="text" id="query-tickets" class="form-control" placeholder="{{'Name or email' | translate}}" ng-model="query" ng-model-options="{debounce: 350}">
-                            </div>&nbsp;<label>&nbsp;<input type="checkbox" ng-model="registeredFilterOptions.all" /> {{'Show cancelled tickets' | translate}}</label>
-                        </form>
-						<uib-pagination ng-model="currentPage" total-items="filteredLength" items-per-page="itemsPerPage"
+                        <div>
+                            <div style="float:left;">
+                                <form class="form-inline">
+                                    <div class="form-group">
+                                        <label for="query-tickets">{{'Search:' | translate}}</label>
+                                        <input eventman-focus type="text" id="query-tickets" class="form-control" placeholder="{{'Name or email' | translate}}" ng-model="query" ng-model-options="{debounce: 350}">
+                                    </div>&nbsp;<label>&nbsp;<input type="checkbox" ng-model="registeredFilterOptions.all" /> {{'Show cancelled tickets' | translate}}</label>
+                                </form>
+                            </div>
+                            <div style="float:right;">
+                                <span style="color:#9e9e9e;">({{filteredLength}} {{'filtered item/s' | translate}})</span>&nbsp;
+                                <a download="eventman.csv" ng-href="{{downloadURL}}" class="btn btn-primary" ng-class="{disabled: !filteredLength}"><span class="fa fa-download"></span> {{'export CSV' | translate}}</a>
+                            </div>
+                        </div>
+
+                        <div class="clearfix"></div>
+                        <uib-pagination ng-model="currentPage" total-items="filteredLength" items-per-page="itemsPerPage"
                                     direction-links="false" boundary-links="true" boundary-link-numbers="true" max-size="maxPaginationSize">
                         </uib-pagination>
                         <table class="table table-striped">
@@ -73,7 +83,7 @@
                                 </tr>
                             </tbody>
                         </table>
-						<uib-pagination ng-model="currentPage" total-items="filteredLength" items-per-page="itemsPerPage"
+                        <uib-pagination ng-model="currentPage" total-items="filteredLength" items-per-page="itemsPerPage"
                                     direction-links="false" boundary-links="true" boundary-link-numbers="true" max-size="maxPaginationSize">
                         </uib-pagination>
                     </div>

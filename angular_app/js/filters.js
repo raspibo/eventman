@@ -39,7 +39,13 @@ eventManApp.filter('splittedFilter', ['$filter',
         return function(inputArray, searchText) {
             var wordArray = searchText ? searchText.toLowerCase().split(/\s+/) : [];
             for (var x=0; x < wordArray.length; x++) {
-                inputArray = $filter('filter')(inputArray, wordArray[x]);
+                var filter_item = wordArray[x];
+                if (filter_item.indexOf(':') != -1) {
+                    var filter_item_split = filter_item.split(':', 2);
+                    filter_item = {};
+                    filter_item[filter_item_split[0]] = filter_item_split[1];
+                }
+                inputArray = $filter('filter')(inputArray, filter_item);
             }
             return inputArray;
         };
