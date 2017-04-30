@@ -21,7 +21,7 @@ class Info(object):
         return self.registered < other.registered or self.attended < other.attended
 
     def __str__(self):
-        return 'registered at %d events and attended at %d' % (self.registered, self.attended)
+        return '%d of %d' % (self.registered, self.attended)
 
     def __eq__(self, other):
         return self.registered == other.registered and self.attended == other.attended
@@ -78,7 +78,7 @@ for presences, registrations in combinations:
         continue
     morons_combinations.append((registrations, presences))
 
-all_morons = set()
+all_morons = {}
 grouped_morons = itertools.groupby(sorted(morons_combinations, key=operator.itemgetter(0), reverse=True),
                                    operator.itemgetter(0))
 
@@ -86,9 +86,9 @@ for i in (item for sublist in grouped_morons for item in sublist[1]):
     morons = Info(*i)
     print('')
     print('Morons (registered at %d events, attended %d):' % (i[0], i[1]))
-    for p, info in all_tickets.items():
+    for p, info in sorted(all_tickets.items()):
         if info == morons:
-            all_morons.add(p)
+            all_morons[p] = info
             print(p)
 
 if next_event_names:
@@ -96,7 +96,7 @@ if next_event_names:
     morons_to_next_event = set()
     for name in sorted(next_event_names):
         if name in all_morons:
-            morons_to_next_event.add(name)
+            morons_to_next_event.add((name, all_morons[name]))
     print('Morons registered at the next event (%d morons):' % len(morons_to_next_event))
-    for m in morons_to_next_event:
-        print(m)
+    for m, info in sorted(morons_to_next_event):
+        print('%s (%s)' % (m, info))
