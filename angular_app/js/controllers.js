@@ -64,10 +64,19 @@ eventManControllers.controller('ModalConfirmInstanceCtrl', ['$scope', '$uibModal
 );
 
 
-eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$uibModal', '$log', '$translate', '$rootScope', '$state', '$filter',
-    function ($scope, Event, $uibModal, $log, $translate, $rootScope, $state, $filter) {
+eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', 'EventTicket', '$uibModal', '$log', '$translate', '$rootScope', '$state', '$filter', 'toaster',
+    function ($scope, Event, EventTicket, $uibModal, $log, $translate, $rootScope, $state, $filter, toaster) {
         $scope.query = '';
         $scope.tickets = [];
+        $scope.eventsOrderProp = "-begin_date";
+        $scope.ticketsOrderProp = ["name", "surname"];
+
+        $scope.shownItems = [];
+        $scope.currentPage = 1;
+        $scope.itemsPerPage = 10;
+        $scope.filteredLength = 0;
+        $scope.maxPaginationSize = 10;
+
         $scope.events = Event.all(function(events) {
             if (events && $state.is('tickets')) {
                 angular.forEach(events, function(evt, idx) {
@@ -81,14 +90,6 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$uibModal'
                 $scope.filterTickets();
             }
         });
-        $scope.eventsOrderProp = "-begin_date";
-        $scope.ticketsOrderProp = ["name", "surname"];
-
-        $scope.shownItems = [];
-        $scope.currentPage = 1;
-        $scope.itemsPerPage = 10;
-        $scope.filteredLength = 0;
-        $scope.maxPaginationSize = 10;
 
         $scope.filterTickets = function() {
             var tickets = $scope.tickets || [];
@@ -111,9 +112,17 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$uibModal'
         });
 
         $scope.confirm_delete = 'Do you really want to delete this event?';
+        $scope.confirm_delete_all_tickets = 'Do you really want to delete all tickets from this event?';
+        $scope.deleted_all_tickets = 'successfully removed all tickets from event';
         $rootScope.$on('$translateChangeSuccess', function () {
             $translate('Do you really want to delete this event?').then(function (translation) {
                 $scope.confirm_delete = translation;
+            });
+            $translate('Do you really want to delete all tickets from this event?').then(function (translation) {
+                $scope.confirm_delete_all_tickets = translation;
+            });
+            $translate('successfully removed all tickets from event').then(function (translation) {
+                $scope.deleted_all_tickets = translation;
             });
         });
 
@@ -129,6 +138,25 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', '$uibModal'
             modalInstance.result.then(function() {
                 Event.delete({'id': _id}, function() {
                     $scope.events = Event.all();
+                });
+            });
+        };
+
+        $scope.deleteAllTickets = function(_id) {
+            var modalInstance = $uibModal.open({
+                scope: $scope,
+                templateUrl: 'modal-confirm-action.html',
+                controller: 'ModalConfirmInstanceCtrl',
+                resolve: {
+                    message: function() { return $scope.confirm_delete_all_tickets; }
+                }
+            });
+            modalInstance.result.then(function() {
+                EventTicket.delete({
+                        event_id: _id
+                    }, function() {
+                        toaster.pop({type: 'error', title: $scope.deleted_all_tickets});
+                        $scope.events = Event.all();
                 });
             });
         };
@@ -771,19 +799,26 @@ eventManControllers.controller('UsersCtrl', ['$scope', '$rootScope', '$state', '
 eventManControllers.controller('FileUploadCtrl', ['$scope', '$log', '$upload', 'Event',
     function ($scope, $log, $upload, Event) {
         $scope.file = null;
+        $scope.progress = 0;
+        $scope.progressbarType = 'warning';
+        $scope.deduplicate = false;
         $scope.reply = {};
         $scope.events = Event.all();
         $scope.upload = function(file, url) {
             $log.debug("FileUploadCtrl.upload");
+            $scope.progress = 0;
+            $scope.progressbarType = 'warning';
             $upload.upload({
                 url: url,
                 file: file,
-                fields: {targetEvent: $scope.targetEvent}
+                fields: {targetEvent: $scope.targetEvent, deduplicate: $scope.deduplicate}
             }).progress(function(evt) {
-                var progressPercentage = parseInt(100.0 * evt.loaded / evt.total);
-                $log.debug('progress: ' + progressPercentage + '%');
+                $scope.progress = parseInt(100.0 * evt.loaded / evt.total);
+                $log.debug('progress: ' + $scope.progress + '%');
             }).success(function(data, status, headers, config) {
                 $scope.file = null;
+                $scope.progress = 100;
+                $scope.progressbarType = 'success';
                 $scope.reply = angular.fromJson(data);
             });
         };

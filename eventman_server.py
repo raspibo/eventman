@@ -874,28 +874,31 @@ class EventsHandler(CollectionHandler):
         return ret
 
     def handle_delete_tickets(self, id_, ticket_id):
-        # Remove a specific ticket from the list of tickets registered at this event.
+        # Remove a ticket (or all tickets) from the list of tickets registered at this event.
         uuid, arguments = self.uuid_arguments
-        doc = self.db.query('events',
-                {'_id': id_, 'tickets._id': ticket_id})
+        doc = self.db.query('events', {'_id': id_})
         ret = {'action': 'delete', '_id': ticket_id, 'uuid': uuid}
         if doc:
             ticket = self._get_ticket_data(ticket_id, doc[0].get('tickets') or [])
+            ticket_query = {}
+            if ticket:
+                ticket_query['_id'] = ticket_id
             merged, rdoc = self.db.update('events',
                     {'_id': id_},
-                    {'tickets': {'_id': ticket_id}},
+                    {'tickets': ticket_query},
                     operation='delete',
                     create=False)
-            self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(ret))
-            env = dict(ticket)
-            env.update({'PERSON_ID': ticket_id, 'TICKED_ID': ticket_id, 'EVENT_ID': id_,
-                'EVENT_TITLE': rdoc.get('title', ''), 'WEB_USER': self.current_user_info.get('username', ''),
-                'WEB_REMOTE_IP': self.request.remote_ip})
-            stdin_data = {'old': ticket,
-                'event': rdoc,
-                'merged': merged
-            }
-            self.run_triggers('delete_ticket_in_event', stdin_data=stdin_data, env=env)
+            if ticket:
+                self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(ret))
+                env = dict(ticket)
+                env.update({'PERSON_ID': ticket_id, 'TICKED_ID': ticket_id, 'EVENT_ID': id_,
+                    'EVENT_TITLE': rdoc.get('title', ''), 'WEB_USER': self.current_user_info.get('username', ''),
+                    'WEB_REMOTE_IP': self.request.remote_ip})
+                stdin_data = {'old': ticket,
+                    'event': rdoc,
+                    'merged': merged
+                }
+                self.run_triggers('delete_ticket_in_event', stdin_data=stdin_data, env=env)
         return ret
 
 
@@ -1034,8 +1037,13 @@ class EbCSVImportPersonsHandler(BaseHandler):
         event_handler.db = self.db
         event_handler.logger = self.logger
         event_id = None
+        deduplicate = False
         try:
             event_id = self.get_body_argument('targetEvent')
+        except:
+            pass
+        try:
+            deduplicate = self.tobool(self.get_body_argument('deduplicate'))
         except:
             pass
         if event_id is None:
@@ -1044,10 +1052,10 @@ class EbCSVImportPersonsHandler(BaseHandler):
         event_details = event_handler.db.query('events', {'_id': event_id})
         if not event_details:
             return self.build_error('invalid event')
-        all_emails = set()
+        all_persons = set()
         #[x.get('email') for x in (event_details[0].get('tickets') or []) if x.get('email')])
         for ticket in (event_details[0].get('tickets') or []):
-            all_emails.add('%s_%s_%s' % (ticket.get('name'), ticket.get('surname'), ticket.get('email')))
+            all_persons.add('%s_%s_%s' % (ticket.get('name'), ticket.get('surname'), ticket.get('email')))
         for fieldname, contents in self.request.files.items():
             for content in contents:
                 filename = content['filename']
@@ -1060,10 +1068,12 @@ class EbCSVImportPersonsHandler(BaseHandler):
                     person['attended'] = False
                     person['from_file'] = filename
                     self.add_access_info(person)
-                    duplicate_check = '%s_%s_%s' % (person.get('name'), person.get('surname'), person.get('email'))
-                    if duplicate_check in all_emails:
-                        continue
-                    all_emails.add(duplicate_check)
+                    if deduplicate:
+                        duplicate_check = '%s_%s_%s_%s' % (person.get('name'), person.get('surname'),
+                                                           person.get('email'), person.get('order_nr'))
+                        if duplicate_check in all_persons:
+                            continue
+                        all_persons.add(duplicate_check)
                     event_handler.handle_post_tickets(event_id, None, person)
                     reply['new_in_event'] += 1
         self.write(reply)

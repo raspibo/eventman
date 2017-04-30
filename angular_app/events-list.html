@@ -74,7 +74,15 @@
                         </td>
                         <td ng-if="hasPermission('event|update') || hasPermission('event|delete')" class="vtop">
                             <div ng-if="hasPermission('event|update')" class="top5 hcenter"><button ng-click="$state.go('event.edit', {id: event._id})" type="button" class="min150 btn btn-warning" title="{{'Edit event' | translate}}"><span class="fa fa-cog"></span> {{'Edit event' | translate}}</button></div>
-                            <div ng-if="hasPermission('event|delete')" class="top5 hcenter bottom5"><button ng-click="deleteEvent(event._id)" type="button" class="min150 btn btn-danger" title="{{'Delete event' | translate}}"><span class="fa fa-trash"></span> {{'Delete event' | translate}}</button></div>
+                            <div ng-if="hasPermission('event|delete')" class="top5 hcenter bottom5" id="delete-event" uib-dropdown>
+                                <button type="button" class="min150 btn btn-danger" title="{{'Delete' | translate}}" uib-dropdown-toggle>
+                                    <span class="fa fa-trash"></span> {{'Delete' | translate}} <span class="caret"></span>
+                                </button>
+                                <ul class="dropdown-menu" uib-dropdown-menu role="menu" aria-labelledby="delete-event">
+                                    <li role="menuitem"><a href="#" ng-click="deleteEvent(event._id)">{{'Delete event' | translate}}</a></li>
+                                    <li role="menuitem"><a href="#" ng-click="deleteAllTickets(event._id)">{{'Delete all tickets in event' | translate}}</a></li>
+                                </ul>
+                            </div>
                         </td>
                     </tr>
                 </tbody>
