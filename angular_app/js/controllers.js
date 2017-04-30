@@ -771,19 +771,26 @@ eventManControllers.controller('UsersCtrl', ['$scope', '$rootScope', '$state', '
 eventManControllers.controller('FileUploadCtrl', ['$scope', '$log', '$upload', 'Event',
     function ($scope, $log, $upload, Event) {
         $scope.file = null;
+        $scope.progress = 0;
+        $scope.progressbarType = 'warning';
+        $scope.deduplicate = false;
         $scope.reply = {};
         $scope.events = Event.all();
         $scope.upload = function(file, url) {
             $log.debug("FileUploadCtrl.upload");
+            $scope.progress = 0;
+            $scope.progressbarType = 'warning';
             $upload.upload({
                 url: url,
                 file: file,
-                fields: {targetEvent: $scope.targetEvent}
+                fields: {targetEvent: $scope.targetEvent, deduplicate: $scope.deduplicate}
             }).progress(function(evt) {
-                var progressPercentage = parseInt(100.0 * evt.loaded / evt.total);
-                $log.debug('progress: ' + progressPercentage + '%');
+                $scope.progress = parseInt(100.0 * evt.loaded / evt.total);
+                $log.debug('progress: ' + $scope.progress + '%');
             }).success(function(data, status, headers, config) {
                 $scope.file = null;
+                $scope.progress = 100;
+                $scope.progressbarType = 'success';
                 $scope.reply = angular.fromJson(data);
             });
         };

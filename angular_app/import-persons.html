@@ -19,8 +19,16 @@
                     </select>
                 </div>
 
-                <input type="submit" value="{{'Import' | translate}}" ng-click="upload(file, '/ebcsvpersons')" />
+                <input type="checkbox" ng-model="deduplicate"> {{'deduplicate entries' | translate}}
 
+                <div>
+                    <br />
+                    <input type="submit" value="{{'Import' | translate}}" ng-click="upload(file, '/ebcsvpersons')" />
+                </div>
+
+                <div class="form-group top5">
+                    <uib-progressbar class="progress-striped" ng-class="{active: progressbarType == 'warning'}" max="100" value="progress" type="progressbarType">{{progress}}%</uib-progressbar>
+                </div>
                 <div class="form-group top5">
                     Result: total: <span>{{reply.total}}</span> valid: <span>{{reply.valid}}</span> new: <span>{{reply.new_in_event}}</span>
                 </div>
