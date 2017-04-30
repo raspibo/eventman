@@ -874,28 +874,31 @@ class EventsHandler(CollectionHandler):
         return ret
 
     def handle_delete_tickets(self, id_, ticket_id):
-        # Remove a specific ticket from the list of tickets registered at this event.
+        # Remove a ticket (or all tickets) from the list of tickets registered at this event.
         uuid, arguments = self.uuid_arguments
-        doc = self.db.query('events',
-                {'_id': id_, 'tickets._id': ticket_id})
+        doc = self.db.query('events', {'_id': id_})
         ret = {'action': 'delete', '_id': ticket_id, 'uuid': uuid}
         if doc:
             ticket = self._get_ticket_data(ticket_id, doc[0].get('tickets') or [])
+            ticket_query = {}
+            if ticket:
+                ticket_query['_id'] = ticket_id
             merged, rdoc = self.db.update('events',
                     {'_id': id_},
-                    {'tickets': {'_id': ticket_id}},
+                    {'tickets': ticket_query},
                     operation='delete',
                     create=False)
-            self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(ret))
-            env = dict(ticket)
-            env.update({'PERSON_ID': ticket_id, 'TICKED_ID': ticket_id, 'EVENT_ID': id_,
-                'EVENT_TITLE': rdoc.get('title', ''), 'WEB_USER': self.current_user_info.get('username', ''),
-                'WEB_REMOTE_IP': self.request.remote_ip})
-            stdin_data = {'old': ticket,
-                'event': rdoc,
-                'merged': merged
-            }
-            self.run_triggers('delete_ticket_in_event', stdin_data=stdin_data, env=env)
+            if ticket:
+                self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(ret))
+                env = dict(ticket)
+                env.update({'PERSON_ID': ticket_id, 'TICKED_ID': ticket_id, 'EVENT_ID': id_,
+                    'EVENT_TITLE': rdoc.get('title', ''), 'WEB_USER': self.current_user_info.get('username', ''),
+                    'WEB_REMOTE_IP': self.request.remote_ip})
+                stdin_data = {'old': ticket,
+                    'event': rdoc,
+                    'merged': merged
+                }
+                self.run_triggers('delete_ticket_in_event', stdin_data=stdin_data, env=env)
         return ret
 
 
