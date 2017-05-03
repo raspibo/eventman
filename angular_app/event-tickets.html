@@ -28,7 +28,7 @@
                                 <form class="form-inline">
                                     <div class="form-group">
                                         <label for="query-tickets">{{'Search:' | translate}}</label>
-                                        <input eventman-focus type="text" id="query-tickets" class="form-control" placeholder="{{'Name or email' | translate}}" ng-model="query" ng-model-options="{debounce: 350}">
+                                        <input eventman-focus type="text" id="query-tickets" class="form-control query-input" placeholder="{{'Name or email or key:value' | translate}}" ng-model="query" ng-model-options="{debounce: 350}" esc-key="resetInput()">
                                     </div>&nbsp;<label>&nbsp;<input type="checkbox" ng-model="registeredFilterOptions.all" /> {{'Show cancelled tickets' | translate}}</label>
                                 </form>
                             </div>
