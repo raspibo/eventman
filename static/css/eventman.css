@@ -111,3 +111,7 @@ input[type=text].form-control, input[type=search].form-control {
 :not(.no-leave)#toast-container > div.ng-leave {
     transition-duration: .2s;
 }
+
+.query-input {
+    min-width: 400px;
+}

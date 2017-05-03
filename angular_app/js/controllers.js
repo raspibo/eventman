@@ -705,6 +705,10 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
             } catch(err) {}
         };
 
+        $scope.resetInput = function() {
+            $scope.query = "";
+        };
+
         $scope.$on('$destroy', function() {
             $scope.EventUpdates && $scope.EventUpdates.close();
         });
