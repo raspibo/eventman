@@ -36,10 +36,10 @@ PRINTER_NAME = 'hackinbo_1'
 # 'DYMO-LabelWriter-450' is the name of the printer on the remote system.
 REMOTES = {
         'qrcode1': {
-            'printer': 'DYMO-LabelWriter-450'
+            'printer': 'hackinbo_2'
         },
         'qrcode2': {
-            'printer': 'DYMO-LabelWriter-450'
+            'printer': 'hackinbo_5'
         },
         'remote1': {
             #'host': '192.168.99.129',
