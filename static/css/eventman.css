@@ -115,3 +115,11 @@ input[type=text].form-control, input[type=search].form-control {
 .query-input {
     min-width: 400px;
 }
+
+.toast {
+    font-size: 24px;
+}
+
+#toast-container > div {
+    width: 40%;
+}
