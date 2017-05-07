@@ -27,7 +27,7 @@ def info(event):
                 data[dbkey] += 1
         total += 1
     print('Total registered: %d' % total)
-    for key, value in data.items():
+    for key, value in sorted(data.items()):
         print('%s: %s' % (key, value))
     print('')
 
