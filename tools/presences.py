@@ -5,8 +5,8 @@ import operator
 import itertools
 import monco
 
-EVENTS = ('HackInBo 2015', 'HackInBo 2015 Winter', 'HackInBo 2016', 'HackInBo 2016 Winter')
-NEXT_EVENT = 'HackInBo 2017' # leave it empty if we've not yet added the tickets for the next event
+EVENTS = ('HackInBo 2015', 'HackInBo 2015 Winter', 'HackInBo 2016', 'HackInBo 2016 Winter', 'HackInBo 2017')
+NEXT_EVENT = '' # leave it empty if we've not yet added the tickets for the next event
 
 all_tickets = {}
 
@@ -29,23 +29,34 @@ class Info(object):
     def __hash__(self):
         return hash((self.registered, self.attended))
 
+event_data = {}
+
 for event_name in EVENTS:
     event = db.query('events', {'title': event_name})[0]
     event_tickets = event['tickets']
     uniq = set()
+    new_in_this = 0
+    event_data[event_name] = {'registered': 0, 'attended': 0, 'new_in_this': 0}
     for ticket in event_tickets:
         if ticket.get('cancelled'):
             continue
+        event_data[event_name]['registered'] += 1
         unique_name = '%s %s' % (ticket.get('name', '').lower(), ticket.get('surname', '').lower())
         if unique_name in uniq:
             continue
         uniq.add(unique_name)
+        attended = ticket.get('attended')
         if unique_name not in all_tickets:
             all_tickets[unique_name] = {'registered': 0, 'attended': 0}
             all_tickets[unique_name] = Info()
+            if attended:
+                event_data[event_name]['new_in_this'] += 1
+                new_in_this += 1
         all_tickets[unique_name].registered += 1
-        if ticket.get('attended'):
+        if attended:
+            event_data[event_name]['attended'] += 1
             all_tickets[unique_name].attended += 1
+
 
 values = list(all_tickets.values())
 unique = set(values)
@@ -60,6 +71,17 @@ if NEXT_EVENT:
         unique_name = '%s %s' % (ticket.get('name', '').lower(), ticket.get('surname', '').lower())
         next_event_names.add(unique_name)
 
+print('New persons at each event:')
+for event_name in EVENTS:
+    new_in_this = event_data[event_name]['new_in_this']
+    attended = event_data[event_name]['attended']
+    percent = 0
+    if attended:
+        percent = new_in_this / attended * 100
+    print('%s: %d persons never seen before (%d total attended, %d%%)' % (event_name, new_in_this,
+                                                                    attended, percent))
+
+print('')
 print('Total persons:', len(values))
 print('')
 res = []
