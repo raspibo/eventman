@@ -634,6 +634,7 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
         };
 
         $scope.submitForm = function(dataModelSubmitted) {
+            $scope.ticket = {_id: $scope.ticket._id};
             angular.forEach(dataModelSubmitted, function(value, key) {
                 key = $scope.formFieldsMap[key] || key;
                 $scope.ticket[key] = value;
