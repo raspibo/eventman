@@ -36,16 +36,36 @@ eventManApp.filter('personRegistered', ['$filter',
 /* Filter that handles splitted words. */
 eventManApp.filter('splittedFilter', ['$filter',
     function($filter) {
+        var negate = function(actual, expected) {
+            if (expected == 'false') {
+                expected = false;
+            } else if (expected == 'true') {
+                expected = true;
+            }
+            if (actual.toLowerCase) {
+                actual = actual.toLowerCase();
+            }
+            return actual != expected;
+        };
         return function(inputArray, searchText) {
             var wordArray = searchText ? searchText.toLowerCase().split(/\s+/) : [];
+            var comparator = false;
             for (var x=0; x < wordArray.length; x++) {
                 var filter_item = wordArray[x];
+                comparator = false;
+                if (!filter_item) {
+                    continue;
+                }
                 if (filter_item.indexOf(':') != -1) {
+                    if (filter_item[0] == '!') {
+                        comparator = negate;
+                        filter_item = filter_item.slice(1);
+                    }
                     var filter_item_split = filter_item.split(':', 2);
                     filter_item = {};
                     filter_item[filter_item_split[0]] = filter_item_split[1];
                 }
-                inputArray = $filter('filter')(inputArray, filter_item);
+                inputArray = $filter('filter')(inputArray, filter_item, comparator);
             }
             return inputArray;
         };
