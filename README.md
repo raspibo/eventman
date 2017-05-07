@@ -14,7 +14,7 @@ Main features:
 - easy way to add a new ticket, if it's already known from a previous event or if it's a completely new ticket
 - set maximum number of tickets and begin/end date for sales
 - can import Eventbrite CSV export files
-- RESTful interface that can be called by third-party applications (see the https://github.com/raspibo/event_man/ repository for a simple script that checks people in using a barcode/QR-code reader)
+- RESTful interface that can be called by third-party applications
 - ability to run triggers to respond to an event (e.g. when a person is marked as attending to an event)
 - can run on HTTPS
 - multiple workstations are kept in sync (i.e.: marking a person as an attendee is shown in every workstation currently viewing the list of tickets of an event)
