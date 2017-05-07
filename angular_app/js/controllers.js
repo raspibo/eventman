@@ -595,9 +595,9 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
                     $state.go('event.ticket.edit', {id: $scope.event._id, ticket_id: ret_ticket._id});
                 } else {
                     $scope.query = '';
-                    if ($scope.$close) {
+                    if ($scope.modalInstance) {
                         // Close the Quick ticket modal.
-                        $scope.$close();
+                        $scope.modalInstance.dismiss('no reason');
                     }
                     var msg = $scope.buildTicketLabel(ret_ticket);
                     msg += ' successfully added to event ' + $scope.event.title;
@@ -651,8 +651,8 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
         $scope.cancelForm = function() {
             if (!$state.is('event.tickets')) {
                 $state.go('events');
-            } else if ($scope.$close) {
-                $scope.$close();
+            } else if ($scope.modalInstance) {
+                $scope.modalInstance.dismiss('no reason');
             }
         };
 
