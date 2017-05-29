@@ -11,7 +11,7 @@
             <form class="form-inline">
                 <div class="form-group">
                     <label for="query-tickets">{{'Search:' | translate}}</label>
-                    <input eventman-focus type="text" id="query-tickets" class="form-control" placeholder="{{'Name or email' | translate}}" ng-model="query" ng-model-options="{debounce: 350}">
+                    <input eventman-focus type="text" id="query-tickets" class="form-control" placeholder="{{'Name or email' | translate}}" ng-model="query" ng-model-options="{debounce: 350}">&nbsp;<label>&nbsp;<input type="checkbox" ng-model="groupByEmail" /> {{'group by email' | translate}}</label>
                 </div>
             </form>
 
@@ -23,7 +23,7 @@
                     <tr>
                         <th class="text-right nowrap">#</th>
                         <th class="nowrap"><a ng-click="updateOrded('name')" href=""><i class="fa fa-caret-up"></i></a>{{'Name' | translate}}<a ng-click="updateOrded('-name')" href=""><i class="fa fa-caret-down"></i></a> <a ng-click="updateOrded('surname')" href=""><i class="fa fa-caret-up"></i></a>{{'Surname' | translate}}<a ng-click="updateOrded('-surname')" href=""><i class="fa fa-caret-down"></i></a> <a ng-click="updateOrded('email')" href=""><i class="fa fa-caret-up"></i></a>{{'Email' | translate}}<a ng-click="updateOrded('-email')" href=""><i class="fa fa-caret-down"></i></a></th>
-                        <th class="text-center nowrap"><strong>{{'Event' | translate}}</strong></th>
+                        <th class="text-center nowrap"><strong>{{'Ticket' | translate}}</strong></th>
                         <th class="text-center nowrap"><strong>{{'Attended' | translate}}</strong></th>
                     </tr>
                 </thead>
@@ -31,14 +31,20 @@
                 <tr ng-repeat="ticket in shownItems">
                     <td class="text-right">{{$index+1}}</td>
                     <td>
-                        <span><strong><a ui-sref="event.ticket.edit({id: ticket.event_id, ticket_id: ticket._id})"><span>{{ticket.name}}</span>&nbsp;<span>{{ticket.surname}}</span></a></strong></span><span ng-if="ticket.email">&nbsp;&lt;{{ticket.email}}&gt;</span>
+                        <span><strong><span>{{ticket.name}}</span>&nbsp;<span>{{ticket.surname}}</span></strong></span><span ng-if="ticket.email">&nbsp;&lt;{{ticket.email}}&gt;</span>
                         <p ng-if="ticket.company || ticket['job title']"><i ng-if="ticket['job title']">{{ticket['job title']}}</i><span ng-if="ticket.company && ticket['job title']">&nbsp;@&nbsp;</span><i ng-if="ticket.company">{{ticket.company}}</i></p>
                     </td>
                     <td class="text-center">
-                        <a ui-sref="event.view({id: ticket.event_id})">{{ticket.event_title}}</a>
+                        <a ng-if="!ticket.tickets" ui-sref="event.ticket.edit({id: ticket.event_id, ticket_id: ticket._id})">{{ticket.event_title}}</a>
+                        <div ng-if="ticket.tickets" ng-repeat="t in ticket.tickets">
+                            <a ui-sref="event.ticket.edit({id: t.event_id, ticket_id: t._id})">{{t.event_title}}</a>
+                        </div>
                     </td>
                     <td class="text-center">
-                        <span class="fa {{(ticket.attended) && 'fa-check-circle text-success' || 'fa-times-circle text-danger'}}"></span>
+                        <span ng-if="!ticket.tickets" class="fa {{(ticket.attended) && 'fa-check-circle text-success' || 'fa-times-circle text-danger'}}"></span>
+                        <div ng-if="ticket.tickets" ng-repeat="t in ticket.tickets">
+                            <span class="fa {{(t.attended) && 'fa-check-circle text-success' || 'fa-times-circle text-danger'}}"></span>
+                        </div>
                     </td>
                 </tr>
                 </tbody>

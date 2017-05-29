@@ -71,6 +71,7 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', 'EventTicke
         $scope.eventsOrderProp = "-begin_date";
         $scope.ticketsOrderProp = ["name", "surname"];
 
+        $scope.groupByEmail = false;
         $scope.shownItems = [];
         $scope.currentPage = 1;
         $scope.itemsPerPage = 10;
@@ -92,7 +93,27 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', 'EventTicke
         });
 
         $scope.filterTickets = function() {
-            var tickets = $scope.tickets || [];
+            var tickets = angular.copy($scope.tickets || []);
+            if ($scope.groupByEmail) {
+                var newDict = {};
+                var newList = [];
+                angular.forEach(tickets, function(item, idx) {
+                    if (!newDict[item.email]) {
+                        newDict[item.email] = {};
+                        newDict[item.email]['name'] = item.name;
+                        newDict[item.email]['surname'] = item.surname;
+                        newDict[item.email]['email'] = item.email;
+                        newDict[item.email]['job title'] = item.job;
+                        newDict[item.email]['company'] = item.company;
+                        newDict[item.email]['tickets'] = [];
+                    }
+                    newDict[item.email]['tickets'].push(item);
+                });
+                angular.forEach(newDict, function(value, key) {
+                    newList.push(value);
+                });
+                tickets = newList;
+            }
             tickets = $filter('splittedFilter')(tickets, $scope.query);
             tickets = $filter('orderBy')(tickets, $scope.ticketsOrderProp);
             $scope.filteredLength = tickets.length;
@@ -104,6 +125,10 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', 'EventTicke
             if (!$scope.query) {
                 $scope.currentPage = 1;
             }
+            $scope.filterTickets();
+        });
+
+        $scope.$watch('groupByEmail', function() {
             $scope.filterTickets();
         });
 
