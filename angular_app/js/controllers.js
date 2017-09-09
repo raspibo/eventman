@@ -826,14 +826,32 @@ eventManControllers.controller('UsersCtrl', ['$scope', '$rootScope', '$state', '
 );
 
 
-eventManControllers.controller('FileUploadCtrl', ['$scope', '$log', '$upload', 'Event',
-    function ($scope, $log, $upload, Event) {
+eventManControllers.controller('FileUploadCtrl', ['$scope', '$log', '$upload', 'EbAPI', 'Event',
+    function ($scope, $log, $upload, EbAPI, Event) {
         $scope.file = null;
         $scope.progress = 0;
         $scope.progressbarType = 'warning';
         $scope.deduplicate = false;
+        $scope.targetEvent = null;
+        $scope.createNewEvent = true;
+        $scope.ebAPIkey = '';
+        $scope.ebEventID = '';
         $scope.reply = {};
         $scope.events = Event.all();
+
+        $scope.apiImport = function() {
+            if (!($scope.ebAPIkey && $scope.ebEventID)) {
+                $log.warn('missing Eventbrite API key or Event ID');
+                return;
+            }
+            EbAPI.apiImport({
+                create: $scope.createNewEvent,
+                eventID: $scope.ebEventID,
+                targetEvent: $scope.targetEvent,
+                apiKey: $scope.ebAPIkey
+            });
+        };
+
         $scope.upload = function(file, url) {
             $log.debug("FileUploadCtrl.upload");
             $scope.progress = 0;

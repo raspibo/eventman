@@ -995,6 +995,20 @@ class UsersHandler(CollectionHandler):
         super(UsersHandler, self).put(id_, resource, resource_id, **kwargs)
 
 
+class EbAPIImportHandler(BaseHandler):
+    """Import events and attendees using Eventbrite API."""
+    @gen.coroutine
+    @authenticated
+    def post(self, *args, **kwargs):
+        reply = {}
+        data = escape.json_decode(self.request.body or '{}')
+        apiKey = data.get('apiKey')
+        targetEvent = data.get('targetEvent')
+        eventID = data.get('eventID')
+        create = data.get('create')
+        self.write(reply)
+
+
 class EbCSVImportPersonsHandler(BaseHandler):
     """Importer for CSV files exported from Eventbrite."""
     csvRemap = {
@@ -1259,8 +1273,13 @@ def run():
             (r'/v%s%s' % (API_VERSION, _users_path), UsersHandler, init_params),
             (r"/(?:index.html)?", RootHandler, init_params),
             (r"/ebcsvpersons", EbCSVImportPersonsHandler, init_params),
+            (r"/v%s/ebcsvpersons" % API_VERSION, EbCSVImportPersonsHandler, init_params),
+            (r"/ebapi", EbAPIImportHandler, init_params),
+            (r"/v%s/ebapi" % API_VERSION, EbAPIImportHandler, init_params),
             (r"/settings", SettingsHandler, init_params),
+            (r"/v%s/settings" % API_VERSION, SettingsHandler, init_params),
             (r"/info", InfoHandler, init_params),
+            (r"/v%s/info" % API_VERSION, InfoHandler, init_params),
             _ws_handler,
             (r'/login', LoginHandler, init_params),
             (r'/v%s/login' % API_VERSION, LoginHandler, init_params),

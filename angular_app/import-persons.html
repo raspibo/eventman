@@ -2,6 +2,37 @@
 <div class="container">
     <div class="panel panel-primary">
         <div class="panel-heading">
+            <div class="panel-title"><h1>{{'Import tickets with Eventbrite API' | translate}}</h1></div>
+        </div>
+        <div class="panel-body">
+            <form name="ebAPIForm" class="well">
+                <div class="form-group">
+                    <label for="eb-api-key">{{'API key' | translate}}</label>
+                    <input ng-model="ebAPIkey" id="eb-api-key" type="password" ng-required="true">
+                </div>
+                <div class="form-group">
+                    <label for="eb-event-id">{{'Eventbrite Event ID' | translate}}</label>
+                    <input ng-model="ebEventID" id="eb-event-id" ng-required="true">
+                </div>
+
+                <input type="checkbox" ng-model="createNewEvent"> {{'create a new event' | translate}}
+
+                <div class="form-group" ng-disabled="createNewEvent">
+                    <label for="forEvent">{{'Associate tickets to this event' | translate}}</label>
+                    <select class="form-control" id="forEvent" ng-model="targetEvent" ng-required="true" ng-disabled="createNewEvent">
+                        <option ng-repeat="event in events" value="{{event._id}}">{{event.title}}</option>
+                    </select>
+                </div>
+                <div>
+                    <br />
+                    <input type="submit" value="{{'Import' | translate}}" ng-click="apiImport()" />
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="panel panel-primary">
+        <div class="panel-heading">
             <div class="panel-title"><h1>{{'Import tickets from Eventbrite CSV' | translate}}</h1></div>
         </div>
         <div class="panel-body">
