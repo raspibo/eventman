@@ -71,6 +71,7 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', 'EventTicke
         $scope.eventsOrderProp = "-begin_date";
         $scope.ticketsOrderProp = ["name", "surname"];
 
+        $scope.groupByEmail = false;
         $scope.shownItems = [];
         $scope.currentPage = 1;
         $scope.itemsPerPage = 10;
@@ -92,7 +93,27 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', 'EventTicke
         });
 
         $scope.filterTickets = function() {
-            var tickets = $scope.tickets || [];
+            var tickets = angular.copy($scope.tickets || []);
+            if ($scope.groupByEmail) {
+                var newDict = {};
+                var newList = [];
+                angular.forEach(tickets, function(item, idx) {
+                    if (!newDict[item.email]) {
+                        newDict[item.email] = {};
+                        newDict[item.email]['name'] = item.name;
+                        newDict[item.email]['surname'] = item.surname;
+                        newDict[item.email]['email'] = item.email;
+                        newDict[item.email]['job title'] = item.job;
+                        newDict[item.email]['company'] = item.company;
+                        newDict[item.email]['tickets'] = [];
+                    }
+                    newDict[item.email]['tickets'].push(item);
+                });
+                angular.forEach(newDict, function(value, key) {
+                    newList.push(value);
+                });
+                tickets = newList;
+            }
             tickets = $filter('splittedFilter')(tickets, $scope.query);
             tickets = $filter('orderBy')(tickets, $scope.ticketsOrderProp);
             $scope.filteredLength = tickets.length;
@@ -104,6 +125,10 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', 'EventTicke
             if (!$scope.query) {
                 $scope.currentPage = 1;
             }
+            $scope.filterTickets();
+        });
+
+        $scope.$watch('groupByEmail', function() {
             $scope.filterTickets();
         });
 
@@ -801,14 +826,36 @@ eventManControllers.controller('UsersCtrl', ['$scope', '$rootScope', '$state', '
 );
 
 
-eventManControllers.controller('FileUploadCtrl', ['$scope', '$log', '$upload', 'Event',
-    function ($scope, $log, $upload, Event) {
+eventManControllers.controller('FileUploadCtrl', ['$scope', '$log', '$upload', 'EbAPI', 'Event', 'toaster',
+    function ($scope, $log, $upload, EbAPI, Event, toaster) {
         $scope.file = null;
         $scope.progress = 0;
         $scope.progressbarType = 'warning';
         $scope.deduplicate = false;
+        $scope.targetEvent = null;
+        $scope.createNewEvent = true;
+        $scope.ebAPIkey = '';
+        $scope.ebEventID = '';
         $scope.reply = {};
         $scope.events = Event.all();
+
+        $scope.apiImport = function() {
+            if (!($scope.ebAPIkey && $scope.ebEventID)) {
+                $log.warn('missing Eventbrite API key or Event ID');
+                return;
+            }
+            EbAPI.apiImport({
+                create: $scope.createNewEvent,
+                eventID: $scope.ebEventID,
+                targetEvent: $scope.targetEvent,
+                oauthToken: $scope.ebAPIkey
+            }, function(data) {
+                console.log(data);
+                toaster.pop({type: 'info', title: 'imported tickets',
+                    body: 'total: ' + data.total + ' errors: ' + (data.total - data.valid)})
+            });
+        };
+
         $scope.upload = function(file, url) {
             $log.debug("FileUploadCtrl.upload");
             $scope.progress = 0;

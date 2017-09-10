@@ -13,7 +13,7 @@ Main features:
 - quickly mark a registered person as an attendee
 - easy way to add a new ticket, if it's already known from a previous event or if it's a completely new ticket
 - set maximum number of tickets and begin/end date for sales
-- can import Eventbrite CSV export files
+- can import from Eventbrite using API and CSV file; see the docs/Eventbrite\_import.md file
 - RESTful interface that can be called by third-party applications
 - ability to run triggers to respond to an event (e.g. when a person is marked as attending to an event)
 - can run on HTTPS
@@ -59,6 +59,7 @@ Be sure to have a running MongoDB server, locally. If you want to install the de
     sudo pip3 install pymongo # version 3.2.2 or later
     sudo pip3 install python-dateutil
     sudo pip3 install pycups # only needed if you want to print labels
+    sudo pip3 install eventbrite # only needed if you want to import from Eventbrite using their API
     sudo pip3 install serial # only for the qrcode_reader script
     sudo pip3 install requests # only for the qrcode_reader script
     git clone https://github.com/raspibo/eventman
