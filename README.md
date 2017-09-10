@@ -13,7 +13,7 @@ Main features:
 - quickly mark a registered person as an attendee
 - easy way to add a new ticket, if it's already known from a previous event or if it's a completely new ticket
 - set maximum number of tickets and begin/end date for sales
-- can import Eventbrite CSV export files
+- can import from Eventbrite using API and CSV file; see the docs/Eventbrite\_import.md file
 - RESTful interface that can be called by third-party applications
 - ability to run triggers to respond to an event (e.g. when a person is marked as attending to an event)
 - can run on HTTPS

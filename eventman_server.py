@@ -436,8 +436,11 @@ class CollectionHandler(BaseHandler):
 
     @gen.coroutine
     @authenticated
-    def post(self, id_=None, resource=None, resource_id=None, **kwargs):
-        data = escape.json_decode(self.request.body or '{}')
+    def post(self, id_=None, resource=None, resource_id=None, _rawData=None, **kwargs):
+        if _rawData:
+            data = _rawData
+        else:
+            data = escape.json_decode(self.request.body or '{}')
         self._clean_dict(data)
         method = self.request.method.lower()
         crud_method = 'create' if method == 'post' else 'update'
@@ -768,7 +771,7 @@ class EventsHandler(CollectionHandler):
         if now > end_datetime:
             raise InputException('ticket sales has ended')
 
-    def handle_post_tickets(self, id_, resource_id, data):
+    def handle_post_tickets(self, id_, resource_id, data, _skipTriggers=False):
         event = self.db.query('events', {'_id': id_})[0]
         self._check_sales_datetime(event)
         self._check_number_of_tickets(event)
@@ -784,7 +787,7 @@ class EventsHandler(CollectionHandler):
                 {'tickets': data},
                 operation='appendUnique',
                 create=False)
-        if doc:
+        if doc and not _skipTriggers:
             self.send_ws_message('event/%s/tickets/updates' % id_, json.dumps(ret))
             ticket = self._get_ticket_data(ticket_id, doc.get('tickets') or [])
             env = dict(ticket)
@@ -1000,12 +1003,41 @@ class EbAPIImportHandler(BaseHandler):
     @gen.coroutine
     @authenticated
     def post(self, *args, **kwargs):
-        reply = {}
+        reply = dict(total=0, valid=0, merged=0, new_in_event=0)
         data = escape.json_decode(self.request.body or '{}')
-        apiKey = data.get('apiKey')
-        targetEvent = data.get('targetEvent')
+        oauthToken = data.get('oauthToken')
         eventID = data.get('eventID')
-        create = data.get('create')
+        targetEventID = data.get('targetEvent')
+        create = True
+        try:
+            create = self.tobool(data.get('create'))
+        except:
+            pass
+        try:
+            eb_info = utils.ebAPIFetch(oauthToken=oauthToken, eventID=eventID)
+        except Exception as e:
+            return self.build_error('Error using Eventbrite API: %s' % e)
+        if 'event' not in eb_info or 'attendees' not in eb_info:
+            return self.build_error('Missing information from Eventbrite API')
+        event_handler = EventsHandler(self.application, self.request)
+        event_handler.db = self.db
+        event_handler.logger = self.logger
+        event_handler.authentication = self.authentication
+        if create:
+            event_handler.post(_rawData=eb_info['event'])
+            event_in_db = self.db.query('events', {'eb_event_id': eb_info['event']['eb_event_id']})
+            if not event_in_db:
+                return self.build_error('Unable to create a new event')
+            targetEventID = event_in_db[0]['_id']
+        for ticket in eb_info.get('attendees') or []:
+            reply['total'] += 1
+            ticket['event_id'] = targetEventID
+            try:
+                event_handler.handle_post_tickets(targetEventID, None, ticket, _skipTriggers=True)
+            except Exception as e:
+                self.logger.warn('failed to add a ticket: ' % e)
+            reply['new_in_event'] += 1
+            reply['valid'] += 1
         self.write(reply)
 
 
@@ -1067,7 +1099,6 @@ class EbCSVImportPersonsHandler(BaseHandler):
         if not event_details:
             return self.build_error('invalid event')
         all_persons = set()
-        #[x.get('email') for x in (event_details[0].get('tickets') or []) if x.get('email')])
         for ticket in (event_details[0].get('tickets') or []):
             all_persons.add('%s_%s_%s' % (ticket.get('name'), ticket.get('surname'), ticket.get('email')))
         for fieldname, contents in self.request.files.items():
@@ -1088,7 +1119,7 @@ class EbCSVImportPersonsHandler(BaseHandler):
                         if duplicate_check in all_persons:
                             continue
                         all_persons.add(duplicate_check)
-                    event_handler.handle_post_tickets(event_id, None, person)
+                    event_handler.handle_post_tickets(event_id, None, person, _skipTriggers=True)
                     reply['new_in_event'] += 1
         self.write(reply)
 

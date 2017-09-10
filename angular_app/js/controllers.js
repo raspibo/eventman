@@ -826,8 +826,8 @@ eventManControllers.controller('UsersCtrl', ['$scope', '$rootScope', '$state', '
 );
 
 
-eventManControllers.controller('FileUploadCtrl', ['$scope', '$log', '$upload', 'EbAPI', 'Event',
-    function ($scope, $log, $upload, EbAPI, Event) {
+eventManControllers.controller('FileUploadCtrl', ['$scope', '$log', '$upload', 'EbAPI', 'Event', 'toaster',
+    function ($scope, $log, $upload, EbAPI, Event, toaster) {
         $scope.file = null;
         $scope.progress = 0;
         $scope.progressbarType = 'warning';
@@ -848,7 +848,11 @@ eventManControllers.controller('FileUploadCtrl', ['$scope', '$log', '$upload', '
                 create: $scope.createNewEvent,
                 eventID: $scope.ebEventID,
                 targetEvent: $scope.targetEvent,
-                apiKey: $scope.ebAPIkey
+                oauthToken: $scope.ebAPIkey
+            }, function(data) {
+                console.log(data);
+                toaster.pop({type: 'info', title: 'imported tickets',
+                    body: 'total: ' + data.total + ' errors: ' + (data.total - data.valid)})
             });
         };
 

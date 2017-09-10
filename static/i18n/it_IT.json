@@ -59,7 +59,7 @@
     "Delete event": "Cancella l'evento",
     "Delete all tickets in event": "Cancella tutti i ticket dell'evento",
     "Import tickets with Eventbrite API": "Importa i biglietti tramite le API di Eventbrite",
-    "API key": "API key",
+    "OAuth token": "OAuth token",
     "Eventbrite Event ID": "Eventbrite Event ID",
     "create a new event": "crea un nuovo evento",
     "Associate tickets to this event": "Associa i biglietti a questo evento",

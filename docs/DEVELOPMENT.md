@@ -58,7 +58,8 @@ The paths used to communicate with the Tornado web server:
 - /users/:user\_id PUT - update an existing user
 - /settings GET - settings to customize the GUI (logo, extra columns for events and tickets lists)
 - /info GET - information about the current user
-- /ebcsvpersons POST - csv file upload to import persons
+- /ebcsvpersons POST - csv file upload to import tickets
+- /ebapi POST - import tickets (and optionally a complete event) using Eventbrite API
 - /login POST - log a user in
 - /logout GET - when visited, the user is logged out
 

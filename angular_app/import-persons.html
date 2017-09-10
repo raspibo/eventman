@@ -7,7 +7,7 @@
         <div class="panel-body">
             <form name="ebAPIForm" class="well">
                 <div class="form-group">
-                    <label for="eb-api-key">{{'API key' | translate}}</label>
+                    <label for="eb-api-key">{{'OAuth token' | translate}}</label>
                     <input ng-model="ebAPIkey" id="eb-api-key" type="password" ng-required="true">
                 </div>
                 <div class="form-group">
@@ -16,6 +16,7 @@
                 </div>
 
                 <input type="checkbox" ng-model="createNewEvent"> {{'create a new event' | translate}}
+                <br />
 
                 <div class="form-group" ng-disabled="createNewEvent">
                     <label for="forEvent">{{'Associate tickets to this event' | translate}}</label>

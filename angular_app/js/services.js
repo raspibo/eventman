@@ -203,11 +203,7 @@ eventManServices.factory('EbAPI', ['$resource', '$rootScope',
                 interceptor: {responseError: $rootScope.errorHandler},
                 isArray: false,
                 transformResponse: function(data, headers) {
-                    data = angular.fromJson(data);
-                    if (data.error) {
-                        return data;
-                    }
-                    return data.info || {};
+                    return angular.fromJson(data);
                 }
             }
         });
