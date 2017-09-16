@@ -56,7 +56,7 @@
                             </thead>
                             <tbody>
                                 <tr ng-repeat="ticket in shownItems">
-                                    <td class="text-right">{{$index+1}}</td>
+                                    <td class="text-right">{{$index + 1 + ((currentPage-1)*itemsPerPage)}}</td>
                                     <td>
                                         <span>
                                             <strong>
