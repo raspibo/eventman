@@ -29,7 +29,7 @@
                 </thead>
                 <tbody>
                 <tr ng-repeat="ticket in shownItems">
-                    <td class="text-right">{{$index+1}}</td>
+                    <td class="text-right">{{$index + 1 + ((currentPage-1)*itemsPerPage)}}</td>
                     <td>
                         <span><strong><span>{{ticket.name}}</span>&nbsp;<span>{{ticket.surname}}</span></strong></span><span ng-if="ticket.email">&nbsp;&lt;{{ticket.email}}&gt;</span>
                         <p ng-if="ticket.company || ticket['job title']"><i ng-if="ticket['job title']">{{ticket['job title']}}</i><span ng-if="ticket.company && ticket['job title']">&nbsp;@&nbsp;</span><i ng-if="ticket.company">{{ticket.company}}</i></p>
