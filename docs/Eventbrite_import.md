@@ -12,7 +12,7 @@ Now go to the Eventbrite web page of your event, and copy the "eid" field of the
 
 In the EventMan "Import tickets" page, set the copied OAuth token and Event ID; it's also possible to select an existing event that will receive the new attendees, or create a brand new event with the information from Eventbrite.
 
-If you've created a new event, don't forget to edit it to add a registration form so that it will contain at least "name", "surname", "email".
+If you've created a new event, don't forget to edit it to add a registration form so that it will contain at least "name", "surname", "email" (also adding "company" and "job title" is a good idea).
 
 
 ## CSV import
