@@ -838,21 +838,31 @@ eventManControllers.controller('FileUploadCtrl', ['$scope', '$log', '$upload', '
         $scope.ebEventID = '';
         $scope.reply = {};
         $scope.events = Event.all();
+        $scope.importRunning = false;
 
         $scope.apiImport = function() {
             if (!($scope.ebAPIkey && $scope.ebEventID)) {
                 $log.warn('missing Eventbrite API key or Event ID');
                 return;
             }
+            $scope.importRunning = true;
+            var watingToaster = toaster.pop({type: 'wait', title: 'importing tickets',
+                                            body: 'this may take a while...',
+                                            timeout: 0, showCloseButton: false,
+                                            tapToDismiss: false});
             EbAPI.apiImport({
                 create: $scope.createNewEvent,
                 eventID: $scope.ebEventID,
                 targetEvent: $scope.targetEvent,
                 oauthToken: $scope.ebAPIkey
             }, function(data) {
-                console.log(data);
-                toaster.pop({type: 'info', title: 'imported tickets',
+                toaster.clear(watingToaster);
+                toaster.pop({type: 'info', title: 'tickets imported!',
                     body: 'total: ' + data.total + ' errors: ' + (data.total - data.valid)})
+                $scope.importRunning = false;
+            }, function(data) {
+                toaster.clear(watingToaster);
+                $scope.importRunning = false;
             });
         };
 

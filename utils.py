@@ -151,6 +151,8 @@ def reworkObj(obj, kind='event'):
             obj[new] = transf(obj[old])
             if old != new:
                 del obj[old]
+    if 'id' in obj:
+        del obj['id']
     if kind == 'event':
         if 'name' in obj:
             obj['title'] = obj.get('name', {}).get('text') or ''
@@ -168,17 +170,32 @@ def reworkObj(obj, kind='event'):
         obj['name'] = profile.get('first_name') or ''
         if not (obj['surname'] and obj['name']):
             obj['surname'] = complete_name
-        obj['email'] = profile.get('email') or ''
+        for key in 'name', 'first_name', 'last_name':
+            if key in profile:
+                del profile[key]
+        obj.update(profile)
+        if 'profile' in obj:
+            del obj['profile']
+        obj['email'] = obj.get('email') or ''
+        if 'job_title' in obj:
+            obj['job title'] = obj['job_title']
+            del obj['job_title']
+        if 'costs' in obj:
+            del obj['costs']
     return obj
 
 
 def expandBarcodes(attendees):
     """Generate an attendee for each barcode in the Eventbrite API data."""
     for attendee in attendees:
+        if 'id' in attendee:
+            del attendee['id']
         barcodes = attendee.get('barcodes') or []
         if not barcodes:
             yield attendee
         barcodes = [b.get('barcode') for b in barcodes if b.get('barcode')]
+        if 'barcodes' in attendee:
+            del attendee['barcodes']
         for code in barcodes:
             att_copy = copy.deepcopy(attendee)
             att_copy['order_nr'] = code
