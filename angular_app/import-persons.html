@@ -26,7 +26,7 @@
                 </div>
                 <div>
                     <br />
-                    <input type="submit" value="{{'Import' | translate}}" ng-click="apiImport()" />
+                    <input type="submit" value="{{'Import' | translate}}" ng-click="apiImport()" ng-disabled="importRunning" />
                 </div>
             </form>
         </div>
@@ -55,7 +55,7 @@
 
                 <div>
                     <br />
-                    <input type="submit" value="{{'Import' | translate}}" ng-click="upload(file, '/ebcsvpersons')" />
+                    <input type="submit" value="{{'Import' | translate}}" ng-click="upload(file, '/ebcsvpersons')" ng-disabled="importRunning" />
                 </div>
 
                 <div class="form-group top5">
