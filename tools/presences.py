@@ -6,7 +6,7 @@ import itertools
 import monco
 
 EVENTS = ('HackInBo 2015', 'HackInBo 2015 Winter', 'HackInBo 2016', 'HackInBo 2016 Winter', 'HackInBo 2017')
-NEXT_EVENT = '' # leave it empty if we've not yet added the tickets for the next event
+NEXT_EVENT = 'HackInBo 2017 Winter' # leave it empty if we've not yet added the tickets for the next event
 
 all_tickets = {}
 
@@ -18,10 +18,10 @@ class Info(object):
         self.attended = attended
 
     def __lt__(self, other):
-        return self.registered < other.registered or self.attended < other.attended
+        return (self.registered - self.attended) > (other.registered - other.attended) or self.registered < other.registered or self.attended < other.attended
 
     def __str__(self):
-        return '%d of %d' % (self.registered, self.attended)
+        return '%d of %d' % (self.attended, self.registered)
 
     def __eq__(self, other):
         return self.registered == other.registered and self.attended == other.attended
@@ -107,7 +107,7 @@ grouped_morons = itertools.groupby(sorted(morons_combinations, key=operator.item
 for i in (item for sublist in grouped_morons for item in sublist[1]):
     morons = Info(*i)
     print('')
-    print('Morons (registered at %d events, attended %d):' % (i[0], i[1]))
+    print('Absentees (registered at %d events, attended %d):' % (i[0], i[1]))
     for p, info in sorted(all_tickets.items()):
         if info == morons:
             all_morons[p] = info
@@ -119,6 +119,6 @@ if next_event_names:
     for name in sorted(next_event_names):
         if name in all_morons:
             morons_to_next_event.add((name, all_morons[name]))
-    print('Morons registered at the next event (%d morons):' % len(morons_to_next_event))
-    for m, info in sorted(morons_to_next_event):
+    print('Absentees registered at the next event (%d morons):' % len(morons_to_next_event))
+    for m, info in sorted(morons_to_next_event, key=operator.itemgetter(1)):
         print('%s (%s)' % (m, info))
