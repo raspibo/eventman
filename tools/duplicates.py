@@ -29,7 +29,7 @@ def run():
         events = db.query('events', {'title': sys.argv[1]})
         info(events[0], sys.argv[2])
     except:
-        print('count.py "title of event" key')
+        print('duplicates.py "title of event" key')
         sys.exit(1)
 
 if __name__ == '__main__':
