@@ -79,7 +79,7 @@ for event_name in EVENTS:
     percent = 0
     if attended:
         percent = new_in_this / attended * 100
-    print('%s: %d persons never seen before (%d total attended, %d%%)' % (event_name, new_in_this,
+    print('%s: %d persons never seen before (%d total attendees, %d%%)' % (event_name, new_in_this,
                                                                     attended, percent))
 
 print('')
