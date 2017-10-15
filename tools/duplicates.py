@@ -5,7 +5,7 @@ import sys
 import monco
 
 
-def info(event, key):
+def info(event, key, short=False):
     tickets = event['tickets']
     data = {}
     for ticket in tickets:
@@ -19,7 +19,10 @@ def info(event, key):
     for key, value in data.items():
         if len(value) < 2:
             continue
-        print('%s : %s' % (key, ', '.join(value)))
+        output = '%s (%d persons)' % (key, len(value))
+        if not short:
+            output += ': %s' % ', '.join(value)
+        print(output)
     print('')
 
 
@@ -27,7 +30,7 @@ def run():
     try:
         db = monco.Monco(dbName='eventman')
         events = db.query('events', {'title': sys.argv[1]})
-        info(events[0], sys.argv[2])
+        info(events[0], sys.argv[2], short='-s' in sys.argv[1:])
     except:
         print('duplicates.py "title of event" key')
         sys.exit(1)
