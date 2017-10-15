@@ -53,7 +53,7 @@ def convert_obj(obj):
         elif obj_l in ['false', 'off', 'no']:
             return False
         elif obj == '%NOW%':
-            return datetime.datetime.utcnow()
+            return str(datetime.datetime.utcnow())
     return obj
 
 
