@@ -5,8 +5,9 @@ import operator
 import itertools
 import monco
 
-EVENTS = ('HackInBo 2015', 'HackInBo 2015 Winter', 'HackInBo 2016', 'HackInBo 2016 Winter', 'HackInBo 2017')
-NEXT_EVENT = 'HackInBo 2017 Winter' # leave it empty if we've not yet added the tickets for the next event
+EVENTS = ('HackInBo 2015', 'HackInBo 2015 Winter', 'HackInBo 2016', 'HackInBo 2016 Winter', 'HackInBo 2017',
+          'HackInBo 2017 Winter')
+NEXT_EVENT = '' # leave it empty if we've not yet added the tickets for the next event
 
 all_tickets = {}
 

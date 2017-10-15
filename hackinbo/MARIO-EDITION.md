@@ -21,6 +21,9 @@ Fate una prova di stampa da ciascun client.
 ## Scansione QR Code
 
 Ogni client dovrà eseguire il file qrcode\_reader.py (directory tools), dopo aver configurato qrcode\_reader.ini con il nome e la password dell'utente, e l'IP del server.
+Nella sezione "event" è importante impostare il campo "id" a quello dell'evento che stiamo gestendo.
+
+Ricordarsi di aggiungere l'utente che farà girare il daemon al gruppo dialout (o comunque di dargli accesso in lettura al file /dev/ttyACM\*)
 
 Per il pomeriggio, è sufficiente collegare tutte le pistole ad un solo PC (quello del server), ed eseguire più istanze di qrcode\_reader.ini dopo aver creato vari file qrcode\_reader\_afternoon.ini (copiando l'originale e cambiandovi nome); il nome utente e las password possono essere sempre quelle di admin. È importante cambiare la porta della seriale.
 
