@@ -1,0 +1,8 @@
+version: '3'
+services:
+  mongo-dump:
+    build: ./docker-tools/mongodump/
+    volumes:
+      - .:/data
+    external_links:
+      - eventman_eventman-mongo_1:eventman-mongo
