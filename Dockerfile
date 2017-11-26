@@ -21,4 +21,4 @@ COPY . /opt/eventman/
 
 WORKDIR /opt/eventman/
 ENTRYPOINT ["./eventman_server.py"]
-CMD ["--debug"]
+CMD ["--debug", "--mongo_url=mongodb://eventman-mongo"]

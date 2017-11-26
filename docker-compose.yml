@@ -1,0 +1,8 @@
+version: '3'
+services:
+  eventman:
+    build: .
+    ports:
+     - "5242:5242"
+  eventman-mongo:
+    image: "mongo:latest"
