@@ -4,5 +4,7 @@ services:
     build: .
     ports:
      - "5242:5242"
+    depends_on:
+     - eventman-mongo
   eventman-mongo:
     image: "mongo:latest"
