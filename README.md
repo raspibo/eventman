@@ -1,5 +1,4 @@
-EventMan(ager)
-===============
+# EventMan(ager)
 
 Your friendly manager of attendees at an event.
 
@@ -18,23 +17,22 @@ Main features:
 - ability to run triggers to respond to an event (e.g. when a person is marked as attending to an event)
 - can run on HTTPS
 - multiple workstations are kept in sync (i.e.: marking a person as an attendee is shown in every workstation currently viewing the list of tickets of an event)
+- can run in Docker: see the docs/DOCKER.md file
 
 See the *screenshots* directory for some images.
 
-Demo
-====
+
+# Demo
 
 Whenever the gods of cloud-at-cost love us - very seldom, indeed - a demo system can be found at http://amy.ismito.it:5242/ (username: admin, password: eventman).
 
 
-Development
-===========
+# Development
 
 See the *docs/DEVELOPMENT.md* file for more information about how to contribute.
 
 
-Technological stack
-===================
+# Technological stack
 
 - [Python 3](https://www.python.org/) for the backend
 - [AngularJS](https://angularjs.org/) (plus some third-party modules) for the webApp
@@ -48,8 +46,7 @@ The web part is incuded; you need to install Tornado, MongoDB and the pymongo mo
 If you want to print labels using the _print\_label_ trigger, you may also need the pycups module.
 
 
-Install and run
-===============
+# Install and run
 
 Be sure to have a running MongoDB server, locally. If you want to install the dependencies only locally to the current user, you can append the *--user* argument to the *pip* calls. Please also install the *python3-dev* package, before running the following commands.
 
@@ -72,8 +69,7 @@ Open browser and navigate to: http://localhost:5242/
 If you store SSL key and certificate in the *ssl* directory (default names: eventman\_key.pem and eventman\_cert.pem), HTTPS will be used: https://localhost:5242/
 
 
-Basic workflow
-==============
+# Basic workflow
 
 So, you've just installed it and you have the server running.  Let's create an event:
 - login with the **admin** user (default password: **eventman**)
@@ -97,8 +93,7 @@ As an administrator, you can now go to the list of tickets of the event:
 - it's also possible to quickly add a new ticket or delete an existing one (the ticket is effectively deleted, it's not the same as the cancelled action)
 
 
-Notes on some special features
-------------------------------
+## Notes on some special features
 
 Some notes about the event registration form:
 - field names are important (case is not considered). You can use whatever you want, but "name", "surname" and "email" are internally used to show the tickets list, so please add at least one of them
@@ -109,8 +104,7 @@ About the "Group ID" of events and "Unregistered persons" list:
 - in the "Unregistered persons" list there will also be deleted tickets (beware that they are transitory: if the page is refreshed, they'll be gone for good); to match tickets between the list of tickets and "Unregistered persons" list, the email field is used, if present
 
 
-Authentication
-==============
+# Authentication
 
 By default, authentication is not required; unregistered and unprivileged users can see and join events, but are unable to edit or handle them. Administrator users can create ed edit events; more information about how permissions are handled can be found in the *docs/DEVELOPMENT.md* file.
 
@@ -118,20 +112,17 @@ The default administrator username and password are **admin** and **eventman**. 
 
 Users can register, but are not forced to do so: tickets can also be issued to unregistered persons. However, if you register, you'll be able to access the list of all of your tickets (otherwise, you have to save the tickets' link, if you want to edit them later).
 
-Tools
-=====
+# Tools
 
 In the 'tools' directory there are some useful tools, to handle check-in and extract data.
 
 
-Other projects
-==============
+# Other projects
 
 Needs something simpler, that just allows you to register attendees at an event?  Try [ibt2](https://github.com/raspibo/ibt2)
 
 
-License and copyright
-=====================
+# License and copyright
 
 Copyright 2015-2017 Davide Alberani <da@erlug.linux.it>, RaspiBO <info@raspibo.org>
 

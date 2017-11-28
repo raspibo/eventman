@@ -1,0 +1,16 @@
+version: '3'
+services:
+  eventman:
+    build: .
+    ports:
+      - "5242:5242"
+    depends_on:
+      - mongo
+    volumes:
+      - ./data:/eventman/data
+  mongo:
+    image: "mongo:latest"
+    volumes:
+      - data:/data/db
+volumes:
+  data:

@@ -107,7 +107,7 @@ class Monco(object):
         """
         self._url = url
         self._dbName = dbName
-        self.connect(url)
+        self.connect()
 
     def connect(self, dbName=None, url=None):
         """Connect to the database.
