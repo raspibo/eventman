@@ -16,9 +16,8 @@ RUN \
 	pip3 install eventbrite && \
 	rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /opt/eventman/
-COPY . /opt/eventman/
+COPY . /eventman
 
-WORKDIR /opt/eventman/
+WORKDIR /eventman/
 ENTRYPOINT ["./eventman_server.py"]
 CMD ["--debug", "--mongo_url=mongodb://mongo"]
