@@ -17,8 +17,10 @@ Main features:
 - ability to run triggers to respond to an event (e.g. when a person is marked as attending to an event)
 - can run on HTTPS
 - multiple workstations are kept in sync (i.e.: marking a person as an attendee is shown in every workstation currently viewing the list of tickets of an event)
+- can run in Docker: see the docs/DOCKER.md file
 
 See the *screenshots* directory for some images.
+
 
 # Demo
 
