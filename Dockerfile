@@ -19,5 +19,4 @@ RUN \
 COPY . /eventman
 
 WORKDIR /eventman/
-ENTRYPOINT ["./eventman_server.py"]
-CMD ["--debug", "--mongo_url=mongodb://mongo"]
+ENTRYPOINT ["./eventman_server.py", "--mongo_url=mongodb://mongo", "--debug"]
