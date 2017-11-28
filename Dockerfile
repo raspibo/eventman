@@ -4,6 +4,7 @@ LABEL \
 	vendor="RaspiBO"
 
 EXPOSE 5242
+VOLUME ["/eventman/data"]
 
 RUN \
 	apt-get update && \
