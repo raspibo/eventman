@@ -3,8 +3,12 @@ services:
   eventman:
     build: .
     ports:
-     - "5242:5242"
+      - "5242:5242"
     depends_on:
-     - mongo
+      - mongo
   mongo:
     image: "mongo:latest"
+    volumes:
+      - data:/data/db
+volumes:
+  data:
