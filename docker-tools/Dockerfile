@@ -6,4 +6,4 @@ LABEL \
 VOLUME ["/data"]
 
 COPY run.sh /
-CMD ["/run.sh"]
+ENTRYPOINT ["/run.sh"]
