@@ -6,6 +6,8 @@ services:
       - "5242:5242"
     depends_on:
       - mongo
+    volumes:
+      - ./data:/eventman/data
   mongo:
     image: "mongo:latest"
     volumes:
