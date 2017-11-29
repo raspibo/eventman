@@ -8,7 +8,7 @@ VOLUME ["/eventman/data"]
 
 RUN \
 	apt-get update && \
-	apt-get -y install \
+	apt-get -y --no-install-recommends install \
 		python3-cups \
 		python3-dateutil \
 		python3-pip \
