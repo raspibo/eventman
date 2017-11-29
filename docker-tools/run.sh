@@ -6,7 +6,10 @@ fi
 
 cmd="$1"
 
-if [ "${cmd}" = "--dump" ] ; then
+if [ "${cmd}" = "--shell" ] ; then
+	echo "INFO: opening shell..."
+	mongo --host mongo eventman
+elif [ "${cmd}" = "--dump" ] ; then
 	echo "INFO: dumping..."
 	mongodump --host mongo --out /tmp/ --db eventman || (echo "ERROR: unable to dump the database" ; exit 10)
 	cd /tmp
