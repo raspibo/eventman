@@ -48,6 +48,15 @@ If you want to print labels using the _print\_label_ trigger, you may also need 
 
 # Install and run
 
+## Docker
+
+Just run:
+
+    docker-compose up
+
+
+## Old-fashioned installation
+
 Be sure to have a running MongoDB server, locally. If you want to install the dependencies only locally to the current user, you can append the *--user* argument to the *pip* calls. Please also install the *python3-dev* package, before running the following commands.
 
     wget https://bootstrap.pypa.io/get-pip.py
