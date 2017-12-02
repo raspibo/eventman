@@ -632,6 +632,8 @@ class EventsHandler(CollectionHandler):
                 self._check_number_of_tickets(event)
             except InputException:
                 event['no_tickets_for_sale'] = True
+            if not self.has_permission('event|write'):
+                event['group_id'] = ''
             if not self.has_permission('tickets-all|read'):
                 event['tickets'] = []
         return event
