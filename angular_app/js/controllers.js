@@ -78,7 +78,11 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', 'EventTicke
         $scope.filteredLength = 0;
         $scope.maxPaginationSize = 10;
 
-        $scope.events = Event.all({_summary: true}, function(events) {
+        var query_params = {};
+        if (!$state.is('tickets')) {
+            query_params['_summary'] = true
+        }
+        $scope.events = Event.all(query_params, function(events) {
             if (events && $state.is('tickets')) {
                 angular.forEach(events, function(evt, idx) {
                     var evt_tickets = (evt.tickets || []).slice(0);
