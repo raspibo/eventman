@@ -78,7 +78,7 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', 'EventTicke
         $scope.filteredLength = 0;
         $scope.maxPaginationSize = 10;
 
-        $scope.events = Event.all(function(events) {
+        $scope.events = Event.all({_summary: true}, function(events) {
             if (events && $state.is('tickets')) {
                 angular.forEach(events, function(evt, idx) {
                     var evt_tickets = (evt.tickets || []).slice(0);
@@ -216,7 +216,9 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
         $scope.eventFormDisabled = false;
 
         if ($state.params.id) {
-            $scope.event = Event.get($state.params);
+            var params = angular.copy($state.params);
+            params['_summary'] = true;
+            $scope.event = Event.get(params);
             if ($state.is('event.view') || !$rootScope.hasPermission('event|update')) {
                 $scope.eventFormDisabled = true;
             }
