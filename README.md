@@ -84,7 +84,13 @@ So, you've just installed it and you have the server running.  Let's create an e
 - login with the **admin** user (default password: **eventman**)
 - click "Add an event"
 - edit basic information about the event and save it
-- in the second panel ("Registration form"), edit the form that will be presented to the persons that want to join your event:
+- a default registration form is provided, with the following fields (all are optional):
+  - Name
+  - Surname
+  - Email
+  - Job title
+  - Company
+- if you want to customize it, go to the second panel ("Registration form") and edit it:
   - first, define how many rows the form will have
   - then define how many columns will be in each rows
   - now edit every form field
