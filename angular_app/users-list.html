@@ -28,15 +28,20 @@
             </form>
 
             <div ng-include=" 'modal-confirm-action.html' " class="hidden"></div>
+            <uib-pagination ng-model="currentPage" total-items="filteredUsersLength" items-per-page="itemsPerPage"
+                        direction-links="false" boundary-links="true" boundary-link-numbers="true" max-size="maxPaginationSize">
+            </uib-pagination>
             <table class="table table-striped">
                 <thead>
                     <tr>
+                        <th class="text-right nowrap">#</th>
                         <th><strong>{{'User' | translate}}</strong></th>
                         <th><strong>{{'Actions' | translate}}</strong></th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr ng-repeat="user in users | splittedFilter:query | orderBy:usersOrderProp">
+                    <tr ng-repeat="user in shownItems">
+                        <td class="text-right">{{$index + 1 + ((currentPage-1)*itemsPerPage)}}</td>
                         <td>
                             <span>
                                 <strong>
@@ -50,6 +55,9 @@
                     </tr>
                 </tbody>
             </table>
+            <uib-pagination ng-model="currentPage" total-items="filteredUsersLength" items-per-page="itemsPerPage"
+                        direction-links="false" boundary-links="true" boundary-link-numbers="true" max-size="maxPaginationSize">
+            </uib-pagination>
         </div>
     </div>
 </div>

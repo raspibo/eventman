@@ -998,15 +998,45 @@ eventManControllers.controller('UsersCtrl', ['$scope', '$rootScope', '$state', '
         $scope.updateUserInfo = {};
         $scope.users = [];
         $scope.usersOrderProp = 'username';
+
         $scope.query = "";
+        $scope.currentPage = 1;
+        $scope.itemsPerPage = 10;
+        $scope.filteredLength = 0;
+        $scope.maxPaginationSize = 10;
+        $scope.shownItems = [];
 
         $scope.userQuery = "";
         $scope.userCurrentPage = 1;
         $scope.userItemsPerPage = 10;
         $scope.userFilteredLength = 0;
         $scope.userMaxPaginationSize = 10;
-        $scope.userMaxAllPersons = 10;
         $scope.userShownItems = [];
+
+        $scope.filterUsers = function() {
+            var users = $scope.users || [];
+            users = $filter('splittedFilter')(users, $scope.query);
+            users = $filter('orderBy')(users, $scope.usersOrderProp);
+            $scope.filteredUsers = angular.copy(users);
+            $scope.filteredUsersLength = $scope.filteredUsers.length;
+            users = $filter('pagination')(users, $scope.currentPage, $scope.itemsPerPage);
+            $scope.shownItems = users;
+        };
+
+        $scope.$watch('query', function() {
+            if (!$scope.query) {
+                $scope.currentPage = 1;
+            }
+            $scope.filterUsers();
+        });
+
+        $scope.$watch('currentPage + itemsPerPage', function() {
+            $scope.filterUsers();
+        });
+
+        $scope.$watch('usersOrderProp', function() {
+            $scope.filterUsers();
+        });
 
         $scope.userFilterTickets = function() {
             var tickets = $scope.user.tickets || [];
@@ -1037,7 +1067,9 @@ eventManControllers.controller('UsersCtrl', ['$scope', '$rootScope', '$state', '
 
         $scope.updateUsersList = function() {
             if ($state.is('users')) {
-                $scope.users = User.all();
+                $scope.users = User.all(function() {
+                    $scope.filterUsers();
+                });
             }
         };
 
