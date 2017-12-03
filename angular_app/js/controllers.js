@@ -990,14 +990,43 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
 );
 
 
-eventManControllers.controller('UsersCtrl', ['$scope', '$rootScope', '$state', '$log', 'User', '$uibModal',
-    function ($scope, $rootScope, $state, $log, User, $uibModal) {
+eventManControllers.controller('UsersCtrl', ['$scope', '$rootScope', '$state', '$log', 'User', '$uibModal', '$filter',
+    function ($scope, $rootScope, $state, $log, User, $uibModal, $filter) {
         $scope.loginData = {};
         $scope.user = {};
+        $scope.user.tickets = [];
         $scope.updateUserInfo = {};
         $scope.users = [];
         $scope.usersOrderProp = 'username';
-        $scope.ticketsOrderProp = 'title';
+        $scope.query = "";
+
+        $scope.userQuery = "";
+        $scope.userCurrentPage = 1;
+        $scope.userItemsPerPage = 10;
+        $scope.userFilteredLength = 0;
+        $scope.userMaxPaginationSize = 10;
+        $scope.userMaxAllPersons = 10;
+        $scope.userShownItems = [];
+
+        $scope.userFilterTickets = function() {
+            var tickets = $scope.user.tickets || [];
+            tickets = $filter('splittedFilter')(tickets, $scope.userQuery);
+            $scope.userFilteredTickets = angular.copy(tickets);
+            $scope.userFilteredLength = $scope.userFilteredTickets.length;
+            tickets = $filter('pagination')(tickets, $scope.userCurrentPage, $scope.userItemsPerPage);
+            $scope.userShownItems = tickets;
+        };
+
+        $scope.$watch('userQuery', function() {
+            if (!$scope.userQuery) {
+                $scope.userCurrentPage = 1;
+            }
+            $scope.userFilterTickets();
+        });
+
+        $scope.$watch('userCurrentPage + userItemsPerPage', function() {
+            $scope.userFilterTickets();
+        });
 
         $scope.confirm_delete = 'Do you really want to delete this user?';
         $rootScope.$on('$translateChangeSuccess', function () {
@@ -1018,6 +1047,7 @@ eventManControllers.controller('UsersCtrl', ['$scope', '$rootScope', '$state', '
             $scope.user = User.get({id: $state.params.id}, function() {
                 $scope.updateUserInfo = $scope.user;
                 $scope.updateUserInfo.isAdmin = $rootScope.hasPermission('admin|all', $scope.updateUserInfo);
+                $scope.userFilterTickets();
             });
         }
 
