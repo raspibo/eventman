@@ -430,7 +430,8 @@ class CollectionHandler(BaseHandler):
             permission = '%s|read' % self.collection
             if acl and not self.has_permission(permission):
                 return self.build_error(status=401, message='insufficient permissions: %s' % permission)
-            output = {self.collection: self.db.query(self.collection, self.arguments)}
+            db_query = {k: v for k, v in self.arguments.items() if not k.startswith('_')}
+            output = {self.collection: self.db.query(self.collection, db_query)}
             output = self.apply_filter(output, 'get_all')
             self.write(output)
 
@@ -625,14 +626,18 @@ class EventsHandler(CollectionHandler):
     def _mangle_event(self, event):
         # Some in-place changes to an event
         if 'tickets' in event:
-            event['tickets_sold'] = len([t for t in event['tickets'] if not t.get('cancelled')])
+            valid_tickets = [t for t in event['tickets'] if not t.get('cancelled')]
+            event['tickets_sold'] = len(valid_tickets)
+            event['total_attendees'] = len([t for t in valid_tickets if t.get('attended')])
             event['no_tickets_for_sale'] = False
             try:
                 self._check_sales_datetime(event)
                 self._check_number_of_tickets(event)
             except InputException:
                 event['no_tickets_for_sale'] = True
-            if not self.has_permission('tickets-all|read'):
+            if not self.has_permission('event|write'):
+                event['group_id'] = ''
+            if '_summary' in self.arguments or not self.has_permission('tickets-all|read'):
                 event['tickets'] = []
         return event
 

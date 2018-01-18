@@ -177,7 +177,7 @@ eventManApp.config(['$stateProvider', '$urlRouterProvider', '$compileProvider',
                 templateUrl: 'user-main.html'
             })
             .state('user.edit', {
-                url: ':id/edit',
+                url: '/:id/edit',
                 templateUrl: 'user-edit.html',
                 controller: 'UsersCtrl'
             })

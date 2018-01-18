@@ -48,6 +48,15 @@ If you want to print labels using the _print\_label_ trigger, you may also need 
 
 # Install and run
 
+## Docker
+
+Just run:
+
+    docker-compose up
+
+
+## Old-fashioned installation
+
 Be sure to have a running MongoDB server, locally. If you want to install the dependencies only locally to the current user, you can append the *--user* argument to the *pip* calls. Please also install the *python3-dev* package, before running the following commands.
 
     wget https://bootstrap.pypa.io/get-pip.py
@@ -75,7 +84,13 @@ So, you've just installed it and you have the server running.  Let's create an e
 - login with the **admin** user (default password: **eventman**)
 - click "Add an event"
 - edit basic information about the event and save it
-- in the second panel ("Registration form"), edit the form that will be presented to the persons that want to join your event:
+- a default registration form is provided, with the following fields (all are optional):
+  - Name
+  - Surname
+  - Email
+  - Job title
+  - Company
+- if you want to customize it, go to the second panel ("Registration form") and edit it:
   - first, define how many rows the form will have
   - then define how many columns will be in each rows
   - now edit every form field

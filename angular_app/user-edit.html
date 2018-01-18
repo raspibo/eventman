@@ -36,26 +36,25 @@
             <form class="form-inline">
                 <div class="form-group">
                     <label for="query-tickets">{{'Search:' | translate}}</label>
-                    <input eventman-focus type="text" id="query-tickets" class="form-control" placeholder="{{'Event title' | translate}}" ng-model="query" ng-model-options="{debounce: 350}">
-                </div>
-                <div class="form-group">
-                    <label for="tickets-order">{{'Sort by:' | translate}}</label>
-                    <select id="tickets-order" class="form-control" ng-model="ticketsOrderProp">
-                        <option value="title">{{'Title' | translate}}</option>
-                        <option value="-title">{{'Title (descending)' | translate}}</option>
-                    </select>
+                    <input eventman-focus type="text" id="query-tickets" class="form-control" placeholder="{{'Name' | translate}}" ng-model="userQuery" ng-model-options="{debounce: 350}">
                 </div>
             </form>
+
+            <uib-pagination ng-model="userCurrentPage" total-items="userFilteredLength" items-per-page="userItemsPerPage"
+                        direction-links="false" boundary-links="true" boundary-link-numbers="true" max-size="userMaxPaginationSize">
+            </uib-pagination>
             <table class="table">
                 <thead>
                     <tr>
+                        <th class="text-right nowrap">#</th>
                         <th>{{'Ticket' | translate}}</th>
                         <th>{{'Event' | translate}}</th>
                         <th class="text-center">{{'Attended' | translate}}</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr ng-repeat="ticket in (user.tickets || []) | splittedFilter:query | orderBy:ticketsOrderProp">
+                    <tr ng-repeat="ticket in userShownItems">
+                        <td class="text-right">{{$index + 1 + ((userCurrentPage-1)*userItemsPerPage)}}</td>
                         <td>
                             <strong>
                                 <a ui-sref="event.ticket.edit({id: ticket.event_id, ticket_id: ticket._id})">
@@ -73,6 +72,9 @@
                     </tr>
                 </tbody>
             </table>
+            <uib-pagination ng-model="userCurrentPage" total-items="userFilteredLength" items-per-page="userItemsPerPage"
+                        direction-links="false" boundary-links="true" boundary-link-numbers="true" max-size="userMaxPaginationSize">
+            </uib-pagination>
         </div>
     </div>
 </div>

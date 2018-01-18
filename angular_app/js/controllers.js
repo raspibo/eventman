@@ -78,7 +78,11 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', 'EventTicke
         $scope.filteredLength = 0;
         $scope.maxPaginationSize = 10;
 
-        $scope.events = Event.all(function(events) {
+        var query_params = {};
+        if (!$state.is('tickets')) {
+            query_params['_summary'] = true
+        }
+        $scope.events = Event.all(query_params, function(events) {
             if (events && $state.is('tickets')) {
                 angular.forEach(events, function(evt, idx) {
                     var evt_tickets = (evt.tickets || []).slice(0);
@@ -208,6 +212,246 @@ eventManControllers.controller('EventsListCtrl', ['$scope', 'Event', 'EventTicke
 );
 
 
+var default_formSchema = {
+    "btnSubmitText": "Submit",
+    "formlyFieldsModel": [
+        {
+            "className": "row",
+            "fieldGroup": [
+                {
+                    "templateOptions": {
+                        "description": "",
+                        "type": "",
+                        "required": false,
+                        "label": "Name",
+                        "placeholder": "",
+                        "options": []
+                    },
+                    "className": "col-xs-4",
+                    "expressionProperties": {},
+                    "key": "input-1512294560560",
+                    "validators": {},
+                    "validation": {
+                        "messages": {}
+                    },
+                    "type": "input"
+                },
+                {
+                    "templateOptions": {
+                        "description": "",
+                        "type": "",
+                        "required": false,
+                        "label": "Surname",
+                        "placeholder": "",
+                        "options": []
+                    },
+                    "className": "col-xs-4",
+                    "expressionProperties": {},
+                    "key": "input-1512294555929",
+                    "validators": {},
+                    "validation": {
+                        "messages": {}
+                    },
+                    "type": "input"
+                },
+                {
+                    "templateOptions": {
+                        "description": "",
+                        "type": "",
+                        "required": false,
+                        "label": "Email",
+                        "placeholder": "",
+                        "options": []
+                    },
+                    "className": "col-xs-4",
+                    "expressionProperties": {},
+                    "key": "input-1512294566386",
+                    "validators": {},
+                    "validation": {
+                        "messages": {}
+                    },
+                    "type": "input"
+                }
+            ]
+        },
+        {
+            "className": "row",
+            "fieldGroup": [
+                {
+                    "templateOptions": {
+                        "description": "",
+                        "type": "",
+                        "required": false,
+                        "label": "Job title",
+                        "placeholder": "",
+                        "options": []
+                    },
+                    "className": "col-xs-6",
+                    "expressionProperties": {},
+                    "key": "input-1512294529739",
+                    "validators": {},
+                    "validation": {
+                        "messages": {}
+                    },
+                    "type": "input"
+                },
+                {
+                    "templateOptions": {
+                        "description": "",
+                        "type": "",
+                        "required": false,
+                        "label": "Company",
+                        "placeholder": "",
+                        "options": []
+                    },
+                    "className": "col-xs-6",
+                    "expressionProperties": {},
+                    "key": "input-1512294538113",
+                    "validators": {},
+                    "validation": {
+                        "messages": {}
+                    },
+                    "type": "input"
+                }
+            ]
+        }
+    ],
+    "dataModel": {},
+    "edaFieldsModelStringified": "[{\"line\":1,\"activeColumn\":1,\"columns\":[{\"numColumn\":1,\"exist\":true,\"control\":{\"type\":\"input\",\"key\":\"input-1512294560560\",\"selectedControl\":\"TextInput\",\"subtype\":\"\",\"templateOptions\":{\"label\":\"Name\",\"required\":false,\"description\":\"\",\"placeholder\":\"\",\"options\":[]},\"formlyExpressionProperties\":{},\"formlyValidators\":{},\"formlyValidation\":{\"messages\":{}},\"edited\":true}},{\"numColumn\":2,\"exist\":true,\"control\":{\"type\":\"input\",\"key\":\"input-1512294555929\",\"subtype\":\"\",\"selectedControl\":\"TextInput\",\"templateOptions\":{\"label\":\"Surname\",\"required\":false,\"description\":\"\",\"placeholder\":\"\",\"options\":[]},\"formlyExpressionProperties\":{},\"formlyValidators\":{},\"formlyValidation\":{\"messages\":{}},\"edited\":true}},{\"numColumn\":3,\"exist\":true,\"control\":{\"type\":\"input\",\"key\":\"input-1512294566386\",\"subtype\":\"\",\"selectedControl\":\"TextInput\",\"templateOptions\":{\"label\":\"Email\",\"required\":false,\"description\":\"\",\"placeholder\":\"\",\"options\":[]},\"formlyExpressionProperties\":{},\"formlyValidators\":{},\"formlyValidation\":{\"messages\":{}},\"edited\":true}}]},{\"line\":-1,\"activeColumn\":1,\"columns\":[{\"numColumn\":1,\"exist\":true,\"control\":{\"type\":\"input\",\"key\":\"input-1512294529739\",\"selectedControl\":\"TextInput\",\"subtype\":\"\",\"templateOptions\":{\"label\":\"Job title\",\"required\":false,\"description\":\"\",\"placeholder\":\"\",\"options\":[]},\"formlyExpressionProperties\":{},\"formlyValidators\":{},\"formlyValidation\":{\"messages\":{}},\"edited\":true}},{\"numColumn\":2,\"exist\":true,\"control\":{\"type\":\"input\",\"key\":\"input-1512294538113\",\"subtype\":\"\",\"selectedControl\":\"TextInput\",\"templateOptions\":{\"label\":\"Company\",\"required\":false,\"description\":\"\",\"placeholder\":\"\",\"options\":[]},\"formlyExpressionProperties\":{},\"formlyValidators\":{},\"formlyValidation\":{\"messages\":{}},\"edited\":true}}]}]",
+    "edaFieldsModel": [
+        {
+            "line": 1,
+            "activeColumn": 1,
+            "columns": [
+                {
+                    "control": {
+                        "edited": true,
+                        "templateOptions": {
+                            "options": [],
+                            "required": false,
+                            "placeholder": "",
+                            "description": "",
+                            "label": "Name"
+                        },
+                        "formlyExpressionProperties": {},
+                        "subtype": "",
+                        "formlyValidators": {},
+                        "key": "input-1512294560560",
+                        "selectedControl": "TextInput",
+                        "type": "input",
+                        "formlyValidation": {
+                            "messages": {}
+                        }
+                    },
+                    "exist": true,
+                    "numColumn": 1
+                },
+                {
+                    "control": {
+                        "edited": true,
+                        "templateOptions": {
+                            "options": [],
+                            "required": false,
+                            "placeholder": "",
+                            "description": "",
+                            "label": "Surname"
+                        },
+                        "formlyExpressionProperties": {},
+                        "subtype": "",
+                        "formlyValidators": {},
+                        "key": "input-1512294555929",
+                        "selectedControl": "TextInput",
+                        "type": "input",
+                        "formlyValidation": {
+                            "messages": {}
+                        }
+                    },
+                    "exist": true,
+                    "numColumn": 2
+                },
+                {
+                    "control": {
+                        "edited": true,
+                        "templateOptions": {
+                            "options": [],
+                            "required": false,
+                            "placeholder": "",
+                            "description": "",
+                            "label": "Email"
+                        },
+                        "formlyExpressionProperties": {},
+                        "subtype": "",
+                        "formlyValidators": {},
+                        "key": "input-1512294566386",
+                        "selectedControl": "TextInput",
+                        "type": "input",
+                        "formlyValidation": {
+                            "messages": {}
+                        }
+                    },
+                    "exist": true,
+                    "numColumn": 3
+                }
+            ]
+        },
+        {
+            "line": -1,
+            "activeColumn": 1,
+            "columns": [
+                {
+                    "control": {
+                        "edited": true,
+                        "templateOptions": {
+                            "options": [],
+                            "required": false,
+                            "placeholder": "",
+                            "description": "",
+                            "label": "Job title"
+                        },
+                        "formlyExpressionProperties": {},
+                        "subtype": "",
+                        "formlyValidators": {},
+                        "key": "input-1512294529739",
+                        "selectedControl": "TextInput",
+                        "type": "input",
+                        "formlyValidation": {
+                            "messages": {}
+                        }
+                    },
+                    "exist": true,
+                    "numColumn": 1
+                },
+                {
+                    "control": {
+                        "edited": true,
+                        "templateOptions": {
+                            "options": [],
+                            "required": false,
+                            "placeholder": "",
+                            "description": "",
+                            "label": "Company"
+                        },
+                        "formlyExpressionProperties": {},
+                        "subtype": "",
+                        "formlyValidators": {},
+                        "key": "input-1512294538113",
+                        "selectedControl": "TextInput",
+                        "type": "input",
+                        "formlyValidation": {
+                            "messages": {}
+                        }
+                    },
+                    "exist": true,
+                    "numColumn": 2
+                }
+            ]
+        }
+    ],
+    "btnCancelText": "Cancel",
+    "formName": "registration_form"
+};
+
+
 eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event', '$log', '$translate', '$rootScope',
     function ($scope, $state, Event, $log, $translate, $rootScope) {
         $scope.event = {};
@@ -216,10 +460,14 @@ eventManControllers.controller('EventDetailsCtrl', ['$scope', '$state', 'Event',
         $scope.eventFormDisabled = false;
 
         if ($state.params.id) {
-            $scope.event = Event.get($state.params);
+            var params = angular.copy($state.params);
+            params['_summary'] = true;
+            $scope.event = Event.get(params);
             if ($state.is('event.view') || !$rootScope.hasPermission('event|update')) {
                 $scope.eventFormDisabled = true;
             }
+        } else if (!($scope.event.formSchema && $scope.event.formSchema.formlyFieldsModel)) {
+            $scope.event.formSchema = default_formSchema;
         }
 
         // store a new Event or update an existing one
@@ -742,14 +990,73 @@ eventManControllers.controller('EventTicketsCtrl', ['$scope', '$state', 'Event',
 );
 
 
-eventManControllers.controller('UsersCtrl', ['$scope', '$rootScope', '$state', '$log', 'User', '$uibModal',
-    function ($scope, $rootScope, $state, $log, User, $uibModal) {
+eventManControllers.controller('UsersCtrl', ['$scope', '$rootScope', '$state', '$log', 'User', '$uibModal', '$filter',
+    function ($scope, $rootScope, $state, $log, User, $uibModal, $filter) {
         $scope.loginData = {};
         $scope.user = {};
+        $scope.user.tickets = [];
         $scope.updateUserInfo = {};
         $scope.users = [];
         $scope.usersOrderProp = 'username';
-        $scope.ticketsOrderProp = 'title';
+
+        $scope.query = "";
+        $scope.currentPage = 1;
+        $scope.itemsPerPage = 10;
+        $scope.filteredLength = 0;
+        $scope.maxPaginationSize = 10;
+        $scope.shownItems = [];
+
+        $scope.userQuery = "";
+        $scope.userCurrentPage = 1;
+        $scope.userItemsPerPage = 10;
+        $scope.userFilteredLength = 0;
+        $scope.userMaxPaginationSize = 10;
+        $scope.userShownItems = [];
+
+        $scope.filterUsers = function() {
+            var users = $scope.users || [];
+            users = $filter('splittedFilter')(users, $scope.query);
+            users = $filter('orderBy')(users, $scope.usersOrderProp);
+            $scope.filteredUsers = angular.copy(users);
+            $scope.filteredUsersLength = $scope.filteredUsers.length;
+            users = $filter('pagination')(users, $scope.currentPage, $scope.itemsPerPage);
+            $scope.shownItems = users;
+        };
+
+        $scope.$watch('query', function() {
+            if (!$scope.query) {
+                $scope.currentPage = 1;
+            }
+            $scope.filterUsers();
+        });
+
+        $scope.$watch('currentPage + itemsPerPage', function() {
+            $scope.filterUsers();
+        });
+
+        $scope.$watch('usersOrderProp', function() {
+            $scope.filterUsers();
+        });
+
+        $scope.userFilterTickets = function() {
+            var tickets = $scope.user.tickets || [];
+            tickets = $filter('splittedFilter')(tickets, $scope.userQuery);
+            $scope.userFilteredTickets = angular.copy(tickets);
+            $scope.userFilteredLength = $scope.userFilteredTickets.length;
+            tickets = $filter('pagination')(tickets, $scope.userCurrentPage, $scope.userItemsPerPage);
+            $scope.userShownItems = tickets;
+        };
+
+        $scope.$watch('userQuery', function() {
+            if (!$scope.userQuery) {
+                $scope.userCurrentPage = 1;
+            }
+            $scope.userFilterTickets();
+        });
+
+        $scope.$watch('userCurrentPage + userItemsPerPage', function() {
+            $scope.userFilterTickets();
+        });
 
         $scope.confirm_delete = 'Do you really want to delete this user?';
         $rootScope.$on('$translateChangeSuccess', function () {
@@ -760,7 +1067,9 @@ eventManControllers.controller('UsersCtrl', ['$scope', '$rootScope', '$state', '
 
         $scope.updateUsersList = function() {
             if ($state.is('users')) {
-                $scope.users = User.all();
+                $scope.users = User.all(function() {
+                    $scope.filterUsers();
+                });
             }
         };
 
@@ -770,6 +1079,7 @@ eventManControllers.controller('UsersCtrl', ['$scope', '$rootScope', '$state', '
             $scope.user = User.get({id: $state.params.id}, function() {
                 $scope.updateUserInfo = $scope.user;
                 $scope.updateUserInfo.isAdmin = $rootScope.hasPermission('admin|all', $scope.updateUserInfo);
+                $scope.userFilterTickets();
             });
         }
 
