@@ -22,11 +22,6 @@ Main features:
 See the *screenshots* directory for some images.
 
 
-# Demo
-
-Whenever the gods of cloud-at-cost love us - very seldom, indeed - a demo system can be found at http://amy.ismito.it:5242/ (username: admin, password: eventman).
-
-
 # Development
 
 See the *docs/DEVELOPMENT.md* file for more information about how to contribute.
