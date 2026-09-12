@@ -22,7 +22,7 @@ Paths
 Webapp
 ------
 
-These are the paths you see in the browser (AngularJS does client-side routing: no request is issued to the web server, during navigation, if not for fetching data and issuing commands):
+These are the paths you see in the browser. The standards-based ES module client uses hash routing, so navigation does not require server-side route handling:
 
 - /#/events - the list of events
 - /#/event/new - edit form to create a new event
@@ -56,6 +56,7 @@ The paths used to communicate with the Tornado web server:
 - /users GET  - list of users
 - /users POST - create a new user
 - /users/:user\_id PUT - update an existing user
+- /tickets GET - list tickets across all events (requires `event:tickets-all|read`)
 - /settings GET - settings to customize the GUI (logo, extra columns for events and tickets lists)
 - /info GET - information about the current user
 - /ebcsvpersons POST - csv file upload to import tickets
@@ -193,8 +194,9 @@ The code is so divided:
     +- utils.py - utilities
     +- angular_app/ - the client-side web application
     |  |
-    |  +- *.html - AngularJS templates
-    |  +- Gruntfile.js - Grunt file to extract i18n strings
+    |  +- index.html - application shell
+    |  +- js/modern-app.js - framework-free application logic
+    |  +- *.html, js/app.js, Gruntfile.js - retired AngularJS implementation
     |  +- js/*.js - AngularJS code
     |     |
     |     +- app.js - main application and routing
@@ -225,21 +227,17 @@ The code is so divided:
     +- templates/ - Tornado Web templates (not used)
     +- tests/ - eeeehhhh
 
-Most of the time you have to edit something in angular\_app/js/ (for the logic; especially controllers.js and services.js), angular\_app/\*.html (for the presentation) or eventman\_server.py for the backend.
+Edit `angular_app/js/modern-app.js` for client behavior and `static/css/eventman-modern.css` for presentation. The AngularJS sources are no longer served and should not receive feature work.
 
 Dependency management and other hipster tools
 ---------------------------------------------
 
-But, but, but... you don't use bower/npm/jam/CthulhuJS!
-
-Yes, exactly. I'm too old for that stuff: I just downloaded the third-party libraries that I needed and put them in static/.  Seems to work, by the way.
-
-I you're a big fan of those tools, please go ahead and send me a pull request.
+The active frontend intentionally has no third-party runtime dependencies or build chain. Legacy manually vendored frontend assets under `static/` are not loaded by `index.html`.
 
 i18n
 ----
 
-In the angular\_app/ directory there is a Gruntfile.js; run grunt here to update the files in static/i18n/; right now to set a language you have to edit angular\_app/js/i18n.js
+The retired AngularJS client used Grunt to extract translations. The current UI is English-only while a modern localization strategy is selected.
 
 Coding style and conventions
 ----------------------------

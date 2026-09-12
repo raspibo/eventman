@@ -652,6 +652,13 @@ class EventsHandler(CollectionHandler):
         # Auto-generate the group_id, if missing.
         if 'group_id' not in data:
             data['group_id'] = self.gen_id()
+        if 'number_of_tickets' in data:
+            try:
+                data['number_of_tickets'] = int(data['number_of_tickets'])
+            except (TypeError, ValueError):
+                raise InputException('number of tickets must be an integer')
+            if data['number_of_tickets'] < 0:
+                raise InputException('number of tickets cannot be negative')
         return data
 
     filter_input_post_all = filter_input_post
@@ -1156,6 +1163,25 @@ class InfoHandler(BaseHandler):
         self.write({'info': info})
 
 
+class TicketsHandler(BaseHandler):
+    """Return tickets across all events for administrative reporting."""
+    @authenticated
+    def get(self, **kwargs):
+        if not self.has_permission('event:tickets-all|read'):
+            return self.build_error(status=403,
+                                    message='insufficient permissions: event:tickets-all|read')
+        tickets = []
+        for event in self.db.query('events'):
+            event_id = str(event.get('_id'))
+            event_title = event.get('title') or ''
+            for ticket in event.get('tickets') or []:
+                ticket = dict(ticket)
+                ticket['event_id'] = event_id
+                ticket['event_title'] = event_title
+                tickets.append(ticket)
+        self.write({'tickets': tickets})
+
+
 class WebSocketEventUpdatesHandler(tornado.websocket.WebSocketHandler):
     """Manage WebSockets."""
     def _clean_url(self, url):
@@ -1338,6 +1364,8 @@ def run():
             (r"/v%s/settings" % API_VERSION, SettingsHandler, init_params),
             (r"/info", InfoHandler, init_params),
             (r"/v%s/info" % API_VERSION, InfoHandler, init_params),
+            (r"/tickets/?", TicketsHandler, init_params),
+            (r"/v%s/tickets/?" % API_VERSION, TicketsHandler, init_params),
             _ws_handler,
             (r'/login', LoginHandler, init_params),
             (r'/v%s/login' % API_VERSION, LoginHandler, init_params),

@@ -30,10 +30,7 @@ See the *docs/DEVELOPMENT.md* file for more information about how to contribute.
 # Technological stack
 
 - [Python 3](https://www.python.org/) for the backend
-- [AngularJS](https://angularjs.org/) (plus some third-party modules) for the webApp
-- [Angular Easy form Generator](https://mackentoch.github.io/easyFormGenerator/) for the custom forms
-- [Bootstrap](http://getbootstrap.com/) (plus [Angular UI](https://angular-ui.github.io/bootstrap/)) for the eye-candy
-- [Font Awesome](https://fortawesome.github.io/Font-Awesome/) for even more cuteness
+- Modern standards-based HTML, CSS and ES modules for the webApp (no browser-side framework or build step)
 - [Tornado web](http://www.tornadoweb.org/) as web server
 - [MongoDB](https://www.mongodb.org/) to store the data
 
@@ -120,6 +117,12 @@ Authentication is required by default. Unregistered and unprivileged users can s
 On first startup an **admin** user is created with a randomly generated password, which is printed once in the server log. Set `--admin_password` to choose the initial password non-interactively. Existing legacy password hashes are upgraded to PBKDF2-SHA256 after a successful login.
 
 Users can register, but are not forced to do so: tickets can also be issued to unregistered persons. However, if you register, you'll be able to access the list of all of your tickets (otherwise, you have to save the tickets' link, if you want to edit them later).
+
+# Web interface
+
+The current interface is a responsive, dependency-free ES module application. It uses native browser controls, keyboard-accessible navigation, `fetch`, WebSockets and the server's XSRF protection. The legacy AngularJS source and vendored dependencies remain in the repository only as historical reference and are no longer loaded.
+
+Existing event registration schemas are rendered for attendees. The legacy visual schema editor has been retired; create or update schemas through the API until a replacement editor is introduced.
 
 # Tools
 

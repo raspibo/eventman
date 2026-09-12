@@ -60,7 +60,10 @@ def convert(seq):
         for key, item in seq.items():
             if key in _force_conversion:
                 try:
-                    d[key] = _force_conversion[key](item)
+                    if _force_conversion[key] is ObjectId:
+                        d[key] = convert_obj(item)
+                    else:
+                        d[key] = _force_conversion[key](item)
                 except (TypeError, ValueError):
                     d[key] = item
             else:
