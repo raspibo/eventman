@@ -1,6 +1,6 @@
 FROM debian:stable-slim
 LABEL \
-	maintainer="Davide Alberani <da@erlug.linux.it>" \
+	maintainer="Davide Alberani <da@mimante.net>" \
 	vendor="RaspiBO"
 
 EXPOSE 5242
@@ -14,7 +14,7 @@ RUN \
 		python3-pip \
 		python3-pymongo \
 		python3-tornado && \
-	pip3 install eventbrite && \
+	pip3 install --break-system-packages eventbrite && \
 	rm -rf /var/lib/apt/lists/*
 
 COPY . /eventman

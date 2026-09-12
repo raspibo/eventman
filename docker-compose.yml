@@ -1,15 +1,20 @@
-version: '3'
 services:
   eventman:
     build: .
     ports:
       - "5242:5242"
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
     volumes:
       - ./data:/eventman/data
   mongo:
-    image: "mongo:latest"
+    image: "mongo:7.0"
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.adminCommand({ ping: 1 }).ok' | grep -q 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
     volumes:
       - data:/data/db
 volumes:

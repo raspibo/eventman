@@ -4,7 +4,7 @@
 
 Scan the output of a serial QR Code reader.
 
-Copyright 2017 Davide Alberani <da@erlug.linux.it>
+Copyright 2017 Davide Alberani <da@mimante.net>
                RaspiBO <info@raspibo.org>
 
 Licensed under the Apache License, Version 2.0 (the "License");

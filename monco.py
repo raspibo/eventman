@@ -3,7 +3,7 @@
 
 Classes and functions used to issue queries to a MongoDB database.
 
-Copyright 2016-2017 Davide Alberani <da@erlug.linux.it>
+Copyright 2016-2017 Davide Alberani <da@mimante.net>
                     RaspiBO <info@raspibo.org>
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,7 @@ limitations under the License.
 import re
 import pymongo
 from bson.objectid import ObjectId
+from pymongo import ReturnDocument
 
 re_objectid = re.compile(r'[0-9a-f]{24}')
 
@@ -193,7 +194,7 @@ class Monco(object):
         data = convert(data)
         if _id is not None:
             data['_id'] = _id
-        _id = db[collection].insert(data)
+        _id = db[collection].insert_one(data).inserted_id
         return self.get(collection, _id)
 
     def insertOne(self, collection, data):
@@ -209,8 +210,8 @@ class Monco(object):
         """
         db = self.connect()
         data = convert(data)
-        ret = db[collection].update(data, {'$set': data}, upsert=True)
-        return ret['updatedExisting']
+        ret = db[collection].update_one(data, {'$set': data}, upsert=True)
+        return ret.matched_count > 0
 
     def _buildSearchPattern(self, data, searchBy):
         """Return an OR condition."""
@@ -260,10 +261,11 @@ class Monco(object):
             for key, value in data.items():
                 newData['%s.$.%s' % (updateList, key)] = value
             data = newData
-        res = db[collection].find_and_modify(query=_id_or_query,
-                update={operator: data}, full_response=True, new=True, upsert=create)
-        lastErrorObject = res.get('lastErrorObject') or {}
-        return lastErrorObject.get('updatedExisting', False), res.get('value') or {}
+        existing = db[collection].find_one(_id_or_query, {'_id': 1}) is not None
+        result = db[collection].find_one_and_update(
+                _id_or_query, {operator: data},
+                return_document=ReturnDocument.AFTER, upsert=create)
+        return existing, result or {}
 
     def updateMany(self, collection, query, data):
         """Update multiple existing documents.
@@ -287,7 +289,8 @@ class Monco(object):
             query = {'_id': query}
         if '_id' in data:
             del data['_id']
-        return db[collection].update(query, {'$set': data}, multi=True)
+        result = db[collection].update_many(query, {'$set': data})
+        return {'n': result.modified_count}
 
     def delete(self, collection, _id_or_query=None, force=False):
         """Remove one or more documents from a collection.
@@ -308,4 +311,5 @@ class Monco(object):
         if not isinstance(_id_or_query, dict):
             _id_or_query = {'_id': _id_or_query}
         _id_or_query = convert(_id_or_query)
-        return db[collection].remove(_id_or_query)
+        result = db[collection].delete_one(_id_or_query)
+        return result.deleted_count

@@ -2,7 +2,7 @@
 """print_label.py - print a label with the name, the company and SEQ_HEX (in a barcode) of an attendee
 
 Copyright 2015-2013 Emiliano Mattioli <oloturia AT gmail.com>
-                    Davide Alberani <da@erlug.linux.it>
+                    Davide Alberani <da@mimante.net>
                     RaspiBO <info@raspibo.org>
 
 Licensed under the Apache License 2.0

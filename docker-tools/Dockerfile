@@ -1,6 +1,6 @@
 FROM mongo:latest
 LABEL \
-	maintainer="Davide Alberani <da@erlug.linux.it>" \
+	maintainer="Davide Alberani <da@mimante.net>" \
 	vendor="RaspiBO"
 
 VOLUME ["/data"]
