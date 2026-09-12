@@ -98,8 +98,8 @@ class Connector():
     def login(self):
         logger.debug('connecting to eventman at %s' % self.login_url)
         self.session = requests.Session()
-        self.session.verify = False
-        ca = cfg['eventman'].get('ca')
+        self.session.verify = True
+        ca = self.cfg['eventman'].get('ca')
         if ca and os.path.isfile(ca):
             self.session.verify = ca
         username = cfg['eventman'].get('username')
@@ -109,8 +109,12 @@ class Connector():
             params['username'] = username
         if password:
             params['password'] = password
+        self.session.get(self.login_url, timeout=TIMEOUT)
         req = self.session.post(self.login_url, json=params, timeout=TIMEOUT)
         req.raise_for_status()
+        xsrf = self.session.cookies.get('_xsrf')
+        if xsrf:
+            self.session.headers['X-Xsrftoken'] = xsrf
         req.connection.close()
         logger.info('connection to eventman at %s established' % self.login_url)
 

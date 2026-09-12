@@ -26,8 +26,10 @@ import json
 import time
 import string
 import random
+import secrets
 import logging
 import datetime
+import ipaddress
 import dateutil.tz
 import dateutil.parser
 
@@ -41,7 +43,7 @@ from tornado import gen, escape, process
 
 import utils
 import monco
-import collections
+from collections.abc import Callable
 
 ENCODING = 'utf-8'
 PROCESS_TIMEOUT = 60
@@ -65,7 +67,8 @@ def authenticated(method):
             return method(self, *args, **kwargs)
         # unauthenticated API calls gets redirected to /v1.0/[...]
         if self.is_api() and not self.current_user:
-            self.redirect('/v%s%s' % (API_VERSION, self.get_login_url()))
+            self.set_status(401)
+            self.write({'error': True, 'message': 'authentication required'})
             return
         return original_wrapper(self, *args, **kwargs)
     return my_wrapper
@@ -101,9 +104,6 @@ class BaseHandler(tornado.web.RequestHandler):
         'users|create': True
     }
 
-    # Cache currently connected users.
-    _users_cache = {}
-
     # A property to access the first value of each argument.
     arguments = property(lambda self: dict([(k, v[0].decode('utf-8'))
         for k, v in self.request.arguments.items()]))
@@ -132,8 +132,6 @@ class BaseHandler(tornado.web.RequestHandler):
         'yes': True,
         'true': True
     }
-
-    _re_split_salt = re.compile(r'\$(?P<salt>.+)\$(?P<hash>.+)')
 
     def write_error(self, status_code, **kwargs):
         """Default error handler."""
@@ -166,6 +164,10 @@ class BaseHandler(tornado.web.RequestHandler):
         for key, value in kwargs.items():
             setattr(self, key, value)
 
+    def prepare(self):
+        """Issue an XSRF token for the single-page client."""
+        self.xsrf_token
+
     @property
     def current_user(self):
         """Retrieve current user name from the secure cookie."""
@@ -178,8 +180,6 @@ class BaseHandler(tornado.web.RequestHandler):
     def current_user_info(self):
         """Information about the current user, including their permissions."""
         current_user = self.current_user
-        if current_user in self._users_cache:
-            return self._users_cache[current_user]
         permissions = set([k for (k, v) in self.permissions.items() if v is True])
         user_info = {'permissions': permissions}
         if current_user:
@@ -190,7 +190,6 @@ class BaseHandler(tornado.web.RequestHandler):
                 permissions.update(set(user.get('permissions') or []))
                 user_info['permissions'] = permissions
                 user_info['isRegistered'] = True
-        self._users_cache[current_user] = user_info
         return user_info
 
     def add_access_info(self, doc):
@@ -227,7 +226,7 @@ class BaseHandler(tornado.web.RequestHandler):
         collection_permission = self.permissions.get(permission)
         if isinstance(collection_permission, bool):
             return collection_permission
-        if isinstance(collection_permission, collections.Callable):
+        if isinstance(collection_permission, Callable):
             return collection_permission(permission)
         return False
 
@@ -249,11 +248,11 @@ class BaseHandler(tornado.web.RequestHandler):
         db_password = user.get('password') or ''
         if not db_password:
             return (False, {})
-        match = self._re_split_salt.match(db_password)
-        if not match:
-            return (False, {})
-        salt = match.group('salt')
-        if utils.hash_password(password, salt=salt) == db_password:
+        authorized, legacy = utils.verify_password(password, db_password)
+        if authorized:
+            if legacy:
+                user['password'] = utils.hash_password(password)
+                self.db.update('users', user['_id'], {'password': user['password']})
             return (True, user)
         return (False, {})
 
@@ -270,8 +269,6 @@ class BaseHandler(tornado.web.RequestHandler):
 
     def logout(self):
         """Remove the secure cookie used fro authentication."""
-        if self.current_user in self._users_cache:
-            del self._users_cache[self.current_user]
         self.clear_cookie("user")
 
 
@@ -408,7 +405,7 @@ class CollectionHandler(BaseHandler):
             if acl and not self.has_permission(permission):
                 return self.build_error(status=401, message='insufficient permissions: %s' % permission)
             handler = getattr(self, 'handle_get_%s' % resource, None)
-            if handler and isinstance(handler, collections.Callable):
+            if handler and isinstance(handler, Callable):
                 output = handler(id_, resource_id, **kwargs) or {}
                 output = self.apply_filter(output, 'get_%s' % resource)
                 self.write(output)
@@ -455,7 +452,7 @@ class CollectionHandler(BaseHandler):
                 return self.build_error(status=401, message='insufficient permissions: %s' % permission)
             # Handle access to sub-resources.
             handler = getattr(self, 'handle_%s_%s' % (method, resource), None)
-            if handler and isinstance(handler, collections.Callable):
+            if handler and isinstance(handler, Callable):
                 data = self.apply_filter(data, 'input_%s_%s' % (method, resource))
                 output = handler(id_, resource_id, data, **kwargs)
                 output = self.apply_filter(output, 'get_%s' % resource)
@@ -501,7 +498,7 @@ class CollectionHandler(BaseHandler):
             if not self.has_permission(permission):
                 return self.build_error(status=401, message='insufficient permissions: %s' % permission)
             method = getattr(self, 'handle_delete_%s' % resource, None)
-            if method and isinstance(method, collections.Callable):
+            if method and isinstance(method, Callable):
                 output = method(id_, resource_id, **kwargs)
                 env['RESOURCE'] = resource
                 if resource_id:
@@ -529,9 +526,9 @@ class CollectionHandler(BaseHandler):
         except:
             pass
 
-    def on_exit(self, returncode, cmd, pipe):
+    def on_exit(self, returncode, cmd, pipe, timeout):
         """Callback executed when a subprocess execution is over."""
-        self.ioloop.remove_timeout(self.timeout)
+        self.ioloop.remove_timeout(timeout)
         logging.debug('trigger: %s returncode: %d' % (' '.join(cmd), returncode))
 
     @gen.coroutine
@@ -547,13 +544,18 @@ class CollectionHandler(BaseHandler):
         :type env: dict
         """
         self.ioloop = tornado.ioloop.IOLoop.instance()
-        processed_env = self._dict2env(env)
+        processed_env = os.environ.copy()
+        processed_env.update(self._dict2env(env or {}))
         p = process.Subprocess(cmd, close_fds=True, stdin=process.Subprocess.STREAM,
                 stdout=process.Subprocess.STREAM, stderr=process.Subprocess.STREAM, env=processed_env)
-        p.set_exit_callback(lambda returncode: self.on_exit(returncode, cmd, p))
-        self.timeout = self.ioloop.add_timeout(datetime.timedelta(seconds=PROCESS_TIMEOUT),
+        timeout = self.ioloop.add_timeout(datetime.timedelta(seconds=PROCESS_TIMEOUT),
                 lambda: self.on_timeout(cmd, p))
-        yield gen.Task(p.stdin.write, stdin_data.encode(ENCODING) or b'')
+        p.set_exit_callback(lambda returncode: self.on_exit(returncode, cmd, p, timeout))
+        if stdin_data is None:
+            stdin_data = ''
+        if isinstance(stdin_data, str):
+            stdin_data = stdin_data.encode(ENCODING)
+        yield gen.Task(p.stdin.write, stdin_data)
         p.stdin.close()
         out, err = yield [gen.Task(p.stdout.read_until_close),
                 gen.Task(p.stderr.read_until_close)]
@@ -579,10 +581,7 @@ class CollectionHandler(BaseHandler):
             return
         logging.debug('running triggers for action "%s"' % action)
         stdin_data = stdin_data or {}
-        try:
-            stdin_data = json.dumps(stdin_data)
-        except:
-            stdin_data = '{}'
+        stdin_data = json.dumps(stdin_data)
         for script in glob.glob(os.path.join(self.data_dir, 'triggers', '%s.d' % action, '*')):
             if not (os.path.isfile(script) and os.access(script, os.X_OK)):
                 continue
@@ -671,7 +670,9 @@ class EventsHandler(CollectionHandler):
     def handle_get_group_persons(self, id_, resource_id=None):
         persons = []
         this_query = {'_id': id_}
-        this_event = self.db.query('events', this_query)[0]
+        this_event = self.db.get('events', id_)
+        if not this_event:
+            raise InputException('event not found', status=404)
         group_id = this_event.get('group_id')
         if group_id is None:
             return {'persons': persons}
@@ -710,7 +711,9 @@ class EventsHandler(CollectionHandler):
         # Return every ticket registered at this event, or the information
         # about a specific ticket.
         query = {'_id': id_}
-        event = self.db.query('events', query)[0]
+        event = self.db.get('events', id_)
+        if not event:
+            raise InputException('event not found', status=404)
         if resource_id:
             return {'ticket': self._get_ticket_data(resource_id, event.get('tickets') or [])}
         tickets = self._filter_results(event.get('tickets') or [], self.arguments)
@@ -777,7 +780,9 @@ class EventsHandler(CollectionHandler):
             raise InputException('ticket sales has ended')
 
     def handle_post_tickets(self, id_, resource_id, data, _skipTriggers=False):
-        event = self.db.query('events', {'_id': id_})[0]
+        event = self.db.get('events', id_)
+        if not event:
+            raise InputException('event not found', status=404)
         self._check_sales_datetime(event)
         self._check_number_of_tickets(event)
         uuid, arguments = self.uuid_arguments
@@ -1040,7 +1045,7 @@ class EbAPIImportHandler(BaseHandler):
             try:
                 event_handler.handle_post_tickets(targetEventID, None, ticket, _skipTriggers=True)
             except Exception as e:
-                self.logger.warn('failed to add a ticket: ' % e)
+                self.logger.warning('failed to add a ticket: %s', e)
             reply['new_in_event'] += 1
             reply['valid'] += 1
         self.write(reply)
@@ -1172,7 +1177,18 @@ class WebSocketEventUpdatesHandler(tornado.websocket.WebSocketHandler):
             _ws_clients[url][self.uuid] = self
         logging.debug('WebSocketEventUpdatesHandler.on_open %s clients connected' % len(_ws_clients[url]))
 
+    def on_close(self):
+        url = self._clean_url(self.request.uri)
+        clients = _ws_clients.get(url, {})
+        if getattr(self, 'uuid', None) in clients and clients[self.uuid] is self:
+            del clients[self.uuid]
+        if not clients:
+            _ws_clients.pop(url, None)
+
     def on_message(self, message):
+        if not ipaddress.ip_address(self.request.remote_ip).is_loopback:
+            self.close(code=1008, reason='server-publish-only channel')
+            return
         url = self._clean_url(self.request.uri)
         logging.debug('WebSocketEventUpdatesHandler.on_message url:%s' % url)
         count = 0
@@ -1229,7 +1245,8 @@ class LoginHandler(RootHandler):
             id_ = str(user['_id'])
             username = user['username']
             logging.info('successful login for user %s (id: %s)' % (username, id_))
-            self.set_secure_cookie("user", id_)
+            self.set_secure_cookie("user", id_, httponly=True,
+                                   secure=self.secure_cookies, samesite='lax')
             self.write({'error': False, 'message': 'successful login'})
             return
         logging.info('login failed for user %s' % username)
@@ -1263,7 +1280,9 @@ def run():
             help="URL to MongoDB server", type=str)
     define("db_name", default='eventman',
             help="Name of the MongoDB database to use", type=str)
-    define("authentication", default=False, help="if set to true, authentication is required")
+    define("authentication", default=True, help="if set to false, authentication is not required")
+    define("admin_password", default=None,
+            help="initial admin password (only used when the admin user is created)", type=str)
     define("debug", default=False, help="run in debug mode")
     define("config", help="read configuration file",
             callback=lambda path: tornado.options.parse_config_file(path, final=False))
@@ -1281,13 +1300,16 @@ def run():
     # database backend connector
     db_connector = monco.Monco(url=options.mongo_url, dbName=options.db_name)
     init_params = dict(db=db_connector, data_dir=options.data_dir, listen_port=options.port,
-            authentication=options.authentication, logger=logger, ssl_options=ssl_options)
+            authentication=options.authentication, logger=logger, ssl_options=ssl_options,
+            secure_cookies=bool(ssl_options))
 
-    # If not present, we store a user 'admin' with password 'eventman' into the database.
+    # If not present, create an administrator with a one-time random password.
     if not db_connector.query('users', {'username': 'admin'}):
+        admin_password = options.admin_password or secrets.token_urlsafe(18)
         db_connector.add('users',
-                {'username': 'admin', 'password': utils.hash_password('eventman'),
+                {'username': 'admin', 'password': utils.hash_password(admin_password),
                  'permissions': ['admin|all']})
+        logger.warning('Created admin user; initial password: %s', admin_password)
 
     # If present, use the cookie_secret stored into the database.
     cookie_secret = db_connector.query('settings', {'setting': 'server_cookie_secret'})
@@ -1327,6 +1349,7 @@ def run():
         static_path=os.path.join(os.path.dirname(__file__), "static"),
         cookie_secret=cookie_secret,
         login_url='/login',
+        xsrf_cookies=True,
         debug=options.debug)
     http_server = tornado.httpserver.HTTPServer(application, ssl_options=ssl_options or None)
     logger.info('Start serving on %s://%s:%d', 'https' if ssl_options else 'http',

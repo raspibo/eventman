@@ -20,11 +20,11 @@ limitations under the License.
 import csv
 import copy
 import json
-import string
-import random
+import re
 import hashlib
 import datetime
 import io
+import secrets
 from bson.objectid import ObjectId
 
 
@@ -89,12 +89,40 @@ def hash_password(password, salt=None):
 
     :returns: the hashed password
     :rtype: str"""
-    if salt is None:
-        salt_pool = string.ascii_letters + string.digits
-        salt = ''.join(random.choice(salt_pool) for x in range(32))
-    pwd = '%s%s' % (salt, password)
-    hash_ = hashlib.sha512(pwd.encode('utf-8'))
-    return '$%s$%s' % (salt, hash_.hexdigest())
+    if salt is not None:
+        # Keep the legacy format available for reading old installations.
+        pwd = '%s%s' % (salt, password)
+        hash_ = hashlib.sha512(pwd.encode('utf-8'))
+        return '$%s$%s' % (salt, hash_.hexdigest())
+    iterations = 600_000
+    salt = secrets.token_bytes(16)
+    digest = hashlib.pbkdf2_hmac(
+        'sha256', password.encode('utf-8'), salt, iterations
+    )
+    return 'pbkdf2_sha256$%d$%s$%s' % (
+        iterations, salt.hex(), digest.hex()
+    )
+
+
+def verify_password(password, encoded):
+    """Verify both modern PBKDF2 and legacy EventMan password hashes."""
+    if not isinstance(encoded, str):
+        return False, False
+    if encoded.startswith('pbkdf2_sha256$'):
+        try:
+            _, iterations, salt, expected = encoded.split('$', 3)
+            actual = hashlib.pbkdf2_hmac(
+                'sha256', password.encode('utf-8'), bytes.fromhex(salt),
+                int(iterations)
+            ).hex()
+        except (TypeError, ValueError):
+            return False, False
+        return secrets.compare_digest(actual, expected), False
+    match = re.match(r'^\$(?P<salt>[^$]+)\$(?P<hash>[0-9a-f]+)$', encoded)
+    if not match:
+        return False, False
+    legacy = hash_password(password, salt=match.group('salt'))
+    return secrets.compare_digest(legacy, encoded), True
 
 
 has_eventbrite_sdk = False
@@ -250,4 +278,3 @@ class ImprovedEncoder(json.JSONEncoder):
 
 # Inject our class as the default encoder.
 json._default_encoder = ImprovedEncoder()
-

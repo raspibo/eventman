@@ -37,7 +37,7 @@ See the *docs/DEVELOPMENT.md* file for more information about how to contribute.
 - [Tornado web](http://www.tornadoweb.org/) as web server
 - [MongoDB](https://www.mongodb.org/) to store the data
 
-The web part is incuded; you need to install Tornado, MongoDB and the pymongo module on your system (no configuration needed).
+The web part is included; you need Python 3.10+, Tornado 6, MongoDB and the pymongo module on your system.
 If you want to print labels using the _print\_label_ trigger, you may also need the pycups module.
 
 
@@ -56,8 +56,7 @@ Be sure to have a running MongoDB server, locally. If you want to install the de
 
     wget https://bootstrap.pypa.io/get-pip.py
     sudo python3 get-pip.py
-    sudo pip3 install tornado # version 4.2 or later
-    sudo pip3 install pymongo # version 3.2.2 or later
+    sudo pip3 install tornado pymongo python-dateutil
     sudo pip3 install python-dateutil
     sudo pip3 install pycups # only needed if you want to print labels
     sudo pip3 install eventbrite # only needed if you want to import from Eventbrite using their API
@@ -116,9 +115,9 @@ About the "Group ID" of events and "Unregistered persons" list:
 
 # Authentication
 
-By default, authentication is not required; unregistered and unprivileged users can see and join events, but are unable to edit or handle them. Administrator users can create ed edit events; more information about how permissions are handled can be found in the *docs/DEVELOPMENT.md* file.
+Authentication is required by default. Unregistered and unprivileged users can see and join events, but are unable to edit or handle them. Administrator users can create and edit events; more information about how permissions are handled can be found in the *docs/DEVELOPMENT.md* file. Use `--authentication=false` only for a deliberately public deployment.
 
-The default administrator username and password are **admin** and **eventman**. If you want to force authentication (you usually don't), run the daemon with --authentication=on
+On first startup an **admin** user is created with a randomly generated password, which is printed once in the server log. Set `--admin_password` to choose the initial password non-interactively. Existing legacy password hashes are upgraded to PBKDF2-SHA256 after a successful login.
 
 Users can register, but are not forced to do so: tickets can also be issued to unregistered persons. However, if you register, you'll be able to access the list of all of your tickets (otherwise, you have to save the tickets' link, if you want to edit them later).
 
@@ -145,4 +144,3 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
-

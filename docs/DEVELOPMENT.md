@@ -66,6 +66,8 @@ The paths used to communicate with the Tornado web server:
 Notice that the above paths are the ones used by the webapp. If you plan to use them from an external application (like the _event\_man_ barcode/qrcode scanner) you better prepend all the path with /v1.0, where 1.0 is the current value of API\_VERSION.
 The main advantage of doing so is that, for every call, a useful status code and a JSON value is returned.
 
+Authentication is enabled by default. API clients must authenticate and include Tornado's `_xsrf` cookie plus an `X-Xsrftoken` header on state-changing requests. API authentication failures return JSON `401` responses; browser routes may redirect to the login page.
+
 Also, remember that most of the paths can take query parameters that will be used as a filter, like GET /events/:event\_id/tickets?name=Mario
 
 
@@ -247,4 +249,3 @@ It's enough to be consistent within the document you're editing.
 I suggest four spaces instead of tabs for all the code: Python (**mandatory**), JavaScript, HTML and CSS.
 
 Python code documented following the [Sphinx](http://sphinx-doc.org/) syntax.
-

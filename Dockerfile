@@ -15,9 +15,12 @@ RUN \
 		python3-pymongo \
 		python3-tornado && \
 	pip3 install --break-system-packages eventbrite && \
+	useradd --system --home-dir /eventman --shell /usr/sbin/nologin eventman && \
 	rm -rf /var/lib/apt/lists/*
 
 COPY . /eventman
 
 WORKDIR /eventman/
-ENTRYPOINT ["./eventman_server.py", "--mongo_url=mongodb://mongo", "--debug"]
+RUN chown -R eventman:eventman /eventman
+USER eventman
+ENTRYPOINT ["./eventman_server.py", "--mongo_url=mongodb://mongo"]

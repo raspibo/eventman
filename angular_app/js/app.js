@@ -105,8 +105,10 @@ eventManApp.run(['$rootScope', '$state', '$stateParams', '$log', 'Info',
 
 
 /* Configure the states. */
-eventManApp.config(['$stateProvider', '$urlRouterProvider', '$compileProvider',
-    function($stateProvider, $urlRouterProvider, $compileProvider) {
+eventManApp.config(['$stateProvider', '$urlRouterProvider', '$compileProvider', '$httpProvider',
+    function($stateProvider, $urlRouterProvider, $compileProvider, $httpProvider) {
+        $httpProvider.defaults.xsrfCookieName = '_xsrf';
+        $httpProvider.defaults.xsrfHeaderName = 'X-Xsrftoken';
         $compileProvider.aHrefSanitizationWhitelist(/^\s*(https?|ftp|mailto|tel|file|blob):/);
         $urlRouterProvider.otherwise('/events');
         $stateProvider
@@ -188,4 +190,3 @@ eventManApp.config(['$stateProvider', '$urlRouterProvider', '$compileProvider',
             });
     }
 ]);
-

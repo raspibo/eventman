@@ -22,7 +22,7 @@ import pymongo
 from bson.objectid import ObjectId
 from pymongo import ReturnDocument
 
-re_objectid = re.compile(r'[0-9a-f]{24}')
+re_objectid = re.compile(r'^[0-9a-fA-F]{24}$')
 
 _force_conversion = {
     '_id': ObjectId,
@@ -42,11 +42,8 @@ def convert_obj(obj):
         return None
     if isinstance(obj, bool):
         return obj
-    try:
-        if re_objectid.match(obj):
-            return ObjectId(obj)
-    except:
-        pass
+    if isinstance(obj, str) and re_objectid.fullmatch(obj):
+        return ObjectId(obj)
     return obj
 
 
@@ -64,7 +61,7 @@ def convert(seq):
             if key in _force_conversion:
                 try:
                     d[key] = _force_conversion[key](item)
-                except:
+                except (TypeError, ValueError):
                     d[key] = item
             else:
                 d[key] = convert(item)
@@ -129,7 +126,9 @@ class Monco(object):
             self._dbName = dbName
         if not self._dbName:
             raise MoncoConnectionError('no database name specified')
-        self.connection = pymongo.MongoClient(self._url)
+        self.connection = pymongo.MongoClient(
+            self._url, serverSelectionTimeoutMS=10_000
+        )
         self.db = self.connection[self._dbName]
         return self.db
 
@@ -256,6 +255,8 @@ class Monco(object):
         if '_id' in data:
             del data['_id']
         operator = self._operations.get(operation)
+        if operator is None:
+            raise ValueError('unsupported update operation: %s' % operation)
         if updateList:
             newData = {}
             for key, value in data.items():
