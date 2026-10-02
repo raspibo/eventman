@@ -1631,6 +1631,15 @@ angular.module('textAngular.taBind', ['textAngular.factories', 'textAngular.DOM'
 					};
 
 					element.on('paste', scope.events.paste = function(e, eventData){
+						var sanitizePastedContent = function(content) {
+							if (!content) return content;
+							return String(content)
+								.replace(/&/g, '&amp;')
+								.replace(/</g, '&lt;')
+								.replace(/>/g, '&gt;')
+								.replace(/"/g, '&quot;')
+								.replace(/'/g, '&#39;');
+						};
 						/* istanbul ignore else: this is for catching the jqLite testing*/
 						if(eventData) angular.extend(e, eventData);
 						if(_isReadonly || _processingPaste){
@@ -1656,7 +1665,7 @@ angular.module('textAngular.taBind', ['textAngular.factories', 'textAngular.DOM'
 								pastedContent = clipboardData.getData('text/plain');
 							}
 
-							processpaste(pastedContent);
+							processpaste(sanitizePastedContent(pastedContent));
 							e.stopPropagation();
 							e.preventDefault();
 							return false;
@@ -1668,7 +1677,7 @@ angular.module('textAngular.taBind', ['textAngular.factories', 'textAngular.DOM'
 							$timeout(function(){
 								// restore selection
 								rangy.restoreSelection(_savedSelection);
-								processpaste(_tempDiv[0].innerHTML);
+								processpaste(sanitizePastedContent(_tempDiv[0].innerHTML));
 								element[0].focus();
 								_tempDiv.remove();
 							}, 0);
