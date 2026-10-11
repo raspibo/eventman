@@ -1,0 +1,4 @@
+-r requirements.txt
+# Requires system CUPS development headers when building pycups.
+pycups>=2.0.1,<3
+Pillow>=10,<13

@@ -6,10 +6,9 @@ qrcode_reader
 
 With this tool, you can use a serial QR Code or barcode scanner to automarically check-in attendees.
 
-Besides some standard packages, it also requires the following:
+From the repository root, in the activated virtual environment, install the scanner dependencies (`pyserial` provides `serial`):
 
-    sudo pip3 install serial
-    sudo pip3 install requests
+    python -m pip install -r requirements-scanner.txt
 
 count
 =====

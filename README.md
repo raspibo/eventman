@@ -34,8 +34,8 @@ See the *docs/DEVELOPMENT.md* file for more information about how to contribute.
 - [Tornado web](http://www.tornadoweb.org/) as web server
 - [MongoDB](https://www.mongodb.org/) to store the data
 
-The web part is included; you need Python 3.10+, Tornado 6, MongoDB and the pymongo module on your system.
-If you want to print labels using the _print\_label_ trigger, you may also need the pycups module.
+The web part is included; you need Python 3.10+ and a separately running MongoDB server.
+Python dependencies are declared in `requirements.txt`, with separate requirement files for optional features. See [dependency and distribution details](docs/DEPENDENCIES.md).
 
 
 # Install and run
@@ -44,25 +44,28 @@ If you want to print labels using the _print\_label_ trigger, you may also need 
 
 Just run:
 
-    docker-compose up
+    docker compose up --build
 
 
 ## Old-fashioned installation
 
-Be sure to have a running MongoDB server, locally. If you want to install the dependencies only locally to the current user, you can append the *--user* argument to the *pip* calls. Please also install the *python3-dev* package, before running the following commands.
+Be sure to have a running MongoDB server locally. Install into a virtual environment:
 
-    wget https://bootstrap.pypa.io/get-pip.py
-    sudo python3 get-pip.py
-    sudo pip3 install tornado pymongo python-dateutil
-    sudo pip3 install python-dateutil
-    sudo pip3 install pycups # only needed if you want to print labels
-    sudo pip3 install eventbrite # only needed if you want to import from Eventbrite using their API
-    sudo pip3 install serial # only for the qrcode_reader script
-    sudo pip3 install requests # only for the qrcode_reader script
     git clone https://github.com/raspibo/eventman
     cd eventman
+    python3 -m venv .venv
+    . .venv/bin/activate
+    python -m pip install -r requirements.txt
     ./eventman_server.py --debug
 
+Optional features can be installed in the same environment:
+
+    python -m pip install -r requirements-eventbrite.txt # Eventbrite API imports
+    python -m pip install -r requirements-scanner.txt    # serial QR/barcode reader
+    python -m pip install -r requirements-printing.txt   # label printing
+
+Label printing also needs system CUPS headers to build pycups, a configured printer,
+and externally installed fonts. See [the printing setup](docs/DEPENDENCIES.md#label-printing).
 
 Open browser and navigate to: http://localhost:5242/
 
@@ -72,7 +75,7 @@ If you store SSL key and certificate in the *ssl* directory (default names: even
 # Basic workflow
 
 So, you've just installed it and you have the server running.  Let's create an event:
-- login with the **admin** user (default password: **eventman**)
+- login with the **admin** user (initial password: printed on first startup, or chosen with `--admin_password`)
 - click "Add an event"
 - edit basic information about the event and save it
 - a default registration form is provided, with the following fields (all are optional):
@@ -120,7 +123,7 @@ Users can register, but are not forced to do so: tickets can also be issued to u
 
 # Web interface
 
-The current interface is a responsive, dependency-free ES module application. It uses native browser controls, keyboard-accessible navigation, `fetch`, WebSockets and the server's XSRF protection. The legacy AngularJS source and vendored dependencies remain in the repository only as historical reference and are no longer loaded.
+The current interface is a responsive, dependency-free ES module application. It uses native browser controls, keyboard-accessible navigation, `fetch`, WebSockets and the server's XSRF protection. The first-party legacy AngularJS source remains as historical reference; its third-party libraries have been removed from the source tree and are available in Git history. The Docker image includes only the active frontend.
 
 Existing event registration schemas are rendered for attendees. The legacy visual schema editor has been retired; create or update schemas through the API until a replacement editor is introduced.
 

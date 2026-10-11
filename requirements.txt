@@ -1,0 +1,4 @@
+# Core server dependencies. bson is provided by pymongo; do not install bson separately.
+tornado>=6.5,<7
+pymongo>=4.6,<5
+python-dateutil>=2.9,<3

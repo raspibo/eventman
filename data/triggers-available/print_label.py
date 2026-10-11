@@ -18,31 +18,39 @@ KEEP_IMG = True
 LABEL_WIDTH = 13488
 LABEL_HEIGHT = 3744
 
-FONT_TEXT = 'Ubuntu-C.ttf'
-FONT_TEXT = 'CONCIBB_.TTF'
-FONT_TEXT_ENCODING = 'latin-1'
-FONT_BARCODE = 'free3of9.ttf'
+# Fonts belong to the host, not the EventMan source distribution.
+FONT_TEXT = os.environ.get('EVENTMAN_LABEL_TEXT_FONT')
+FONT_BARCODE = os.environ.get('EVENTMAN_LABEL_BARCODE_FONT')
 
 PRINTER_NAME = None
 #PRINTER_NAME = 'DYMO_LabelWriter_450'
 
 
 def _get_resource(filename):
-    return os.path.join(os.path.dirname(sys.argv[0]), filename)
+    if not filename or not os.path.isabs(filename) or not os.path.isfile(filename):
+        raise ValueError('Set EVENTMAN_LABEL_TEXT_FONT and EVENTMAN_LABEL_BARCODE_FONT '
+                         'to absolute paths of externally installed fonts '
+                         '(the barcode font must encode Code 39).')
+    return filename
 
 
 def build_label(w, h, barcode_text, line1, line2, font_text=FONT_TEXT, font_barcode=FONT_BARCODE):
     barcode_text = "*" + barcode_text + "*"
-    line1 = str(line1, 'utf-8').encode(FONT_TEXT_ENCODING, 'ignore')
-    line2 = str(line2, 'utf-8').encode(FONT_TEXT_ENCODING, 'ignore')
+    if isinstance(line1, bytes):
+        line1 = line1.decode('utf-8')
+    if isinstance(line2, bytes):
+        line2 = line2.decode('utf-8')
     fontbar = ImageFont.truetype(_get_resource(font_barcode), 2000)
     fontname = ImageFont.truetype(_get_resource(font_text), 1100)
     fontjob = ImageFont.truetype(_get_resource(font_text), 780)
     image = Image.new('RGB', (w, h), (255, 255, 255))
     draw = ImageDraw.Draw(image)
-    wbar, hbar = draw.textsize(barcode_text, font=fontbar)
-    wnorm1, hnorm1 = draw.textsize(line1, font=fontname)
-    wnorm2, hnorm2 = draw.textsize(line2, font=fontjob)
+    def text_size(text, font):
+        left, top, right, bottom = draw.textbbox((0, 0), text, font=font)
+        return right - left, bottom - top
+    wbar, hbar = text_size(barcode_text, fontbar)
+    wnorm1, hnorm1 = text_size(line1, fontname)
+    wnorm2, hnorm2 = text_size(line2, fontjob)
     draw.text(((w-wnorm1)/2, -1300+(h-hnorm1)/2), line1, (0, 0, 0), font=fontname)
     draw.text(((w-wnorm2)/2, -480+(h-hnorm2)/2), line2, (0, 0, 0), font=fontjob)
     draw.text(((w-wbar)/2, 850+(h-hbar)/2), barcode_text, (0, 0, 0), font=fontbar)

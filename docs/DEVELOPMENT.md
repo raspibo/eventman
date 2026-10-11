@@ -190,7 +190,7 @@ Code layout
 The code is so divided:
 
     +- eventman_server.py - the Tornado Web server
-    +- backend.py - stuff to interact with MongoDB
+    +- monco.py - project-owned MongoDB helper
     +- utils.py - utilities
     +- angular_app/ - the client-side web application
     |  |
@@ -219,20 +219,19 @@ The code is so divided:
     +- ssl/ - put here your eventman_cert.pem  and eventman_key.pem certs
     +- static/
     |  |
-    |  +- js/ - every third-party libraries (plus eventman.js with some small utils)
-    |  +- css/ - third-party CSS (plus eventman.css)
-    |  +- fonts/ - third-party fonts
-    |  +- images/ - third-party images
+    |  +- js/ - retired first-party eventman.js utilities
+    |  +- css/ - eventman-modern.css and retired eventman.css
+    |  +- images/ - local images
     |  +- i18n/ - i18n files
     +- templates/ - Tornado Web templates (not used)
     +- tests/ - eeeehhhh
 
-Edit `angular_app/js/modern-app.js` for client behavior and `static/css/eventman-modern.css` for presentation. The AngularJS sources are no longer served and should not receive feature work.
+Edit `angular_app/js/modern-app.js` for client behavior and `static/css/eventman-modern.css` for presentation. The AngularJS sources are no longer loaded by the active client and should not receive feature work. Source-checkout deployments still expose this directory through the static fallback; the Docker image includes only the active client.
 
 Dependency management and other hipster tools
 ---------------------------------------------
 
-The active frontend intentionally has no third-party runtime dependencies or build chain. Legacy manually vendored frontend assets under `static/` are not loaded by `index.html`.
+The active frontend intentionally has no third-party runtime dependencies or build chain. Retired third-party frontend libraries have been removed from the working tree. Python dependencies and optional features are declared in `requirements*.txt`. See [DEPENDENCIES.md](DEPENDENCIES.md) for the inventory, installation, distribution limits and historical recovery.
 
 i18n
 ----

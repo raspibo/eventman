@@ -1,4 +1,10 @@
 angular_app/node_modules/
+.venv/
+.git/
+.agents/
+.codex/
+.aws/
+screenshots/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

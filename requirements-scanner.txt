@@ -1,0 +1,4 @@
+-r requirements.txt
+# pyserial provides the serial module; the PyPI package named serial is unrelated.
+pyserial>=3.5,<4
+requests>=2.32,<3
