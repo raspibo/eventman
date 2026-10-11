@@ -215,7 +215,7 @@ async function showTicketForm(eventId, ticketId) {
     const event = await api(`/events/${encodeURIComponent(eventId)}`);
     const ticket = ticketId ? (await api(`/events/${encodeURIComponent(eventId)}/tickets/${encodeURIComponent(ticketId)}`)).ticket : {};
     page(ticketId ? `Edit ticket · ${event.title}` : `Register · ${event.title}`, ticketForm(event, ticket),
-        hasPermission('event:tickets-all|read') ? `<a class="button secondary" href="#/event/${eventId}/tickets">Back to tickets</a>` : '');
+        `<a class="button secondary" href="#/event/${escapeHtml(encodeURIComponent(eventId))}/view">View event</a>${hasPermission('event:tickets-all|read') ? `<a class="button secondary" href="#/event/${eventId}/tickets">Back to tickets</a>` : ''}`);
     qs('#ticket-form').addEventListener('submit', async submit => {
         submit.preventDefault();
         const data = formValues(submit.currentTarget);
@@ -311,7 +311,7 @@ async function showAllTickets() {
     page('All tickets', `<section class="card"><label>Search tickets<input id="all-ticket-search" type="search" placeholder="Name, email, or event"></label><div class="table-wrap"><table><thead><tr><th>Person</th><th>Event</th><th>Email</th><th>Attended</th></tr></thead><tbody id="all-ticket-rows"></tbody></table></div></section>`);
     const draw = () => {
         const term = qs('#all-ticket-search').value.toLowerCase();
-        qs('#all-ticket-rows').innerHTML = tickets.filter(ticket => JSON.stringify(ticket).toLowerCase().includes(term)).map(ticket => `<tr><td><a href="#/event/${ticket.event_id}/ticket/${ticket._id}/edit">${escapeHtml(ticketName(ticket))}</a></td><td>${escapeHtml(ticket.event_title || '')}</td><td>${escapeHtml(ticket.email || '')}</td><td>${ticket.attended ? '<span class="status success">Yes</span>' : '<span class="status">No</span>'}</td></tr>`).join('') || `<tr><td colspan="4">${empty('No tickets match your search.')}</td></tr>`;
+        qs('#all-ticket-rows').innerHTML = tickets.filter(ticket => JSON.stringify(ticket).toLowerCase().includes(term)).map(ticket => `<tr><td><a href="#/event/${ticket.event_id}/ticket/${ticket._id}/edit">${escapeHtml(ticketName(ticket))}</a></td><td><a href="#/event/${escapeHtml(encodeURIComponent(ticket.event_id))}/view">${escapeHtml(ticket.event_title || 'View event')}</a></td><td>${escapeHtml(ticket.email || '')}</td><td>${ticket.attended ? '<span class="status success">Yes</span>' : '<span class="status">No</span>'}</td></tr>`).join('') || `<tr><td colspan="4">${empty('No tickets match your search.')}</td></tr>`;
     };
     qs('#all-ticket-search').addEventListener('input', draw); draw();
 }
