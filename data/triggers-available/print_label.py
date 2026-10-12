@@ -54,12 +54,18 @@ def build_label(w, h, barcode_text, line1, line2, font_text=FONT_TEXT, font_barc
     draw.text(((w-wnorm1)/2, -1300+(h-hnorm1)/2), line1, (0, 0, 0), font=fontname)
     draw.text(((w-wnorm2)/2, -480+(h-hnorm2)/2), line2, (0, 0, 0), font=fontjob)
     draw.text(((w-wbar)/2, 850+(h-hbar)/2), barcode_text, (0, 0, 0), font=fontbar)
-    if not KEEP_IMG:
-        tmpfile = tempfile.NamedTemporaryFile(prefix='eventman_print_label_', suffix='.png')
-    else:
-        tmpfile = tempfile.mktemp(prefix='eventman_print_label_', suffix='.png')
-        tmpfile = open(tmpfile, 'wb')
-    image.save(tmpfile, dpi=[600, 300], format='png')
+    keep_img = KEEP_IMG
+    tmpfile = tempfile.NamedTemporaryFile(
+        prefix='eventman_print_label_', suffix='.png', delete=not keep_img
+    )
+    try:
+        image.save(tmpfile, dpi=[600, 300], format='png')
+        tmpfile.flush()
+    except Exception:
+        tmpfile.close()
+        if keep_img:
+            os.unlink(tmpfile.name)
+        raise
     return tmpfile
 
 
@@ -76,8 +82,8 @@ def run():
     company = os.environ.get('COMPANY') or ''
     # Print the decimal value SEQ as an hex of at least 6 digits.
     seq = os.environ.get('SEQ_HEX', '0')
-    label_file = build_label(LABEL_WIDTH, LABEL_HEIGHT, seq, name, company)
-    print_label(label_file, name)
+    with build_label(LABEL_WIDTH, LABEL_HEIGHT, seq, name, company) as label_file:
+        print_label(label_file, name)
 
 
 if __name__ == '__main__':

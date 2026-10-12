@@ -241,6 +241,10 @@ The Eventbrite error-response tests use a temporary loopback HTTP server and
 mock the SDK and database. They require permission to bind a local socket and
 do not contact Eventbrite or invoke printers, scanners, or a real database.
 
+Label temporary-file tests require Pillow from `requirements-printing.txt` and
+skip when it is absent. They generate small real PNGs with a test font and mock
+CUPS, so pycups and external barcode fonts are not needed for these tests.
+
 Dependency management and other hipster tools
 ---------------------------------------------
 

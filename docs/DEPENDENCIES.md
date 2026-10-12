@@ -98,6 +98,14 @@ container paths. Missing or invalid paths produce an explicit configuration
 error. The trigger now accepts Python 3 text and uses Pillow's supported
 `textbbox` API, replacing the removed `textsize` API.
 
+Label images are created atomically in the system temporary directory with
+owner-only permissions (0600 on POSIX). `KEEP_IMG=True` in `print_label.py`
+preserves completed images named `eventman_print_label_*.png` after submission,
+including submission failures, for troubleshooting. They contain attendee data;
+operators should remove retained images when no longer needed. Set `KEEP_IMG=False`
+to remove images when submission finishes or fails. Generation failures remove
+partial files in either mode. File handles are closed in all these paths.
+
 ## Reproducibility and remaining limits
 
 Requirement files specify bounded compatibility ranges, not a fully resolved,
