@@ -258,6 +258,9 @@ EVENTMAN_BROWSER=/path/to/chrome python3 -m unittest discover -s tests -p 'test_
 The checks run the active client and stylesheet at desktop/mobile sizes with
 stubbed API and live-update calls. They test real DOM parsing, navigation links,
 malformed routes, and read-only/edit forms without a server or database. The
+same checks cover stored ticket/user identifiers, attendance and deletion
+actions, form submissions and redirects, and simulated WebSocket updates.
+All mutation requests are captured by the stub; no real records are changed. The
 headless browser runs with its sandbox disabled inside this disposable fixture;
 use this command only with the trusted local test files.
 

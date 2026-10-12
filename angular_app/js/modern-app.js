@@ -161,7 +161,7 @@ async function showEvent(id, editing) {
             ['begin_date', 'end_date', 'ticket_sales_begin_date', 'ticket_sales_end_date'].forEach(field => splitDateTime(data, field));
             await api(`/events/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(data) });
             notice('Event saved.', 'success');
-            location.hash = `#/event/${id}/edit`;
+            location.hash = `#/event/${encodeURIComponent(id)}/edit`;
         } catch (error) {
             reportActionError(error);
         }
@@ -185,7 +185,7 @@ async function showNewEvent() {
             data.formSchema = defaultFormSchema;
             const event = await api('/events', { method: 'POST', body: JSON.stringify(data) });
             notice('Event created.', 'success');
-            location.hash = `#/event/${event._id}/edit`;
+            location.hash = `#/event/${encodeURIComponent(event._id)}/edit`;
         } catch (error) {
             reportActionError(error);
         }
@@ -229,10 +229,10 @@ async function showTicketForm(eventId, ticketId) {
         const data = formValues(submit.currentTarget);
         schemaFields(event.formSchema).filter(field => field.type === 'checkbox' || field.type === 'boolean').forEach(field => { data[field.key] = submit.currentTarget.elements[field.key].checked; });
         if (ticketId) data.cancelled = submit.currentTarget.elements.cancelled.checked;
-        const url = ticketId ? `/events/${eventId}/tickets/${ticketId}` : `/events/${eventId}/tickets`;
+        const url = ticketId ? `/events/${encodeURIComponent(eventId)}/tickets/${encodeURIComponent(ticketId)}` : `/events/${encodeURIComponent(eventId)}/tickets`;
         const saved = await api(url, { method: ticketId ? 'PUT' : 'POST', body: JSON.stringify(data) });
         notice(ticketId ? 'Ticket saved.' : 'Registration complete.', 'success');
-        location.hash = `#/event/${eventId}/ticket/${ticketId || saved.ticket?._id || saved._id}/edit`;
+        location.hash = `#/event/${encodeURIComponent(eventId)}/ticket/${encodeURIComponent(ticketId || saved.ticket?._id || saved._id)}/edit`;
     });
 }
 
@@ -248,8 +248,8 @@ async function showTickets(id) {
         qs('#ticket-count').textContent = `${visible.length} shown · ${(event.tickets || []).filter(ticket => ticket.attended && !ticket.cancelled).length} attended`;
         qs('#ticket-rows').innerHTML = visible.map(ticket => `<tr class="${ticket.cancelled ? 'cancelled' : ''}">
             <td>${escapeHtml(ticket.seq_hex || '')}</td><td><a href="#/event/${htmlId(id)}/ticket/${htmlId(ticket._id)}/edit">${escapeHtml(ticketName(ticket))}</a><div class="metadata">${escapeHtml(ticket.email || '')}</div></td>
-            <td class="hide-small">${escapeHtml(ticket.company || '')}</td><td><input class="check" type="checkbox" data-attendance="${ticket._id}" ${ticket.attended ? 'checked' : ''} aria-label="Mark ${escapeHtml(ticketName(ticket))} as attended"></td>
-            <td><button class="secondary" data-delete-ticket="${ticket._id}">Delete</button></td></tr>`).join('') || `<tr><td colspan="5">${empty('No tickets match your search.')}</td></tr>`;
+            <td class="hide-small">${escapeHtml(ticket.company || '')}</td><td><input class="check" type="checkbox" data-attendance="${escapeHtml(ticket._id)}" ${ticket.attended ? 'checked' : ''} aria-label="Mark ${escapeHtml(ticketName(ticket))} as attended"></td>
+            <td><button class="secondary" data-delete-ticket="${escapeHtml(ticket._id)}">Delete</button></td></tr>`).join('') || `<tr><td colspan="5">${empty('No tickets match your search.')}</td></tr>`;
         document.querySelectorAll('[data-attendance]').forEach(input => input.addEventListener('change', () => updateTicket(id, input.dataset.attendance, { attended: input.checked })));
         document.querySelectorAll('[data-delete-ticket]').forEach(button => button.addEventListener('click', () => deleteTicket(id, button.dataset.deleteTicket)));
     };
@@ -262,15 +262,15 @@ async function showTickets(id) {
 }
 
 async function updateTicket(eventId, ticketId, data) {
-    await api(`/events/${eventId}/tickets/${ticketId}`, { method: 'PUT', body: JSON.stringify(data) });
+    await api(`/events/${encodeURIComponent(eventId)}/tickets/${encodeURIComponent(ticketId)}`, { method: 'PUT', body: JSON.stringify(data) });
     notice('Ticket updated.', 'success');
 }
 
 async function deleteTicket(eventId, ticketId) {
     if (!window.confirm('Permanently delete this ticket?')) return;
-    await api(`/events/${eventId}/tickets/${ticketId}`, { method: 'DELETE' });
+    await api(`/events/${encodeURIComponent(eventId)}/tickets/${encodeURIComponent(ticketId)}`, { method: 'DELETE' });
     notice('Ticket deleted.', 'success');
-    location.hash = `#/event/${eventId}/tickets`;
+    location.hash = `#/event/${encodeURIComponent(eventId)}/tickets`;
 }
 
 function connectUpdates(id, rerender) {
@@ -307,8 +307,8 @@ async function showUsers() {
     page('Users', `<section class="card"><label>Search users<input id="user-search" type="search"></label><div class="table-wrap"><table><thead><tr><th>Username</th><th>Email</th><th>Actions</th></tr></thead><tbody id="user-rows"></tbody></table></div></section>`, '<a class="button" href="#/login">Add user</a>');
     const draw = () => {
         const term = qs('#user-search').value.toLowerCase();
-        qs('#user-rows').innerHTML = users.filter(user => JSON.stringify(user).toLowerCase().includes(term)).map(user => `<tr><td><a href="#/user/${htmlId(user._id)}/edit">${escapeHtml(user.username)}</a></td><td>${escapeHtml(user.email || '')}</td><td>${hasPermission('user|delete') ? `<button class="danger" data-delete-user="${user._id}">Delete</button>` : ''}</td></tr>`).join('');
-        document.querySelectorAll('[data-delete-user]').forEach(button => button.addEventListener('click', async () => { if (confirm('Delete this user?')) { await api(`/users/${button.dataset.deleteUser}`, { method: 'DELETE' }); location.hash = '#/users'; }}));
+        qs('#user-rows').innerHTML = users.filter(user => JSON.stringify(user).toLowerCase().includes(term)).map(user => `<tr><td><a href="#/user/${htmlId(user._id)}/edit">${escapeHtml(user.username)}</a></td><td>${escapeHtml(user.email || '')}</td><td>${hasPermission('user|delete') ? `<button class="danger" data-delete-user="${escapeHtml(user._id)}">Delete</button>` : ''}</td></tr>`).join('');
+        document.querySelectorAll('[data-delete-user]').forEach(button => button.addEventListener('click', async () => { if (confirm('Delete this user?')) { await api(`/users/${encodeURIComponent(button.dataset.deleteUser)}`, { method: 'DELETE' }); location.hash = '#/users'; }}));
     };
     qs('#user-search').addEventListener('input', draw); draw();
 }
@@ -327,7 +327,7 @@ async function showAllTickets() {
 async function showUser(id) {
     const user = await api(`/users/${encodeURIComponent(id)}`);
     page(`Account · ${user.username}`, `<section class="card"><form id="user-form"><div class="grid"><label>Email<input name="email" type="email" value="${escapeHtml(user.email || '')}"></label><label>Current password<input name="old_password" type="password" autocomplete="current-password"></label><label>New password<input name="new_password" type="password" autocomplete="new-password" minlength="12"></label>${hasPermission('admin|all') ? `<label><input class="check" name="isAdmin" type="checkbox" ${hasPermissionForUser(user, 'admin|all') ? 'checked' : ''}> Administrator</label>` : ''}</div><div class="actions"><button>Save account</button></div></form></section>`);
-    qs('#user-form').addEventListener('submit', async event => { event.preventDefault(); const data = formValues(event.currentTarget); if (event.currentTarget.elements.isAdmin) data.isAdmin = event.currentTarget.elements.isAdmin.checked; await api(`/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }); notice('Account saved.', 'success'); });
+    qs('#user-form').addEventListener('submit', async event => { event.preventDefault(); const data = formValues(event.currentTarget); if (event.currentTarget.elements.isAdmin) data.isAdmin = event.currentTarget.elements.isAdmin.checked; await api(`/users/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(data) }); notice('Account saved.', 'success'); });
 }
 const hasPermissionForUser = (user, permission) => (user.permissions || []).includes(permission);
 
