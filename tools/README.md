@@ -28,6 +28,12 @@ Both tools use `EVENTMAN_MONGO_URL` if set, otherwise local MongoDB, and accept
 protected environment configuration; do not place them in command arguments or
 commit them to the repository.
 
+The default Compose setup does not expose MongoDB's port on the host. A local
+Python command using its default `localhost:27017` cannot reach that database;
+use the Docker commands below instead. `mongodb://mongo` resolves on the Compose
+network, not from the host. A connection timeout now reports `Cannot reach
+MongoDB`; this is distinct from an unmatched account or an incorrect password.
+
 Before deploying the login change, inventory the intended database:
 
 ```sh

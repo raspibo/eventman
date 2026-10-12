@@ -7,7 +7,7 @@ import sys
 import warnings
 
 import pymongo
-from pymongo.errors import PyMongoError
+from pymongo.errors import PyMongoError, ServerSelectionTimeoutError
 
 from utils import hash_password
 
@@ -52,6 +52,10 @@ def main():
         with pymongo.MongoClient(os.environ.get('EVENTMAN_MONGO_URL'),
                                 serverSelectionTimeoutMS=10_000) as client:
             reset_password(client[args.db_name]['users'], args.username, password)
+    except ServerSelectionTimeoutError:
+        raise SystemExit('Cannot reach MongoDB; check EVENTMAN_MONGO_URL. '
+                         'For the Compose database, run this tool through Docker Compose '
+                         'with EVENTMAN_MONGO_URL=mongodb://mongo') from None
     except PyMongoError:
         raise SystemExit('Unable to reset password; check MongoDB access and configuration') from None
     except ValueError:

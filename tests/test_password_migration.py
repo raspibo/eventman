@@ -7,7 +7,7 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
 
-from pymongo.errors import OperationFailure
+from pymongo.errors import OperationFailure, ServerSelectionTimeoutError
 
 from eventman_server import BaseHandler, UsersHandler
 from tools import password_hash_inventory, reset_user_password
@@ -196,3 +196,20 @@ class PasswordMigrationTests(unittest.TestCase):
             reset_user_password.main()
         self.assertEqual(output.getvalue(), 'Password reset complete\n')
         users.update_one.assert_called_once()
+
+    def test_connection_timeouts_give_safe_compose_guidance(self):
+        for tool, args in [
+            (password_hash_inventory, ['inventory']),
+            (reset_user_password, ['reset', '--username', 'fixture-user']),
+        ]:
+            with self.subTest(tool=tool.__name__):
+                with patch('sys.argv', args), patch('sys.stdin.isatty', return_value=True), \
+                        patch('getpass.getpass', side_effect=[PASSWORD, PASSWORD]), \
+                        patch('pymongo.MongoClient', side_effect=ServerSelectionTimeoutError('fake-uri-secret')):
+                    with self.assertRaises(SystemExit) as error:
+                        tool.main()
+                self.assertIn('Cannot reach MongoDB', str(error.exception))
+                self.assertIn('Docker Compose', str(error.exception))
+                self.assertNotIn('fake-uri-secret', str(error.exception))
+                self.assertNotIn(PASSWORD, str(error.exception))
+                self.assertTrue(error.exception.__suppress_context__)

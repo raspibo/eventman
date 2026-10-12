@@ -5,7 +5,7 @@ import json
 import os
 
 import pymongo
-from pymongo.errors import PyMongoError
+from pymongo.errors import PyMongoError, ServerSelectionTimeoutError
 
 from utils import password_hash_kind
 
@@ -30,6 +30,10 @@ def main():
         with pymongo.MongoClient(os.environ.get('EVENTMAN_MONGO_URL'),
                                 serverSelectionTimeoutMS=10_000) as client:
             counts = inventory(client[args.db_name]['users'])
+    except ServerSelectionTimeoutError:
+        raise SystemExit('Cannot reach MongoDB; check EVENTMAN_MONGO_URL. '
+                         'For the Compose database, run this tool through Docker Compose '
+                         'with EVENTMAN_MONGO_URL=mongodb://mongo') from None
     except (PyMongoError, ValueError):
         # Driver errors can include credentials from the connection URI.
         raise SystemExit('Unable to inventory password formats; check MongoDB access and configuration') from None
