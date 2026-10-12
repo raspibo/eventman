@@ -237,6 +237,9 @@ With the core requirements installed, run from the repository root:
 python3 -m unittest discover -s tests -p 'test_*.py'
 ```
 
+Admin bootstrap tests use temporary password files and a fake database to verify
+first-time setup, error handling, and existing-admin compatibility.
+
 The Eventbrite error-response tests use a temporary loopback HTTP server and
 mock the SDK and database. They require permission to bind a local socket and
 do not contact Eventbrite or invoke printers, scanners, or a real database.

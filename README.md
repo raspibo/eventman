@@ -42,7 +42,9 @@ Python dependencies are declared in `requirements.txt`, with separate requiremen
 
 ## Docker
 
-Just run:
+For first-time setup, configure the initial admin password file as described in
+[the Docker instructions](docs/DOCKER.md#initial-admin-password). Existing
+databases with an admin need no bootstrap password. Then run:
 
     docker compose up --build
 
@@ -56,7 +58,12 @@ Be sure to have a running MongoDB server locally. Install into a virtual environ
     python3 -m venv .venv
     . .venv/bin/activate
     python -m pip install -r requirements.txt
-    ./eventman_server.py --debug
+    ./eventman_server.py --debug --admin_password_file=/absolute/private/admin-password
+
+Before first startup, create that UTF-8 file outside the checkout with your chosen
+password on one line and permissions 0600. The server account must be able to
+read it. A final newline is allowed; spaces in the password are preserved.
+Once the admin exists, the file option can be removed.
 
 Optional features can be installed in the same environment:
 
@@ -75,7 +82,7 @@ If you store SSL key and certificate in the *ssl* directory (default names: even
 # Basic workflow
 
 So, you've just installed it and you have the server running.  Let's create an event:
-- login with the **admin** user (initial password: printed on first startup, or chosen with `--admin_password`)
+- login with the **admin** user using the password supplied at first startup
 - click "Add an event"
 - edit basic information about the event and save it
 - a default registration form is provided, with the following fields (all are optional):
@@ -117,7 +124,16 @@ About the "Group ID" of events and "Unregistered persons" list:
 
 Authentication is required by default. Unregistered and unprivileged users can see and join events, but are unable to edit or handle them. Administrator users can create and edit events; more information about how permissions are handled can be found in the *docs/DEVELOPMENT.md* file. Use `--authentication=false` only for a deliberately public deployment.
 
-On first startup an **admin** user is created with a randomly generated password, which is printed once in the server log. Set `--admin_password` to choose the initial password non-interactively. Existing legacy password hashes are upgraded to PBKDF2-SHA256 after a successful login.
+On first startup, supply the **admin** password using `--admin_password_file`
+(recommended) or the existing `--admin_password` option. Both options can also
+be set in a Tornado configuration file. Passwords are never printed to logs.
+Startup fails before creating the admin if neither supplies a password, if both
+are supplied, or if the password file is unreadable, empty, or contains multiple
+lines. Keep secret files outside the checkout with owner-only access; passwords
+passed directly on the command line may be visible in shell history and process
+listings. Existing admins are not changed, and their startup ignores bootstrap
+inputs. Existing legacy password hashes are upgraded to PBKDF2-SHA256 after a
+successful login.
 
 Users can register, but are not forced to do so: tickets can also be issued to unregistered persons. However, if you register, you'll be able to access the list of all of your tickets (otherwise, you have to save the tickets' link, if you want to edit them later).
 

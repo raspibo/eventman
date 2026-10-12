@@ -26,7 +26,6 @@ import json
 import time
 import string
 import random
-import secrets
 import logging
 import datetime
 import ipaddress
@@ -1292,6 +1291,34 @@ class LogoutHandler(BaseHandler):
         self.write({'error': False, 'message': 'logged out'})
 
 
+def ensure_admin(db_connector, admin_password=None, admin_password_file=None):
+    """Create the initial administrator from an explicitly supplied password.
+
+    :param db_connector: database connector
+    :param admin_password: initial password, retained for compatibility
+    :param admin_password_file: UTF-8 file containing the initial password
+    """
+    if db_connector.query('users', {'username': 'admin'}):
+        return
+    if admin_password is not None and admin_password_file is not None:
+        raise SystemExit('Choose only one of --admin_password and --admin_password_file')
+    if admin_password_file is not None:
+        try:
+            with open(admin_password_file, encoding='utf-8') as password_file:
+                admin_password = password_file.read().rstrip('\r\n')
+        except (OSError, UnicodeError):
+            raise SystemExit('Unable to read the initial admin password file') from None
+        if '\r' in admin_password or '\n' in admin_password:
+            raise SystemExit('The initial admin password file must contain one line')
+    if not admin_password:
+        raise SystemExit('Initial admin password required: use --admin_password_file '
+                         'or --admin_password')
+    db_connector.add('users',
+            {'username': 'admin', 'password': utils.hash_password(admin_password),
+             'permissions': ['admin|all']})
+    logging.warning('Created admin user')
+
+
 def run():
     """Run the Tornado web application."""
     # command line arguments; can also be written in a configuration file,
@@ -1311,6 +1338,8 @@ def run():
     define("authentication", default=True, help="if set to false, authentication is not required")
     define("admin_password", default=None,
             help="initial admin password (only used when the admin user is created)", type=str)
+    define("admin_password_file", default=None,
+            help="UTF-8 file containing the initial admin password", type=str)
     define("debug", default=False, help="run in debug mode")
     define("config", help="read configuration file",
             callback=lambda path: tornado.options.parse_config_file(path, final=False))
@@ -1331,13 +1360,7 @@ def run():
             authentication=options.authentication, logger=logger, ssl_options=ssl_options,
             secure_cookies=bool(ssl_options))
 
-    # If not present, create an administrator with a one-time random password.
-    if not db_connector.query('users', {'username': 'admin'}):
-        admin_password = options.admin_password or secrets.token_urlsafe(18)
-        db_connector.add('users',
-                {'username': 'admin', 'password': utils.hash_password(admin_password),
-                 'permissions': ['admin|all']})
-        logger.warning('Created admin user; initial password: %s', admin_password)
+    ensure_admin(db_connector, options.admin_password, options.admin_password_file)
 
     # If present, use the cookie_secret stored into the database.
     cookie_secret = db_connector.query('settings', {'setting': 'server_cookie_secret'})
