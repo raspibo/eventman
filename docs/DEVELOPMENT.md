@@ -121,6 +121,16 @@ update\_ticket\_in\_event and attends will receive these information:
 
 In the **data/triggers-available** there is an example of script: **echo.py**.
 
+Trigger action names accept ASCII letters, digits, underscores, and hyphens.
+The resolved `triggers` root must stay inside the configured `data_dir`, and
+resolved action directories must stay inside that trigger root. Script symlinks
+may resolve anywhere inside `data_dir`, including `triggers-available`; external
+targets are skipped with a warning. Selected scripts execute using their resolved
+paths. Move trusted external scripts inside `data_dir` before enabling them.
+Only executable regular files are selected. Missing action directories are a
+no-op. Keep the data/trigger directories writable only by trusted operators:
+these checks do not prevent races caused by concurrent hostile local changes.
+
 
 Database layout
 ===============
@@ -239,6 +249,11 @@ python3 -m unittest discover -s tests -p 'test_*.py'
 
 Admin bootstrap tests use temporary password files and a fake database to verify
 first-time setup, error handling, and existing-admin compatibility.
+
+Trigger path tests use temporary executable fixtures and symlinks but stub
+subprocess execution. They verify action validation, root confinement, safe
+available-trigger links, executable selection, and unchanged JSON/environment
+delivery to the stub; they never execute a trigger or access hardware.
 
 The Eventbrite error-response tests use a temporary loopback HTTP server and
 mock the SDK and database. They require permission to bind a local socket and

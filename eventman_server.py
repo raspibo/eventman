@@ -578,13 +578,28 @@ class CollectionHandler(BaseHandler):
         """
         if not hasattr(self, 'data_dir'):
             return
+        if not isinstance(action, str) or not re.fullmatch(r'[A-Za-z0-9_-]+', action):
+            logging.warning('Skipping invalid trigger action')
+            return
+        data_root = os.path.realpath(self.data_dir)
+        trigger_root = os.path.realpath(os.path.join(data_root, 'triggers'))
+        action_dir = os.path.realpath(os.path.join(trigger_root, '%s.d' % action))
+        if (os.path.commonpath([data_root, trigger_root]) != data_root or
+                os.path.commonpath([trigger_root, action_dir]) != trigger_root):
+            logging.warning('Skipping trigger directory outside its allowed root')
+            return
         logging.debug('running triggers for action "%s"' % action)
         stdin_data = stdin_data or {}
         stdin_data = json.dumps(stdin_data)
-        for script in glob.glob(os.path.join(self.data_dir, 'triggers', '%s.d' % action, '*')):
+        for candidate in glob.glob(os.path.join(action_dir, '*')):
+            script = os.path.realpath(candidate)
+            # Available-trigger symlinks may target anywhere inside data_dir.
+            if os.path.commonpath([data_root, script]) != data_root:
+                logging.warning('Skipping trigger script outside its allowed root')
+                continue
             if not (os.path.isfile(script) and os.access(script, os.X_OK)):
                 continue
-            out, err = yield gen.Task(self.run_subprocess, [script], stdin_data, env)
+            out, err = yield self.run_subprocess([script], stdin_data, env)
 
     def build_ws_url(self, path, proto='ws', host=None):
         """Return a WebSocket url from a path."""
