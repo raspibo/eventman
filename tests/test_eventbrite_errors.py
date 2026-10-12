@@ -14,11 +14,16 @@ from tornado.testing import AsyncHTTPTestCase
 from eventman_server import EbAPIImportHandler
 
 
+class AdminImportProbe(EbAPIImportHandler):
+    def has_permission(self, permission):
+        return permission == 'admin|all'
+
+
 class EventbriteErrorTests(AsyncHTTPTestCase):
     def get_app(self):
         self.db = Mock()
         return tornado.web.Application([
-            ('/ebapi', EbAPIImportHandler, {
+            ('/ebapi', AdminImportProbe, {
                 'authentication': False,
                 'db': self.db,
                 'logger': logging.getLogger(),

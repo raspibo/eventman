@@ -100,8 +100,8 @@ So, you've just installed it and you have the server running.  Let's create an e
 Now persons can start joining your event:
 - click on "Join this event" in the list of events
 - compile the form and submit it
-- the user will have to keep the provided link, if they want to edit their information later
-- from this link, a person can also mark a ticket as "cancelled" (not counted in the list of tickets), or they can enable it again
+- registered owners can revisit their ticket link to edit information or cancel their registration; authorized staff can also manage tickets
+- guest registrations require staff assistance for later changes; a ticket link alone does not grant access
 - if the person was a registered user, it's possible to see the list of own tickets in the personal page
 
 As an administrator, you can now go to the list of tickets of the event:
@@ -137,7 +137,15 @@ accounts require an operator-managed reset to PBKDF2-SHA256. See
 [password retirement and recovery](tools/README.md#password-retirement-and-recovery)
 for read-only inventory and reset commands, including recovery for an admin.
 
-Users can register, but are not forced to do so: tickets can also be issued to unregistered persons. However, if you register, you'll be able to access the list of all of your tickets (otherwise, you have to save the tickets' link, if you want to edit them later).
+Create an account and log in before registering to manage your tickets later.
+Reading or editing a ticket requires its registered owner or authorized staff,
+including with `--authentication=false`. Owners can cancel their registrations;
+attendance markers and permanent deletion require staff permissions. Guest and
+ownerless tickets require staff assistance. Bulk ticket data and live updates
+require `event:tickets-all|read`; imports require `admin|all`.
+
+See [the #147 audit and deployment procedure](SECURITY_AUDIT_147.md) for the
+required signing-key rotation after upgrading a deployment that exposed its key.
 
 # Web interface
 

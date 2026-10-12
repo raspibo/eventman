@@ -255,6 +255,14 @@ registration/password-change behavior, and inventory/reset tooling with mocked
 MongoDB collections and fixture credentials. They never reset real accounts.
 See [the operator recovery procedure](../tools/README.md#password-retirement-and-recovery).
 
+Issue #147 tests use fake accounts and isolated HTTP/WebSocket listeners to
+check owner/staff ticket access, account changes, redaction, privileged imports,
+query validation, subscriber permissions, internal publishing, and revoked roles.
+Rotation unit tests mock writes. Optional `test_authorization_mongo.py` checks
+real database updates and rotation in uniquely named test databases; run only
+with `EVENTMAN_TEST_MONGO_URL` pointing to a disposable test instance, never the
+application database. See [the audit and deployment procedure](../SECURITY_AUDIT_147.md).
+
 Trigger path tests use temporary executable fixtures and symlinks but stub
 subprocess execution. They verify action validation, root confinement, safe
 available-trigger links, executable selection, and unchanged JSON/environment

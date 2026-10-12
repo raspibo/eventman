@@ -82,3 +82,18 @@ updated. Do not hash an old digest as if it were the user's password. If rollbac
 is needed, use a revision supporting PBKDF2, and do not restore weaker hashes
 over successfully reset accounts. No real account reset is part of repository
 validation; deployment inventory/reset and login checks are owner-operated.
+
+## Cookie-signing key rotation
+
+After reviewing the #147 secret-disclosure fix, rotate any previously exposed
+signing key and restart every application instance. The operator command
+requires `--yes`, changes one existing settings record, and prints no key values:
+
+```sh
+python3 -m tools.rotate_cookie_secret --db-name eventman --yes
+```
+
+It uses the same `EVENTMAN_MONGO_URL` convention as the password tools. Stop the
+application before rotation and preserve a protected backup; existing login
+cookies become invalid after restart. See [the deployment procedure and remaining
+acceptance checks](../SECURITY_AUDIT_147.md#signing-key-rotation-and-deployment).

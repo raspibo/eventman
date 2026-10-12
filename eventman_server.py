@@ -29,6 +29,7 @@ import random
 import logging
 import datetime
 import ipaddress
+from http.client import responses as http_responses
 import dateutil.tz
 import dateutil.parser
 
@@ -96,17 +97,29 @@ class BaseHandler(tornado.web.RequestHandler):
     """Base class for request handlers."""
     permissions = {
         'event|read': True,
-        'event:tickets|read': True,
         'event:tickets|create': True,
-        'event:tickets|update': True,
         'event:tickets-all|create': True,
         'events|read': True,
         'users|create': True
     }
 
     # A property to access the first value of each argument.
-    arguments = property(lambda self: dict([(k, v[0].decode('utf-8'))
-        for k, v in self.request.arguments.items()]))
+    @property
+    def arguments(self):
+        arguments = {k: v[0].decode('utf-8') for k, v in self.request.arguments.items()}
+        self.validate_input(arguments)
+        return arguments
+
+    def validate_input(self, value):
+        """Reject MongoDB operator/path keys throughout client-supplied data."""
+        if isinstance(value, dict):
+            for key, item in value.items():
+                if not isinstance(key, str) or key.startswith('$') or '.' in key or '\x00' in key:
+                    raise InputException('invalid input field')
+                self.validate_input(item)
+        elif isinstance(value, list):
+            for item in value:
+                self.validate_input(item)
 
     # A property to access both the UUID and the clean arguments.
     @property
@@ -139,9 +152,18 @@ class BaseHandler(tornado.web.RequestHandler):
             exc = kwargs['exc_info'][1]
             status_code = exc.status
             message = exc.message
+        elif 400 <= status_code < 500:
+            # Expected HTTP rejections must not be described as server failures.
+            message = http_responses.get(status_code, 'request rejected')
         else:
             message = 'internal error'
         self.build_error(message, status=status_code)
+
+    def log_exception(self, typ, value, tb):
+        if isinstance(value, BaseException):
+            logging.warning('Request rejected (%s)', type(value).__name__)
+        else:
+            super().log_exception(typ, value, tb)
 
     def is_api(self):
         """Return True if the path is from an API call."""
@@ -174,6 +196,8 @@ class BaseHandler(tornado.web.RequestHandler):
         current_user = self.get_secure_cookie("user")
         if isinstance(current_user, bytes):
             current_user = current_user.decode('utf-8')
+        if current_user and not self.db.getOne('users', {'_id': current_user}):
+            return None
         return current_user
 
     @property
@@ -186,7 +210,8 @@ class BaseHandler(tornado.web.RequestHandler):
             user_info['_id'] = current_user
             user = self.db.getOne('users', {'_id': current_user})
             if user:
-                user_info = user
+                user_info = {key: user[key] for key in
+                             ('_id', 'username', 'email', 'created_at', 'updated_at') if key in user}
                 permissions.update(set(user.get('permissions') or []))
                 user_info['permissions'] = permissions
                 user_info['isRegistered'] = True
@@ -240,6 +265,8 @@ class BaseHandler(tornado.web.RequestHandler):
 
         :returns: tuple like (bool_user_is_authorized, dict_user_info)
         :rtype: dict"""
+        if not isinstance(username, str) or not isinstance(password, str):
+            return False, {}
         query = [{'username': username}, {'email': username}]
         res = self.db.query('users', query)
         if not res:
@@ -287,6 +314,14 @@ class CollectionHandler(BaseHandler):
     # set of documents we're managing (a collection in MongoDB or a table in a SQL database)
     document = None
     collection = None
+
+    def has_resource_permission(self, permission, id_, resource, resource_id):
+        """Check permission for a specific subresource operation."""
+        return self.has_permission(permission)
+
+    def has_document_permission(self, permission, id_):
+        """Check permission for an existing document operation."""
+        return self.has_permission(permission)
 
     # set of documents used to store incremental sequences
     counters_collection = 'counters'
@@ -354,6 +389,9 @@ class CollectionHandler(BaseHandler):
 
         :param data: dictionary to clean
         :type data: dict"""
+        if not isinstance(data, dict):
+            raise InputException('expected a JSON object')
+        self.validate_input(data)
         if isinstance(data, dict):
             for key in list(data.keys()):
                 if (isinstance(key, str) and key.startswith('$')) or key in ('_id', 'created_by', 'created_at',
@@ -399,8 +437,8 @@ class CollectionHandler(BaseHandler):
         if resource:
             # Handle access to sub-resources.
             permission = '%s:%s%s|read' % (self.document, resource, '-all' if resource_id is None else '')
-            if acl and not self.has_permission(permission):
-                return self.build_error(status=401, message='insufficient permissions: %s' % permission)
+            if acl and not self.has_resource_permission(permission, id_, resource, resource_id):
+                return self.build_error(status=403, message='insufficient permissions: %s' % permission)
             handler = getattr(self, 'handle_get_%s' % resource, None)
             if handler and isinstance(handler, Callable):
                 output = handler(id_, resource_id, **kwargs) or {}
@@ -432,6 +470,11 @@ class CollectionHandler(BaseHandler):
     @gen.coroutine
     @authenticated
     def post(self, id_=None, resource=None, resource_id=None, _rawData=None, **kwargs):
+        yield self._post(id_, resource, resource_id, _rawData=_rawData, **kwargs)
+
+    @gen.coroutine
+    def _post(self, id_=None, resource=None, resource_id=None, _rawData=None, **kwargs):
+        """Perform a write after the public handler checks authentication."""
         if _rawData:
             data = _rawData
         else:
@@ -445,8 +488,8 @@ class CollectionHandler(BaseHandler):
         self.add_access_info(data)
         if resource:
             permission = '%s:%s%s|%s' % (self.document, resource, '-all' if resource_id is None else '', crud_method)
-            if not self.has_permission(permission):
-                return self.build_error(status=401, message='insufficient permissions: %s' % permission)
+            if not self.has_resource_permission(permission, id_, resource, resource_id):
+                return self.build_error(status=403, message='insufficient permissions: %s' % permission)
             # Handle access to sub-resources.
             handler = getattr(self, 'handle_%s_%s' % (method, resource), None)
             if handler and isinstance(handler, Callable):
@@ -463,7 +506,7 @@ class CollectionHandler(BaseHandler):
             return self.build_error(status=404, message='unable to access resource: %s' % resource)
         if id_ is not None:
             permission = '%s|%s' % (self.document, crud_method)
-            if not self.has_permission(permission):
+            if not self.has_document_permission(permission, id_):
                 return self.build_error(status=401, message='insufficient permissions: %s' % permission)
             data = self.apply_filter(data, 'input_%s' % method)
             merged, newData = self.db.update(self.collection, id_, data)
@@ -492,8 +535,8 @@ class CollectionHandler(BaseHandler):
         if resource:
             # Handle access to sub-resources.
             permission = '%s:%s%s|delete' % (self.document, resource, '-all' if resource_id is None else '')
-            if not self.has_permission(permission):
-                return self.build_error(status=401, message='insufficient permissions: %s' % permission)
+            if not self.has_resource_permission(permission, id_, resource, resource_id):
+                return self.build_error(status=403, message='insufficient permissions: %s' % permission)
             method = getattr(self, 'handle_delete_%s' % resource, None)
             if method and isinstance(method, Callable):
                 output = method(id_, resource_id, **kwargs)
@@ -641,6 +684,20 @@ class EventsHandler(CollectionHandler):
     document = 'event'
     collection = 'events'
 
+    def has_resource_permission(self, permission, id_, resource, resource_id):
+        if self.has_permission(permission):
+            return True
+        if resource != 'tickets' or resource_id is None:
+            return False
+        operation = permission.rsplit('|', 1)[-1]
+        if self.has_permission('event:tickets-all|%s' % operation):
+            return True
+        if operation not in ('read', 'update') or not self.current_user:
+            return False
+        event = self.db.get('events', id_)
+        ticket = self._get_ticket_data(resource_id, event.get('tickets') or [])
+        return bool(ticket.get('created_by') and str(ticket['created_by']) == self.current_user)
+
     def _mangle_event(self, event):
         # Some in-place changes to an event
         if 'tickets' in event:
@@ -655,7 +712,7 @@ class EventsHandler(CollectionHandler):
                 event['no_tickets_for_sale'] = True
             if not self.has_permission('event|write'):
                 event['group_id'] = ''
-            if '_summary' in self.arguments or not self.has_permission('tickets-all|read'):
+            if '_summary' in self.arguments or not self.has_permission('event:tickets-all|read'):
                 event['tickets'] = []
         return event
 
@@ -685,9 +742,10 @@ class EventsHandler(CollectionHandler):
 
     def filter_input_post_tickets(self, data):
         # Avoid users to be able to auto-update their 'attendee' status.
-        if not self.has_permission('event|update'):
-            if 'attended' in data:
-                del data['attended']
+        if not (self.has_permission('event:tickets|update') or
+                self.has_permission('event:tickets-all|update')):
+            if any(key == 'attended' or key.endswith('_attended') or key == 'checked_in_by' for key in data):
+                raise InputException('attendance field requires staff permission', status=403)
         self.add_access_info(data)
         return data
 
@@ -840,6 +898,11 @@ class EventsHandler(CollectionHandler):
     def handle_put_tickets(self, id_, ticket_id, data):
         # Update an existing entry for a ticket registered at this event.
         self._clean_dict(data)
+        if not (self.has_permission('event:tickets|update') or
+                self.has_permission('event:tickets-all|update')):
+            protected = {'seq', 'seq_hex', 'ticket_id', 'event_id', 'attended', 'checked_in_by', 'from_file'}
+            if any(key in protected or key.endswith('_attended') for key in data):
+                raise InputException('ticket field requires staff permission', status=403)
         uuid, arguments = self.uuid_arguments
         _errorMessage = ''
         if '_errorMessage' in arguments:
@@ -885,6 +948,9 @@ class EventsHandler(CollectionHandler):
         if 'number_of_tickets' in current_event and old_ticket_data.get('cancelled') and not data.get('cancelled'):
             self._check_number_of_tickets(current_event)
 
+        # Keep ownerless tickets ownerless; staff edits must not claim them.
+        for field in ('created_by', 'created_at'):
+            data[field] = old_ticket_data.get(field)
         self.add_access_info(data)
         merged, doc = self.db.update('events', query,
                 data, updateList='tickets', create=False)
@@ -917,8 +983,12 @@ class EventsHandler(CollectionHandler):
         uuid, arguments = self.uuid_arguments
         doc = self.db.query('events', {'_id': id_})
         ret = {'action': 'delete', '_id': ticket_id, 'uuid': uuid}
+        if not doc:
+            raise InputException('event not found', status=404)
         if doc:
             ticket = self._get_ticket_data(ticket_id, doc[0].get('tickets') or [])
+            if ticket_id is not None and not ticket:
+                raise InputException('ticket not found', status=404)
             ticket_query = {}
             if ticket:
                 ticket_query['_id'] = ticket_id
@@ -946,9 +1016,21 @@ class UsersHandler(CollectionHandler):
     document = 'user'
     collection = 'users'
 
+    @gen.coroutine
+    def post(self, id_=None, resource=None, resource_id=None, **kwargs):
+        # Account registration is the only anonymous collection write.
+        if id_ is None and resource is None and resource_id is None:
+            yield self._post(id_, resource, resource_id, **kwargs)
+        else:
+            yield super(UsersHandler, self).post(id_, resource, resource_id, **kwargs)
+
+    def has_document_permission(self, permission, id_):
+        return (self.has_permission(permission) or
+                (permission == 'user|update' and self.current_user == id_))
+
     def filter_get(self, data):
-        if 'password' in data:
-            del data['password']
+        data = {key: data[key] for key in
+                ('_id', 'username', 'email', 'permissions', 'created_at', 'updated_at') if key in data}
         if '_id' in data:
             # Also add a 'tickets' list with all the tickets created by this user
             tickets = []
@@ -968,9 +1050,15 @@ class UsersHandler(CollectionHandler):
         if 'users' not in data:
             return data
         for user in data['users']:
-            if 'password' in user:
-                del user['password']
+            for key in list(user):
+                if key not in ('_id', 'username', 'email', 'permissions', 'created_at', 'updated_at'):
+                    del user[key]
         return data
+
+    # Account writes must use the same public representation as reads.
+    filter_put = filter_get
+    filter_post = filter_get
+    filter_post_all = filter_get
 
     @gen.coroutine
     @authenticated
@@ -978,9 +1066,11 @@ class UsersHandler(CollectionHandler):
         if id_ is not None:
             if (self.has_permission('user|read') or self.current_user == id_):
                 acl = False
-        super(UsersHandler, self).get(id_, resource, resource_id, acl=acl, **kwargs)
+        yield super(UsersHandler, self).get(id_, resource, resource_id, acl=acl, **kwargs)
 
     def filter_input_post_all(self, data):
+        if any(not isinstance(data.get(key, ''), str) for key in ('username', 'password', 'email')):
+            raise InputException('username, password, and email must be strings')
         username = (data.get('username') or '').strip()
         password = (data.get('password') or '').strip()
         email = (data.get('email') or '').strip()
@@ -995,14 +1085,19 @@ class UsersHandler(CollectionHandler):
     def filter_input_put(self, data):
         old_pwd = data.get('old_password')
         new_pwd = data.get('new_password')
+        if any(value is not None and not isinstance(value, str) for value in (old_pwd, new_pwd)):
+            raise InputException('passwords must be strings')
+        # Raw hashes must never bypass the password-change authorization path.
+        data.pop('password', None)
         if old_pwd is not None:
             del data['old_password']
         if new_pwd is not None:
             del data['new_password']
-            authorized, user = self.user_authorized(data['username'], old_pwd)
-            if not (self.has_permission('user|update') or (authorized and
-                                                           self.current_user_info.get('username') == data['username'])):
-                raise InputException('not authorized to change password')
+            if not self.has_permission('user|update'):
+                user = self.db.getOne('users', {'_id': self.current_user})
+                authorized = isinstance(old_pwd, str) and utils.verify_password(old_pwd, user.get('password') or '')[0]
+                if not authorized:
+                    raise InputException('not authorized to change password', status=403)
             data['password'] = utils.hash_password(new_pwd)
         if '_id' in data:
             del data['_id']
@@ -1013,6 +1108,7 @@ class UsersHandler(CollectionHandler):
         if not self.has_permission('admin|all'):
             if 'permissions' in data:
                 del data['permissions']
+            data.pop('isAdmin', None)
         else:
             if 'isAdmin' in data:
                 if not 'permissions' in data:
@@ -1031,7 +1127,9 @@ class UsersHandler(CollectionHandler):
             return self.build_error(status=404, message='unable to access the resource')
         if not (self.has_permission('user|update') or self.current_user == id_):
             return self.build_error(status=401, message='insufficient permissions: user|update or current user')
-        super(UsersHandler, self).put(id_, resource, resource_id, **kwargs)
+        if not self.db.get('users', id_):
+            return self.build_error(status=404, message='user not found')
+        yield super(UsersHandler, self).put(id_, resource, resource_id, **kwargs)
 
 
 class EbAPIImportHandler(BaseHandler):
@@ -1039,8 +1137,15 @@ class EbAPIImportHandler(BaseHandler):
     @gen.coroutine
     @authenticated
     def post(self, *args, **kwargs):
+        if not self.has_permission('admin|all'):
+            return self.build_error('insufficient permissions: admin|all', status=403)
         reply = dict(total=0, valid=0, merged=0, new_in_event=0)
         data = escape.json_decode(self.request.body or '{}')
+        if not isinstance(data, dict):
+            raise InputException('expected a JSON object')
+        self.validate_input(data)
+        if any(not isinstance(data.get(key, ''), str) for key in ('oauthToken', 'eventID', 'targetEvent')):
+            raise InputException('import identifiers and token must be strings')
         oauthToken = data.get('oauthToken')
         eventID = data.get('eventID')
         targetEventID = data.get('targetEvent')
@@ -1117,6 +1222,8 @@ class EbCSVImportPersonsHandler(BaseHandler):
     @authenticated
     def post(self, **kwargs):
         # import a CSV list of persons
+        if not self.has_permission('admin|all'):
+            return self.build_error('insufficient permissions: admin|all', status=403)
         event_handler = EventsHandler(self.application, self.request)
         event_handler.db = self.db
         event_handler.logger = self.logger
@@ -1168,7 +1275,19 @@ class SettingsHandler(BaseHandler):
     @authenticated
     def get(self, **kwargs):
         query = self.arguments_tobool()
-        settings = self.db.query('settings', query)
+        # Publish known presentation records only; never return server secrets.
+        public_settings = {'ticket_custom_field', 'logo', 'event_custom_field'}
+        settings = []
+        for setting in sorted(public_settings):
+            if 'setting' in query and query['setting'] != setting:
+                continue
+            records = self.db.query('settings', dict(query, setting=setting))
+            for record in records:
+                if record.get('setting') != setting:
+                    continue
+                settings.append({key: record[key] for key in
+                                 ('setting', 'label', 'key', 'type', 'value', 'in_event_details')
+                                 if key in record})
         self.write({'settings': settings})
 
 
@@ -1203,7 +1322,7 @@ class TicketsHandler(BaseHandler):
         self.write({'tickets': tickets})
 
 
-class WebSocketEventUpdatesHandler(tornado.websocket.WebSocketHandler):
+class WebSocketEventUpdatesHandler(tornado.websocket.WebSocketHandler, BaseHandler):
     """Manage WebSockets."""
     def _clean_url(self, url):
         url = re_slashes.sub('/', url)
@@ -1213,6 +1332,9 @@ class WebSocketEventUpdatesHandler(tornado.websocket.WebSocketHandler):
         return url
 
     def open(self, event_id, *args, **kwargs):
+        if not self.has_permission('event:tickets-all|read'):
+            self.close(code=1008, reason='insufficient permissions')
+            return
         try:
             self.uuid = self.get_argument('uuid')
         except:
@@ -1233,9 +1355,10 @@ class WebSocketEventUpdatesHandler(tornado.websocket.WebSocketHandler):
             _ws_clients.pop(url, None)
 
     def on_message(self, message):
-        if not ipaddress.ip_address(self.request.remote_ip).is_loopback:
-            self.close(code=1008, reason='server-publish-only channel')
-            return
+        self.close(code=1008, reason='server-publish-only channel')
+
+    def publish_message(self, message):
+        """Forward updates from the dedicated loopback publisher listener only."""
         url = self._clean_url(self.request.uri)
         logging.debug('WebSocketEventUpdatesHandler.on_message url:%s' % url)
         count = 0
@@ -1248,6 +1371,10 @@ class WebSocketEventUpdatesHandler(tornado.websocket.WebSocketHandler):
         for uuid, client in _ws_clients.get(url, {}).items():
             if uuid and uuid == current_uuid:
                continue
+            if not client.has_permission('event:tickets-all|read'):
+                client.close(code=1008, reason='insufficient permissions')
+                _to_delete.add(uuid)
+                continue
             try:
                 client.write_message(message)
             except:
@@ -1260,6 +1387,23 @@ class WebSocketEventUpdatesHandler(tornado.websocket.WebSocketHandler):
             except KeyError:
                 pass
         logging.debug('WebSocketEventUpdatesHandler.on_message sent message to %d clients' % count)
+
+
+class InternalWebSocketPublisher(WebSocketEventUpdatesHandler):
+    """Accept server updates on the separate loopback-only listener."""
+    def prepare(self):
+        pass
+
+    def open(self, event_id, *args, **kwargs):
+        if not ipaddress.ip_address(self.request.remote_ip).is_loopback:
+            self.close(code=1008, reason='loopback-only publisher')
+
+    def on_close(self):
+        pass
+
+    def on_message(self, message):
+        if ipaddress.ip_address(self.request.remote_ip).is_loopback:
+            self.publish_message(message)
 
 
 class LoginHandler(RootHandler):
@@ -1392,7 +1536,8 @@ def run():
         db_connector.add('settings',
                 {'setting': 'server_cookie_secret', 'cookie_secret': cookie_secret})
 
-    _ws_handler = (r"/ws/+event/+(?P<event_id>[\w\d_-]+)/+tickets/+updates/?", WebSocketEventUpdatesHandler)
+    _ws_path = r"/ws/+event/+(?P<event_id>[\w\d_-]+)/+tickets/+updates/?"
+    _ws_handler = (_ws_path, WebSocketEventUpdatesHandler, init_params)
     _events_path = r"/events/?(?P<id_>[\w\d_-]+)?/?(?P<resource>[\w\d_-]+)?/?(?P<resource_id>[\w\d_-]+)?"
     _users_path = r"/users/?(?P<id_>[\w\d_-]+)?/?(?P<resource>[\w\d_-]+)?/?(?P<resource_id>[\w\d_-]+)?"
     application = tornado.web.Application([
@@ -1431,7 +1576,7 @@ def run():
     http_server.listen(options.port, options.address)
 
     # Also listen on options.port+1 for our local ws connection.
-    ws_application = tornado.web.Application([_ws_handler], debug=options.debug)
+    ws_application = tornado.web.Application([(_ws_path, InternalWebSocketPublisher)], debug=options.debug)
     ws_http_server = tornado.httpserver.HTTPServer(ws_application)
     ws_http_server.listen(options.port+1, address='127.0.0.1')
     logger.debug('Starting WebSocket on ws://127.0.0.1:%d', options.port+1)

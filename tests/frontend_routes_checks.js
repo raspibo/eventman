@@ -10,7 +10,7 @@ api = async (path, options = {}) => {
 };
 const realConnectUpdates = connectUpdates;
 connectUpdates = () => {};
-state.info = { user: { permissions: ['admin|all'] } };
+state.info = { user: { permissions: ['admin|all'], isRegistered: true } };
 const hostileId = '\" onmouseover=\"window.injected=true\"><img src=x onerror=\"window.injected=true\">\'&%';
 const safeId = '1700000000_12-3-abcdef';
 const eventFixture = { title: 'Test event', tickets: [{ _id: 'ticket-1', name: 'Test attendee' }] };
@@ -169,6 +169,21 @@ for (const ticketId of [null, actionId]) {
     assert(location.hash === `#/event/${encodeURIComponent(actionEventId)}/ticket/${encodeURIComponent(actionId)}/edit`,
         'Ticket form redirect changed identifier');
 }
+
+// Guests can register, but receive confirmation without an inaccessible edit redirect.
+state.info.user = { permissions: [] };
+fixture = { ...eventFixture, ticket: { _id: 'guest-ticket' } };
+await showTicketForm(safeId, null);
+assert(app.textContent.includes('before registering'), 'Missing guest account guidance');
+const guestHash = location.hash;
+mutations.length = 0;
+qs('#ticket-form').dispatchEvent(new Event('submit', { cancelable: true }));
+await settleActions();
+assert(mutations.length === 1 && mutations[0].method === 'POST', 'Guest registration failed');
+assert(app.querySelector('.page-heading h1').textContent === 'Registration complete', 'Guest confirmation missing');
+assert(location.hash === guestHash, 'Guest was redirected to an inaccessible ticket');
+assert(!app.querySelector('a[href*="/ticket/"]'), 'Guest confirmation offers ticket access');
+state.info.user = { permissions: ['admin|all'], isRegistered: true };
 
 fixture = { username: 'Test user', email: 'test@example.invalid' };
 await showUser(actionId);

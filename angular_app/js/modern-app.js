@@ -222,7 +222,9 @@ function ticketForm(event, ticket = {}) {
 async function showTicketForm(eventId, ticketId) {
     const event = await api(`/events/${encodeURIComponent(eventId)}`);
     const ticket = ticketId ? (await api(`/events/${encodeURIComponent(eventId)}/tickets/${encodeURIComponent(ticketId)}`)).ticket : {};
-    page(ticketId ? `Edit ticket · ${event.title}` : `Register · ${event.title}`, ticketForm(event, ticket),
+    const guestNote = !ticketId && !state.info.user?.isRegistered
+        ? '<p class="warning">To manage this registration later, <a href="#/login">create an account or log in</a> before registering. Guest registrations can only be managed by authorized staff.</p>' : '';
+    page(ticketId ? `Edit ticket · ${event.title}` : `Register · ${event.title}`, guestNote + ticketForm(event, ticket),
         `<a class="button secondary" href="#/event/${htmlId(eventId)}/view">View event</a>${hasPermission('event:tickets-all|read') ? `<a class="button secondary" href="#/event/${htmlId(eventId)}/tickets">Back to tickets</a>` : ''}`);
     qs('#ticket-form').addEventListener('submit', async submit => {
         submit.preventDefault();
@@ -232,6 +234,11 @@ async function showTicketForm(eventId, ticketId) {
         const url = ticketId ? `/events/${encodeURIComponent(eventId)}/tickets/${encodeURIComponent(ticketId)}` : `/events/${encodeURIComponent(eventId)}/tickets`;
         const saved = await api(url, { method: ticketId ? 'PUT' : 'POST', body: JSON.stringify(data) });
         notice(ticketId ? 'Ticket saved.' : 'Registration complete.', 'success');
+        if (!ticketId && !state.info.user?.isRegistered) {
+            page('Registration complete', '<section class="card"><p>Your registration was saved. Contact authorized event staff if you need to change or cancel it.</p></section>',
+                `<a class="button secondary" href="#/event/${htmlId(eventId)}/view">View event</a>`);
+            return;
+        }
         location.hash = `#/event/${encodeURIComponent(eventId)}/ticket/${encodeURIComponent(ticketId || saved.ticket?._id || saved._id)}/edit`;
     });
 }
