@@ -94,6 +94,10 @@ python3 -m tools.rotate_cookie_secret --db-name eventman --yes
 ```
 
 It uses the same `EVENTMAN_MONGO_URL` convention as the password tools. Stop the
-application before rotation and preserve a protected backup; existing login
+application before rotation, keep MongoDB running, and preserve a protected backup; existing login
 cookies become invalid after restart. See [the deployment procedure and remaining
 acceptance checks](../SECURITY_AUDIT_147.md#signing-key-rotation-and-deployment).
+For Compose, `docker compose up -d --wait mongo` starts only MongoDB; a rotation
+command using `--no-deps` will not start it automatically. Connection, database
+access, and unexpected signing-key record counts report distinct errors without
+printing secret values.

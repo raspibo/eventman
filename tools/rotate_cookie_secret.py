@@ -5,7 +5,7 @@ import os
 import secrets
 
 import pymongo
-from pymongo.errors import PyMongoError
+from pymongo.errors import ConnectionFailure, PyMongoError
 
 
 def rotate_cookie_secret(settings):
@@ -30,8 +30,12 @@ def main():
         with pymongo.MongoClient(os.environ.get('EVENTMAN_MONGO_URL'),
                                 serverSelectionTimeoutMS=10_000) as client:
             rotate_cookie_secret(client[args.db_name]['settings'])
-    except (PyMongoError, ValueError):
-        raise SystemExit('Unable to rotate signing key; check database access and that exactly one key record exists') from None
+    except ConnectionFailure:
+        raise SystemExit('Cannot reach MongoDB; start the MongoDB service and check EVENTMAN_MONGO_URL') from None
+    except PyMongoError:
+        raise SystemExit('Unable to access signing-key record; check MongoDB authentication and permissions') from None
+    except ValueError:
+        raise SystemExit('Unable to rotate signing key; the selected database must contain exactly one existing key record') from None
     print('Signing key rotated; restart all EventMan processes. Existing login cookies will be invalid.')
 
 

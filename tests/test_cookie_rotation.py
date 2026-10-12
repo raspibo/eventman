@@ -5,10 +5,30 @@ import io
 import unittest
 from unittest.mock import Mock, patch
 
+from pymongo.errors import OperationFailure, ServerSelectionTimeoutError
+
 from tools import rotate_cookie_secret
 
 
 class CookieRotationTests(unittest.TestCase):
+    def test_cli_connection_failure_has_actionable_message_without_details(self):
+        with patch('sys.argv', ['rotate', '--yes']), patch('pymongo.MongoClient') as client:
+            client.return_value.__enter__.side_effect = ServerSelectionTimeoutError('fixture-private-connection-details')
+            with self.assertRaises(SystemExit) as error:
+                rotate_cookie_secret.main()
+            self.assertIn('Cannot reach MongoDB', str(error.exception))
+            self.assertNotIn('fixture-private', str(error.exception))
+
+    def test_cli_record_and_access_failures_are_distinct_without_details(self):
+        for failure, expected in [(ValueError('fixture-private-record-details'), 'exactly one'),
+                                  (OperationFailure('fixture-private-access-details'), 'authentication and permissions')]:
+            with self.subTest(failure=type(failure).__name__), patch('sys.argv', ['rotate', '--yes']), \
+                    patch('pymongo.MongoClient'), patch.object(rotate_cookie_secret, 'rotate_cookie_secret', side_effect=failure):
+                with self.assertRaises(SystemExit) as error:
+                    rotate_cookie_secret.main()
+                self.assertIn(expected, str(error.exception))
+                self.assertNotIn('fixture-private', str(error.exception))
+
     def test_rotation_changes_only_one_existing_key_without_returning_it(self):
         settings = Mock()
         settings.find.return_value.limit.return_value = [{'_id': 'key-record'}]
