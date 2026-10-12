@@ -11,7 +11,15 @@ const defaultFormSchema = {
 
 const escapeHtml = (value = '') => String(value).replace(/[&<>"']/g, char =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+const htmlId = value => escapeHtml(encodeURIComponent(value));
 const route = () => location.hash.slice(1) || '/events';
+
+function routeId(value) {
+    // Decode once, then enforce the server's identifier character restrictions.
+    const id = decodeURIComponent(value || '');
+    if (!/^[\p{L}\p{N}_-]+$/u.test(id)) throw new Error('Invalid route identifier.');
+    return id;
+}
 const hasPermission = permission => {
     const permissions = state.info.user?.permissions || [];
     const [scope] = permission.split('|');
@@ -54,7 +62,7 @@ function renderNavigation() {
     nav.innerHTML = `
         <a href="#/events">Events</a>
         ${hasPermission('admin|all') ? '<a href="#/users">Users</a><a href="#/tickets">All tickets</a><a href="#/import/persons">Import</a>' : ''}
-        ${user?._id ? `<a href="#/user/${encodeURIComponent(user._id)}/edit">${escapeHtml(user.username)}</a><button class="secondary" data-action="logout">Log out</button>` : '<a href="#/login">Log in</a>'}`;
+        ${user?._id ? `<a href="#/user/${htmlId(user._id)}/edit">${escapeHtml(user.username)}</a><button class="secondary" data-action="logout">Log out</button>` : '<a href="#/login">Log in</a>'}`;
     qs('[data-action="logout"]')?.addEventListener('click', logout);
 }
 
@@ -78,15 +86,15 @@ async function showEvents() {
     const data = await api('/events?_summary=true');
     state.events = data.events || [];
     const cards = state.events.map(event => {
-        const eventUrl = hasPermission('event|update') ? `#/event/${event._id}/edit` : `#/event/${event._id}/view`;
+        const eventUrl = hasPermission('event|update') ? `#/event/${htmlId(event._id)}/edit` : `#/event/${htmlId(event._id)}/view`;
         const join = !event.no_tickets_for_sale && hasPermission('event:tickets-all|create')
-            ? `<a class="button" href="#/event/${event._id}/ticket/new">Register</a>` : '';
+            ? `<a class="button" href="#/event/${htmlId(event._id)}/ticket/new">Register</a>` : '';
         return `<article class="event">
             <div><h2><a href="${eventUrl}">${escapeHtml(event.title || 'Untitled event')}</a></h2>
             ${event.tagline ? `<p>${escapeHtml(event.tagline)}</p>` : ''}
             <p class="metadata">${escapeHtml([formatDate(event.begin_date), event.where].filter(Boolean).join(' · '))}</p>
             <div class="metrics"><span><strong>${event.total_attendees || 0}</strong> attended</span><span><strong>${event.tickets_sold || 0}</strong> registered</span></div></div>
-            <div class="actions">${join}${hasPermission('event:tickets-all|read') ? `<a class="button secondary" href="#/event/${event._id}/tickets">Manage tickets</a>` : ''}</div>
+            <div class="actions">${join}${hasPermission('event:tickets-all|read') ? `<a class="button secondary" href="#/event/${htmlId(event._id)}/tickets">Manage tickets</a>` : ''}</div>
         </article>`;
     }).join('');
     page('Events', `<section class="card"><div class="toolbar"><label>Search events <input id="event-search" type="search" placeholder="Title, place, or summary"></label></div><div id="event-list" class="event-list">${cards || empty('No events yet.')}</div></section>`,
@@ -145,7 +153,7 @@ async function showEvent(id, editing) {
     state.event = event;
     const canEdit = editing && hasPermission('event|update');
     page(event.title || 'Event', eventForm(event, !canEdit),
-        `${hasPermission('event:tickets-all|read') ? `<a class="button secondary" href="#/event/${id}/tickets">Tickets</a>` : ''}${!editing && hasPermission('event:tickets-all|create') ? `<a class="button" href="#/event/${id}/ticket/new">Register</a>` : ''}${canEdit && hasPermission('event|delete') ? `<button class="danger" id="delete-event">Delete event</button>` : ''}`);
+        `${hasPermission('event:tickets-all|read') ? `<a class="button secondary" href="#/event/${htmlId(id)}/tickets">Tickets</a>` : ''}${!editing && hasPermission('event:tickets-all|create') ? `<a class="button" href="#/event/${htmlId(id)}/ticket/new">Register</a>` : ''}${canEdit && hasPermission('event|delete') ? `<button class="danger" id="delete-event">Delete event</button>` : ''}`);
     qs('#event-form')?.addEventListener('submit', async submit => {
         submit.preventDefault();
         try {
@@ -215,7 +223,7 @@ async function showTicketForm(eventId, ticketId) {
     const event = await api(`/events/${encodeURIComponent(eventId)}`);
     const ticket = ticketId ? (await api(`/events/${encodeURIComponent(eventId)}/tickets/${encodeURIComponent(ticketId)}`)).ticket : {};
     page(ticketId ? `Edit ticket · ${event.title}` : `Register · ${event.title}`, ticketForm(event, ticket),
-        `<a class="button secondary" href="#/event/${escapeHtml(encodeURIComponent(eventId))}/view">View event</a>${hasPermission('event:tickets-all|read') ? `<a class="button secondary" href="#/event/${eventId}/tickets">Back to tickets</a>` : ''}`);
+        `<a class="button secondary" href="#/event/${htmlId(eventId)}/view">View event</a>${hasPermission('event:tickets-all|read') ? `<a class="button secondary" href="#/event/${htmlId(eventId)}/tickets">Back to tickets</a>` : ''}`);
     qs('#ticket-form').addEventListener('submit', async submit => {
         submit.preventDefault();
         const data = formValues(submit.currentTarget);
@@ -239,14 +247,14 @@ async function showTickets(id) {
         const visible = filteredTickets(event.tickets || [], qs('#ticket-search').value, qs('#show-cancelled').checked);
         qs('#ticket-count').textContent = `${visible.length} shown · ${(event.tickets || []).filter(ticket => ticket.attended && !ticket.cancelled).length} attended`;
         qs('#ticket-rows').innerHTML = visible.map(ticket => `<tr class="${ticket.cancelled ? 'cancelled' : ''}">
-            <td>${escapeHtml(ticket.seq_hex || '')}</td><td><a href="#/event/${id}/ticket/${ticket._id}/edit">${escapeHtml(ticketName(ticket))}</a><div class="metadata">${escapeHtml(ticket.email || '')}</div></td>
+            <td>${escapeHtml(ticket.seq_hex || '')}</td><td><a href="#/event/${htmlId(id)}/ticket/${htmlId(ticket._id)}/edit">${escapeHtml(ticketName(ticket))}</a><div class="metadata">${escapeHtml(ticket.email || '')}</div></td>
             <td class="hide-small">${escapeHtml(ticket.company || '')}</td><td><input class="check" type="checkbox" data-attendance="${ticket._id}" ${ticket.attended ? 'checked' : ''} aria-label="Mark ${escapeHtml(ticketName(ticket))} as attended"></td>
             <td><button class="secondary" data-delete-ticket="${ticket._id}">Delete</button></td></tr>`).join('') || `<tr><td colspan="5">${empty('No tickets match your search.')}</td></tr>`;
         document.querySelectorAll('[data-attendance]').forEach(input => input.addEventListener('change', () => updateTicket(id, input.dataset.attendance, { attended: input.checked })));
         document.querySelectorAll('[data-delete-ticket]').forEach(button => button.addEventListener('click', () => deleteTicket(id, button.dataset.deleteTicket)));
     };
     page(`Tickets · ${event.title}`, `<section class="card"><div class="toolbar"><div class="actions"><label>Search tickets<input id="ticket-search" type="search" placeholder="Name, email, or field"></label><label><input id="show-cancelled" type="checkbox"> Show cancelled</label></div><span id="ticket-count" class="status"></span></div><div class="table-wrap"><table><thead><tr><th>#</th><th>Person</th><th class="hide-small">Company</th><th>Attended</th><th>Actions</th></tr></thead><tbody id="ticket-rows"></tbody></table></div></section>`,
-        `<a class="button" href="#/event/${id}/ticket/new">Add ticket</a><a class="button secondary" href="#/event/${id}/edit">Edit event</a>`);
+        `<a class="button" href="#/event/${htmlId(id)}/ticket/new">Add ticket</a><a class="button secondary" href="#/event/${htmlId(id)}/edit">Edit event</a>`);
     qs('#ticket-search').addEventListener('input', renderRows);
     qs('#show-cancelled').addEventListener('change', renderRows);
     renderRows();
@@ -299,7 +307,7 @@ async function showUsers() {
     page('Users', `<section class="card"><label>Search users<input id="user-search" type="search"></label><div class="table-wrap"><table><thead><tr><th>Username</th><th>Email</th><th>Actions</th></tr></thead><tbody id="user-rows"></tbody></table></div></section>`, '<a class="button" href="#/login">Add user</a>');
     const draw = () => {
         const term = qs('#user-search').value.toLowerCase();
-        qs('#user-rows').innerHTML = users.filter(user => JSON.stringify(user).toLowerCase().includes(term)).map(user => `<tr><td><a href="#/user/${user._id}/edit">${escapeHtml(user.username)}</a></td><td>${escapeHtml(user.email || '')}</td><td>${hasPermission('user|delete') ? `<button class="danger" data-delete-user="${user._id}">Delete</button>` : ''}</td></tr>`).join('');
+        qs('#user-rows').innerHTML = users.filter(user => JSON.stringify(user).toLowerCase().includes(term)).map(user => `<tr><td><a href="#/user/${htmlId(user._id)}/edit">${escapeHtml(user.username)}</a></td><td>${escapeHtml(user.email || '')}</td><td>${hasPermission('user|delete') ? `<button class="danger" data-delete-user="${user._id}">Delete</button>` : ''}</td></tr>`).join('');
         document.querySelectorAll('[data-delete-user]').forEach(button => button.addEventListener('click', async () => { if (confirm('Delete this user?')) { await api(`/users/${button.dataset.deleteUser}`, { method: 'DELETE' }); location.hash = '#/users'; }}));
     };
     qs('#user-search').addEventListener('input', draw); draw();
@@ -311,7 +319,7 @@ async function showAllTickets() {
     page('All tickets', `<section class="card"><label>Search tickets<input id="all-ticket-search" type="search" placeholder="Name, email, or event"></label><div class="table-wrap"><table><thead><tr><th>Person</th><th>Event</th><th>Email</th><th>Attended</th></tr></thead><tbody id="all-ticket-rows"></tbody></table></div></section>`);
     const draw = () => {
         const term = qs('#all-ticket-search').value.toLowerCase();
-        qs('#all-ticket-rows').innerHTML = tickets.filter(ticket => JSON.stringify(ticket).toLowerCase().includes(term)).map(ticket => `<tr><td><a href="#/event/${ticket.event_id}/ticket/${ticket._id}/edit">${escapeHtml(ticketName(ticket))}</a></td><td><a href="#/event/${escapeHtml(encodeURIComponent(ticket.event_id))}/view">${escapeHtml(ticket.event_title || 'View event')}</a></td><td>${escapeHtml(ticket.email || '')}</td><td>${ticket.attended ? '<span class="status success">Yes</span>' : '<span class="status">No</span>'}</td></tr>`).join('') || `<tr><td colspan="4">${empty('No tickets match your search.')}</td></tr>`;
+        qs('#all-ticket-rows').innerHTML = tickets.filter(ticket => JSON.stringify(ticket).toLowerCase().includes(term)).map(ticket => `<tr><td><a href="#/event/${htmlId(ticket.event_id)}/ticket/${htmlId(ticket._id)}/edit">${escapeHtml(ticketName(ticket))}</a></td><td><a href="#/event/${htmlId(ticket.event_id)}/view">${escapeHtml(ticket.event_title || 'View event')}</a></td><td>${escapeHtml(ticket.email || '')}</td><td>${ticket.attended ? '<span class="status success">Yes</span>' : '<span class="status">No</span>'}</td></tr>`).join('') || `<tr><td colspan="4">${empty('No tickets match your search.')}</td></tr>`;
     };
     qs('#all-ticket-search').addEventListener('input', draw); draw();
 }
@@ -335,16 +343,16 @@ async function showImport() {
 async function render() {
     state.socket?.close(); state.socket = null;
     try {
-        const parts = route().split('/').filter(Boolean);
+        const parts = route().split('/').slice(1);
         if (parts[0] === 'events') return showEvents();
         if (parts[0] === 'event' && parts[1] === 'new') return showNewEvent();
-        if (parts[0] === 'event' && parts[2] === 'tickets') return showTickets(parts[1]);
-        if (parts[0] === 'event' && parts[2] === 'ticket') return showTicketForm(parts[1], parts[3] === 'new' ? null : parts[3]);
-        if (parts[0] === 'event') return showEvent(parts[1], parts[2] === 'edit');
+        if (parts[0] === 'event' && parts[2] === 'tickets') return showTickets(routeId(parts[1]));
+        if (parts[0] === 'event' && parts[2] === 'ticket') return showTicketForm(routeId(parts[1]), parts[3] === 'new' ? null : routeId(parts[3]));
+        if (parts[0] === 'event') return showEvent(routeId(parts[1]), parts[2] === 'edit');
         if (parts[0] === 'login') return showLogin();
         if (parts[0] === 'users') return showUsers();
         if (parts[0] === 'tickets') return showAllTickets();
-        if (parts[0] === 'user') return showUser(parts[1]);
+        if (parts[0] === 'user') return showUser(routeId(parts[1]));
         if (parts[0] === 'import') return showImport();
         location.hash = '#/events';
     } catch (error) {

@@ -248,6 +248,19 @@ Label temporary-file tests require Pillow from `requirements-printing.txt` and
 skip when it is absent. They generate small real PNGs with a test font and mock
 CUPS, so pycups and external barcode fonts are not needed for these tests.
 
+Frontend route security checks use an installed Chromium browser with an isolated
+temporary profile. Set its executable path to run them (otherwise they skip):
+
+```sh
+EVENTMAN_BROWSER=/path/to/chrome python3 -m unittest discover -s tests -p 'test_frontend_routes.py'
+```
+
+The checks run the active client and stylesheet at desktop/mobile sizes with
+stubbed API and live-update calls. They test real DOM parsing, navigation links,
+malformed routes, and read-only/edit forms without a server or database. The
+headless browser runs with its sandbox disabled inside this disposable fixture;
+use this command only with the trusted local test files.
+
 Dependency management and other hipster tools
 ---------------------------------------------
 
