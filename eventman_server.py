@@ -1033,7 +1033,9 @@ class EbAPIImportHandler(BaseHandler):
         try:
             eb_info = utils.ebAPIFetch(oauthToken=oauthToken, eventID=eventID)
         except Exception as e:
-            return self.build_error('Error using Eventbrite API: %s' % e)
+            # SDK exception text may contain OAuth tokens or request details.
+            logging.warning('Eventbrite import failed (%s)', type(e).__name__)
+            return self.build_error('Eventbrite import failed')
         if 'event' not in eb_info or 'attendees' not in eb_info:
             return self.build_error('Missing information from Eventbrite API')
         event_handler = EventsHandler(self.application, self.request)

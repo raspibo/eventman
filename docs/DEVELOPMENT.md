@@ -228,6 +228,19 @@ The code is so divided:
 
 Edit `angular_app/js/modern-app.js` for client behavior and `static/css/eventman-modern.css` for presentation. The AngularJS sources are no longer loaded by the active client and should not receive feature work. Source-checkout deployments still expose this directory through the static fallback; the Docker image includes only the active client.
 
+Security regression tests
+-------------------------
+
+With the core requirements installed, run from the repository root:
+
+```sh
+python3 -m unittest discover -s tests -p 'test_*.py'
+```
+
+The Eventbrite error-response tests use a temporary loopback HTTP server and
+mock the SDK and database. They require permission to bind a local socket and
+do not contact Eventbrite or invoke printers, scanners, or a real database.
+
 Dependency management and other hipster tools
 ---------------------------------------------
 
