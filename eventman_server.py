@@ -39,6 +39,7 @@ from tornado.options import define, options
 import tornado.web
 import tornado.websocket
 from tornado import gen, escape, process
+from tornado.iostream import StreamClosedError
 
 import utils
 import monco
@@ -554,10 +555,17 @@ class CollectionHandler(BaseHandler):
             stdin_data = ''
         if isinstance(stdin_data, str):
             stdin_data = stdin_data.encode(ENCODING)
-        yield gen.Task(p.stdin.write, stdin_data)
-        p.stdin.close()
-        out, err = yield [gen.Task(p.stdout.read_until_close),
-                gen.Task(p.stderr.read_until_close)]
+        # Drain output while writing input so full pipes cannot deadlock a trigger.
+        stdout = p.stdout.read_until_close()
+        stderr = p.stderr.read_until_close()
+        try:
+            yield p.stdin.write(stdin_data)
+        except StreamClosedError:
+            # An early exit may close stdin; still collect its output and error.
+            pass
+        finally:
+            p.stdin.close()
+        out, err = yield [stdout, stderr]
         logging.debug('trigger: %s' % ' '.join(cmd))
         if out:
             logging.debug('trigger stdout: %s' % out.decode(ENCODING))

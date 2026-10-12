@@ -255,6 +255,13 @@ subprocess execution. They verify action validation, root confinement, safe
 available-trigger links, executable selection, and unchanged JSON/environment
 delivery to the stub; they never execute a trigger or access hardware.
 
+Subprocess compatibility tests execute disposable Python scripts in temporary
+directories. They verify stdin/environment delivery, concurrent stdout/stderr
+draining, early exits, timeout cancellation/killing, and a confined available-
+trigger symlink end to end. They do not execute configured triggers, invoke
+hardware, contact external services, or use a real database. Run them separately
+with `python3 -m unittest discover -s tests -p 'test_trigger_subprocess.py'`.
+
 The Eventbrite error-response tests use a temporary loopback HTTP server and
 mock the SDK and database. They require permission to bind a local socket and
 do not contact Eventbrite or invoke printers, scanners, or a real database.
