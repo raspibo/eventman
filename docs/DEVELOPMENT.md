@@ -250,6 +250,11 @@ python3 -m unittest discover -s tests -p 'test_*.py'
 Admin bootstrap tests use temporary password files and a fake database to verify
 first-time setup, error handling, and existing-admin compatibility.
 
+Password-retirement tests verify PBKDF2 creation/login, legacy rejection,
+registration/password-change behavior, and inventory/reset tooling with mocked
+MongoDB collections and fixture credentials. They never reset real accounts.
+See [the operator recovery procedure](../tools/README.md#password-retirement-and-recovery).
+
 Trigger path tests use temporary executable fixtures and symlinks but stub
 subprocess execution. They verify action validation, root confinement, safe
 available-trigger links, executable selection, and unchanged JSON/environment

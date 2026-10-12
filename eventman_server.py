@@ -248,11 +248,8 @@ class BaseHandler(tornado.web.RequestHandler):
         db_password = user.get('password') or ''
         if not db_password:
             return (False, {})
-        authorized, legacy = utils.verify_password(password, db_password)
+        authorized, _ = utils.verify_password(password, db_password)
         if authorized:
-            if legacy:
-                user['password'] = utils.hash_password(password)
-                self.db.update('users', user['_id'], {'password': user['password']})
             return (True, user)
         return (False, {})
 

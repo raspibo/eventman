@@ -79,21 +79,14 @@ def csvParse(csvStr, remap=None, merge=None):
     return reply, results
 
 
-def hash_password(password, salt=None):
-    """Hash a password.
+def hash_password(password):
+    """Create a modern password hash with a random salt.
 
     :param password: the cleartext password
     :type password: str
-    :param salt: the optional salt (randomly generated, if None)
-    :type salt: str
 
     :returns: the hashed password
     :rtype: str"""
-    if salt is not None:
-        # Keep the legacy format available for reading old installations.
-        pwd = '%s%s' % (salt, password)
-        hash_ = hashlib.sha512(pwd.encode('utf-8'))
-        return '$%s$%s' % (salt, hash_.hexdigest())
     iterations = 600_000
     salt = secrets.token_bytes(16)
     digest = hashlib.pbkdf2_hmac(
@@ -105,7 +98,7 @@ def hash_password(password, salt=None):
 
 
 def verify_password(password, encoded):
-    """Verify both modern PBKDF2 and legacy EventMan password hashes."""
+    """Verify PBKDF2 hashes; legacy hashes require an operator-managed reset."""
     if not isinstance(encoded, str):
         return False, False
     if encoded.startswith('pbkdf2_sha256$'):
@@ -118,11 +111,24 @@ def verify_password(password, encoded):
         except (TypeError, ValueError):
             return False, False
         return secrets.compare_digest(actual, expected), False
-    match = re.match(r'^\$(?P<salt>[^$]+)\$(?P<hash>[0-9a-f]+)$', encoded)
-    if not match:
-        return False, False
-    legacy = hash_password(password, salt=match.group('salt'))
-    return secrets.compare_digest(legacy, encoded), True
+    return False, False
+
+
+def password_hash_kind(encoded):
+    """Classify stored hash metadata without computing or exposing a digest.
+
+    :param encoded: stored password value
+    :returns: format name, missing, or unrecognized
+    """
+    if encoded is None or encoded == '':
+        return 'missing'
+    if not isinstance(encoded, str):
+        return 'unrecognized'
+    if re.fullmatch(r'pbkdf2_sha256\$[1-9][0-9]*\$(?:[0-9a-f]{2})+\$[0-9a-f]{64}', encoded):
+        return 'pbkdf2_sha256'
+    if re.fullmatch(r'\$[^$]+\$[0-9a-f]{128}', encoded):
+        return 'legacy_sha512'
+    return 'unrecognized'
 
 
 has_eventbrite_sdk = False

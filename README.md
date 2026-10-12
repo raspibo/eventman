@@ -132,8 +132,10 @@ are supplied, or if the password file is unreadable, empty, or contains multiple
 lines. Keep secret files outside the checkout with owner-only access; passwords
 passed directly on the command line may be visible in shell history and process
 listings. Existing admins are not changed, and their startup ignores bootstrap
-inputs. Existing legacy password hashes are upgraded to PBKDF2-SHA256 after a
-successful login.
+inputs. Legacy SHA-512 password hashes are no longer accepted for login; affected
+accounts require an operator-managed reset to PBKDF2-SHA256. See
+[password retirement and recovery](tools/README.md#password-retirement-and-recovery)
+for read-only inventory and reset commands, including recovery for an admin.
 
 Users can register, but are not forced to do so: tickets can also be issued to unregistered persons. However, if you register, you'll be able to access the list of all of your tickets (otherwise, you have to save the tickets' link, if you want to edit them later).
 
