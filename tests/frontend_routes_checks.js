@@ -40,6 +40,58 @@ assert(app.querySelector('#ticket-form'), 'Missing registration form');
 fixture = { events: [{ ...eventFixture, _id: hostileId }] };
 await showEvents();
 assertSafeLinks(hostileId);
+
+// Date grouping uses event dates/times, not API insertion order or sales deadlines.
+const referenceNow = new Date('2026-10-12T12:00:00').getTime();
+const datedEvents = [
+    { _id: 'past-old', begin_date: '2020-01-01' },
+    { _id: 'future-later', begin_date: '2026-10-14', begin_time: '09:00:00' },
+    { _id: 'undated' },
+    { _id: 'past-recent', begin_date: '2026-10-11' },
+    { _id: 'future-near', begin_date: '2026-10-13', begin_time: '09:00:00' },
+    { _id: 'today', begin_date: '2026-10-12' },
+    { _id: 'ended-today', begin_date: '2026-10-12', begin_time: '08:00:00', end_date: '2026-10-12', end_time: '11:00:00' },
+    { _id: 'ongoing', begin_date: '2026-10-10', end_date: '2026-10-12' },
+    { _id: 'invalid', begin_date: 'not-a-date' },
+    { _id: 'invalid-calendar', begin_date: '2026-02-30' },
+];
+const grouped = groupEvents(datedEvents, referenceNow);
+assert(grouped.upcoming.map(event => event._id).join(',') === 'ongoing,today,future-near,future-later', 'Upcoming/current ordering wrong');
+assert(grouped.past.map(event => event._id).join(',') === 'ended-today,past-recent,past-old', 'Past ordering wrong');
+assert(grouped.undated.map(event => event._id).join(',') === 'undated,invalid,invalid-calendar', 'Missing/invalid dates were lost');
+assert(datedEvents[0]._id === 'past-old', 'Grouping mutated API insertion order');
+assert(eventTimestamp('2026-10-12T10:00:00+02:00') === Date.parse('2026-10-12T08:00:00Z'), 'Explicit timezone offset lost');
+assert(eventTimestamp('2026-10-12') === new Date(2026, 9, 12).getTime(), 'Date-only start interpreted as UTC');
+assert(eventTimestamp('2026-10-12', '', true) === new Date(2026, 9, 13).getTime(), 'Date-only end excludes its date');
+assert(groupEvents([{ begin_date: '2026-10-12', end_date: '2026-10-12', end_time: '12:00:00' }], referenceNow).past.length === 1,
+    'Exact end boundary is not past');
+assert(groupEvents([{ begin_date: '2026-10-12' }], new Date('2026-10-13T00:00:00').getTime()).past.length === 1,
+    'No-end event did not expire at local midnight');
+assert(formatDate('not-a-date') === '', 'Invalid date breaks event-list rendering');
+
+fixture = { events: [
+    { _id: 'past', title: 'Past fixture', begin_date: '2000-01-01' },
+    { _id: 'later', title: 'Later fixture', begin_date: '2099-12-01', summary: 'find this event' },
+    { _id: 'missing', title: 'Undated fixture' },
+    { _id: 'near', title: 'Nearest fixture', begin_date: '2099-01-01' },
+    { _id: 'bad', title: 'Invalid fixture', begin_date: 'bad-date' },
+] };
+await showEvents();
+assert(state.events.map(event => event._id).join(',') === 'near,later,past,missing,bad', 'Rendered order is not grouped');
+assert([...app.querySelectorAll('.event h2')].map(heading => heading.textContent).join(',') ===
+    'Nearest fixture,Later fixture,Past fixture,Undated fixture,Invalid fixture', 'Cards do not follow grouped order');
+qs('#event-search').value = 'find this event';
+qs('#event-search').dispatchEvent(new Event('input'));
+const visibleCards = [...app.querySelectorAll('.event')].filter(card => getComputedStyle(card).display !== 'none');
+assert(visibleCards.length === 1 && visibleCards[0].textContent.includes('Later fixture'), 'Search mapped to the wrong sorted event');
+assert([...app.querySelectorAll('.event-group')].filter(group => !group.hidden).length === 1, 'Empty groups remain visible after search');
+qs('#event-search').value = '';
+qs('#event-search').dispatchEvent(new Event('input'));
+assert([...app.querySelectorAll('.event')].every(card => !card.hidden), 'Clearing search did not restore past/undated cards');
+fixture = { events: [] };
+await showEvents();
+assert(app.textContent.includes('No events yet.'), 'Empty-list guidance lost');
+
 fixture = { users: [{ _id: hostileId, username: 'Test user' }] };
 state.info.user.permissions = ['users|read'];
 await showUsers();

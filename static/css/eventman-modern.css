@@ -45,6 +45,8 @@ textarea { min-height: 7rem; resize: vertical; }
 fieldset { border: 0; padding: 0; margin: 0; } fieldset + fieldset { margin-top: 1.2rem; }
 legend { font-size: 1.05rem; font-weight: 750; margin-bottom: .75rem; }
 .event-list { display: grid; gap: .8rem; }
+.event-group > h2 { margin-bottom: .8rem; }
+.event[hidden], .event-group[hidden] { display: none; }
 .event { display: grid; grid-template-columns: 1fr auto; gap: 1rem; padding: 1rem; border: 1px solid var(--border); border-radius: .6rem; }
 .event h2 a { color: var(--text); } .metadata { color: var(--muted); font-size: .9rem; margin-top: .4rem; }
 .metrics { display: flex; gap: 1rem; color: var(--muted); margin-top: .5rem; } .metrics strong { color: var(--text); }

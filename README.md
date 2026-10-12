@@ -151,6 +151,13 @@ required signing-key rotation after upgrading a deployment that exposed its key.
 
 The current interface is a responsive, dependency-free ES module application. It uses native browser controls, keyboard-accessible navigation, `fetch`, WebSockets and the server's XSRF protection. The first-party legacy AngularJS source remains as historical reference; its third-party libraries have been removed from the source tree and are available in Git history. The Docker image includes only the active frontend.
 
+The event list shows upcoming/current events first, ordered by start date, then
+past events with the most recent first. Events with missing or invalid start
+dates appear last under "Undated events". Separate date/time fields use the
+browser's local timezone; full timestamps retain explicit timezone offsets.
+Date-only end dates include the whole day. Events without a valid end remain
+current through the end of their start day. Search covers all three groups.
+
 Existing event registration schemas are rendered for attendees. The legacy visual schema editor has been retired; create or update schemas through the API until a replacement editor is introduced.
 
 # Tools

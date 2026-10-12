@@ -25,7 +25,48 @@ const hasPermission = permission => {
     const [scope] = permission.split('|');
     return permissions.includes('admin|all') || permissions.includes(`${scope}|all`) || permissions.includes(permission);
 };
-const formatDate = value => value ? new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: value.includes?.(':') ? 'short' : undefined }).format(new Date(value)) : '';
+const formatDate = value => {
+    const timestamp = eventTimestamp(value);
+    return timestamp === null ? '' : new Intl.DateTimeFormat(undefined, {
+        dateStyle: 'medium', timeStyle: value.includes(':') ? 'short' : undefined
+    }).format(new Date(timestamp));
+};
+
+function eventTimestamp(date, time = '', endOfDay = false) {
+    if (typeof date !== 'string') return null;
+    const parts = date.match(/^(\d{4})-(\d{2})-(\d{2})(?:$|T)/);
+    if (!parts) return null;
+    const calendar = new Date(Number(parts[1]), Number(parts[2]) - 1, Number(parts[3]));
+    if (calendar.getFullYear() !== Number(parts[1]) || calendar.getMonth() !== Number(parts[2]) - 1
+        || calendar.getDate() !== Number(parts[3])) return null;
+    const value = time ? `${date.slice(0, 10)}T${time}` : date.length === 10 ? `${date}T00:00:00` : date;
+    const parsed = new Date(value);
+    if (!Number.isFinite(parsed.getTime())) return null;
+    if (endOfDay && date.length === 10 && !time) parsed.setHours(24, 0, 0, 0);
+    return parsed.getTime();
+}
+
+function groupEvents(events, now = Date.now()) {
+    const groups = { upcoming: [], past: [], undated: [] };
+    for (const event of events) {
+        const start = eventTimestamp(event.begin_date, event.begin_time);
+        if (start === null) {
+            groups.undated.push(event);
+            continue;
+        }
+        let end = eventTimestamp(event.end_date, event.end_time, true);
+        if (end === null || end < start) {
+            const startDay = new Date(start);
+            startDay.setHours(24, 0, 0, 0);
+            end = startDay.getTime();
+        }
+        groups[end <= now ? 'past' : 'upcoming'].push(event);
+    }
+    const byStart = (a, b) => eventTimestamp(a.begin_date, a.begin_time) - eventTimestamp(b.begin_date, b.begin_time);
+    groups.upcoming.sort(byStart);
+    groups.past.sort((a, b) => byStart(b, a));
+    return groups;
+}
 const ticketName = ticket => [ticket.name, ticket.surname].filter(Boolean).join(' ') || ticket.email || 'Unnamed ticket';
 const qs = selector => document.querySelector(selector);
 
@@ -84,8 +125,9 @@ function empty(message) { return `<div class="empty">${escapeHtml(message)}</div
 
 async function showEvents() {
     const data = await api('/events?_summary=true');
-    state.events = data.events || [];
-    const cards = state.events.map(event => {
+    const groups = groupEvents(data.events || []);
+    state.events = [...groups.upcoming, ...groups.past, ...groups.undated];
+    const eventCard = event => {
         const eventUrl = hasPermission('event|update') ? `#/event/${htmlId(event._id)}/edit` : `#/event/${htmlId(event._id)}/view`;
         const join = !event.no_tickets_for_sale && hasPermission('event:tickets-all|create')
             ? `<a class="button" href="#/event/${htmlId(event._id)}/ticket/new">Register</a>` : '';
@@ -96,6 +138,10 @@ async function showEvents() {
             <div class="metrics"><span><strong>${event.total_attendees || 0}</strong> attended</span><span><strong>${event.tickets_sold || 0}</strong> registered</span></div></div>
             <div class="actions">${join}${hasPermission('event:tickets-all|read') ? `<a class="button secondary" href="#/event/${htmlId(event._id)}/tickets">Manage tickets</a>` : ''}</div>
         </article>`;
+    };
+    const cards = Object.entries(groups).filter(([, events]) => events.length).map(([key, events]) => {
+        const title = { upcoming: 'Upcoming and current events', past: 'Past events', undated: 'Undated events' }[key];
+        return `<section class="event-group"><h2>${title}</h2><div class="event-list">${events.map(eventCard).join('')}</div></section>`;
     }).join('');
     page('Events', `<section class="card"><div class="toolbar"><label>Search events <input id="event-search" type="search" placeholder="Title, place, or summary"></label></div><div id="event-list" class="event-list">${cards || empty('No events yet.')}</div></section>`,
         hasPermission('events|create') || hasPermission('event|create') ? '<a class="button" href="#/event/new">Create event</a>' : '');
@@ -103,6 +149,9 @@ async function showEvents() {
         const term = event.target.value.toLowerCase();
         document.querySelectorAll('.event').forEach((card, index) => {
             card.hidden = !JSON.stringify(state.events[index]).toLowerCase().includes(term);
+        });
+        document.querySelectorAll('.event-group').forEach(group => {
+            group.hidden = ![...group.querySelectorAll('.event')].some(card => !card.hidden);
         });
     });
 }

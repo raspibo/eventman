@@ -300,6 +300,9 @@ stubbed API and live-update calls. They test real DOM parsing, navigation links,
 malformed routes, and read-only/edit forms without a server or database. The
 same checks cover stored ticket/user identifiers, attendance and deletion
 actions, form submissions and redirects, and simulated WebSocket updates.
+Event-list fixtures cover upcoming/current/past ordering, local date-only and
+split date/time boundaries, explicit timezone offsets, invalid/undated events,
+empty lists, and search after sorting (including hidden empty groups).
 All mutation requests are captured by the stub; no real records are changed. The
 headless browser runs with its sandbox disabled inside this disposable fixture;
 use this command only with the trusted local test files.
