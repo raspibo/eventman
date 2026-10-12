@@ -271,6 +271,11 @@ The Eventbrite error-response tests use a temporary loopback HTTP server and
 mock the SDK and database. They require permission to bind a local socket and
 do not contact Eventbrite or invoke printers, scanners, or a real database.
 
+JSON-response tests also use a temporary loopback server and fake database.
+They assert that reflected errors, event/user documents, and missing documents
+are JSON data, including when values contain markup. Browser checks separately
+verify that error pages and notices display such messages as text.
+
 Label temporary-file tests require Pillow from `requirements-printing.txt` and
 skip when it is absent. They generate small real PNGs with a test font and mock
 CUPS, so pycups and external barcode fonts are not needed for these tests.

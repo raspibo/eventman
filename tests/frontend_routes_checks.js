@@ -192,3 +192,13 @@ qs('#event-form').dispatchEvent(new Event('submit', { cancelable: true }));
 await settleActions();
 assert(mutations.length === 1 && mutations[0].method === 'POST', 'New event did not submit once');
 assert(location.hash === `#/event/${encodeURIComponent(actionEventId)}/edit`, 'New event redirect changed identifier');
+
+// API error text is data, including markup received in a JSON response.
+const hostileMessage = '<img src=x onerror="window.injected=true"><script>window.injected=true</script>';
+errorPage(new Error(hostileMessage));
+assert(app.querySelector('.error p').textContent === hostileMessage, 'Error message data changed');
+assert(!app.querySelector('img, script, [onerror]'), 'Injected error page');
+notice(hostileMessage, 'error');
+assert(notices.lastElementChild.textContent === hostileMessage, 'Notice message data changed');
+assert(!notices.querySelector('img, script, [onerror]'), 'Injected error notice');
+assert(!window.injected, 'Error message executed code');
